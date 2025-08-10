@@ -6,10 +6,31 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Attribute below the  "Joining Table" note means :
+// When extract the record from database, 
+// those field below "Joining Table" will NOT be extracted.
+// Reasons:
+// [1] - Keep the fetch out data convertiable to the entitiy 
+// [2] - Make the fetch out data more manageable without handle too much unrelated joining tables
+// [3] - lightweight data output
+//
+// Reaosn of joining them here is to easier viewiing in prisma studio
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  mainId    String   @unique
+
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt  DateTime? 
 }

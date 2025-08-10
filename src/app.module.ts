@@ -14,6 +14,9 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
+import { UserModule } from './user/user.module';
+import { StripeModule } from './stripe/stripe.module';
+import { SellerModule } from './seller/seller.module';
 
 @Module({
   imports: [
@@ -31,6 +34,9 @@ import { CacheModule } from '@nestjs/cache-manager';
       },
     ]),
     AuthModule,
+    UserModule,
+    StripeModule,
+    SellerModule,
   ],
   controllers: [AppController],
   providers: [

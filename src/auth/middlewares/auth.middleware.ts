@@ -16,12 +16,13 @@ import { AuthService } from '../services/auth.service';
 export interface IRequest extends Request {
   csrfToken(): string;
   middleware: {
+    bvtUserId: string;
     userId: string;
     familyName: string;
     givenName: string;
     email: string;
     accessToken: string;
-    origin: 'SELLER' | 'BUYER';
+    origin: 'VENDOR_URL' | 'BUYER_URL' | 'ADMIN_URL';
   };
 }
 
@@ -68,20 +69,24 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     try {
+      // Step 1 : get the user data from access token
       const { email, familyName, givenName, userId } =
         this.authService.verifyAccessToken(accessToken);
 
+      // Step 2 : get the origin where the api is sent
       let origin: IRequest['middleware']['origin'];
       if (req.headers.origin === process.env.BUYER_URL) {
-        origin = 'BUYER';
-      } else if (req.headers.origin === process.env.SELLER_URL) {
-        origin = 'SELLER';
+        origin = 'BUYER_URL';
+      } else if (req.headers.origin === process.env.VENDOR_URL) {
+        origin = 'VENDOR_URL';
       } else {
         throw new UnauthorizedException('Invalid Origin');
       }
 
+      // Step 3 : get the origin where the api is sent
       req.middleware = {
-        userId,
+        bvtUserId: userId,
+        userId: '',
         familyName,
         givenName,
         email,
