@@ -29,8 +29,77 @@ model User {
   email     String   @unique
   mainId    String   @unique
 
-  
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
   deletedAt  DateTime? 
+
+  // Joining Table
+  Seller Seller[]
+  BuyerStripeAccountMapping BuyerStripeAccountMapping[]
+}
+
+
+model Seller {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String   
+  status   SellerStatus
+  attributes Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt  DateTime? 
+
+  // Joining Table
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  SellerStripeAccountMapping SellerStripeAccountMapping[]
+  Shop Shop[]
+}
+
+enum SellerStatus {
+  ACTIVE 
+  DELETED
+  SUSPENDED
+}
+
+model Shop {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @db.Text
+  sellerId    String
+  country     String
+  shopUrl     String
+  attributes  Json
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime? @updatedAt
+  deletedAt   DateTime?
+
+  // Joining Table
+  seller      Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+
+
+model SellerStripeAccountMapping {
+ id String   @id @default(cuid())
+ sellerId String
+ stripeAccountId String
+ identifyId String
+ createdAt DateTime @default(now())
+
+  // Joining Table
+  seller    Seller  @relation(fields: [sellerId], references: [id], onDelete:Cascade)
+}
+
+
+
+model BuyerStripeAccountMapping {
+ id String   @id @default(cuid())
+ userId String
+ stripeCustomerId String
+ identifyId String
+ createdAt DateTime @default(now())
+
+  // Joining Table
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -2,22 +2,17 @@ type OptionalProperties<T> = {
   [K in keyof T]-?: undefined extends T[K] ? K : never;
 }[keyof T];
 
+export type sellerStatausType = 'ACTIVE' | 'DELETED' | 'SUSPENDED';
+
 export class Seller {
   id: string;
+  userId: string;
   email: string;
 
-  /* Bvt main app id */
-  mainId: string;
+  status: sellerStatausType;
 
-  state: 'ACTIVE' | 'DELETED' | 'SUSPENDED';
-
+  attributes: Record<string, any>;
   createdAt: Date;
-
-  stripeConnectedAccountId: string;
-  stripeOnboardingCompleted: boolean;
-
-  defaultCurrency: string;
-  country: string;
 
   //optional properties
   updatedAt?: Date | null;

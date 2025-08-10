@@ -17,6 +17,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { UserModule } from './user/user.module';
 import { StripeModule } from './stripe/stripe.module';
 import { SellerModule } from './seller/seller.module';
+import { ShopModule } from './shop/shop.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { SellerModule } from './seller/seller.module';
     UserModule,
     StripeModule,
     SellerModule,
+    ShopModule,
   ],
   controllers: [AppController],
   providers: [
