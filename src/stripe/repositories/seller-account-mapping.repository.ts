@@ -9,7 +9,7 @@ export class SellerStripeAccountMappingRepository {
 
   async create(
     mapping: SellerStripeAccountMapping,
-  ): Promise<SellerStripeAccountMapping | null> {
+  ): Promise<SellerStripeAccountMapping> {
     return mapPrismaSellerStripeAccountMappingToDomain(
       await this.prisma.sellerStripeAccountMapping.create({
         data: {
@@ -19,7 +19,7 @@ export class SellerStripeAccountMappingRepository {
           createdAt: mapping.createdAt ?? new Date(),
         },
       }),
-    );
+    ) as SellerStripeAccountMapping;
   }
 
   async findOne(id: string): Promise<SellerStripeAccountMapping | null> {
@@ -43,7 +43,7 @@ export class SellerStripeAccountMappingRepository {
 
   async update(
     mapping: SellerStripeAccountMapping,
-  ): Promise<SellerStripeAccountMapping | null> {
+  ): Promise<SellerStripeAccountMapping> {
     return mapPrismaSellerStripeAccountMappingToDomain(
       await this.prisma.sellerStripeAccountMapping.update({
         where: { id: mapping.id },
@@ -52,15 +52,15 @@ export class SellerStripeAccountMappingRepository {
           identifyId: mapping.identifyId,
         },
       }),
-    );
+    ) as SellerStripeAccountMapping;
   }
 
-  async remove(id: string): Promise<SellerStripeAccountMapping | null> {
+  async remove(id: string): Promise<SellerStripeAccountMapping> {
     return mapPrismaSellerStripeAccountMappingToDomain(
       await this.prisma.sellerStripeAccountMapping.delete({
         where: { id },
       }),
-    );
+    ) as SellerStripeAccountMapping;
   }
 }
 

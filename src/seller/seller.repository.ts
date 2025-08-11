@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Seller, sellerStatausType } from './entities/seller.entity';
+import { Seller, SellerStatusType } from './entities/seller.entity';
 import {
   Seller as PrismaSeller,
   SellerStatus as PrismaSellerStatus,
@@ -10,7 +10,7 @@ import {
 export class SellerRepository {
   constructor(private readonly prisma: DatabaseService) {}
 
-  async create(seller: Seller): Promise<Seller | null> {
+  async create(seller: Seller): Promise<Seller> {
     return mapPrismaSellerToDomain(
       await this.prisma.seller.create({
         data: {
@@ -21,7 +21,7 @@ export class SellerRepository {
           createdAt: seller.createdAt ?? new Date(),
         },
       }),
-    );
+    ) as Seller;
   }
 
   async findAll(): Promise<Seller[]> {
@@ -36,13 +36,13 @@ export class SellerRepository {
     );
   }
 
-  async findByUserId(userId: string): Promise<Seller | null> {
+  async findByUserId(userId: string): Promise<Seller> {
     return mapPrismaSellerToDomain(
       await this.prisma.seller.findFirst({ where: { userId } }),
-    );
+    ) as Seller;
   }
 
-  async update(seller: Seller): Promise<Seller | null> {
+  async update(seller: Seller): Promise<Seller> {
     return mapPrismaSellerToDomain(
       await this.prisma.seller.update({
         where: { id: seller.id },
@@ -54,13 +54,13 @@ export class SellerRepository {
           deletedAt: seller.deletedAt ?? null,
         },
       }),
-    );
+    ) as Seller;
   }
 
-  async remove(id: string): Promise<Seller | null> {
+  async remove(id: string): Promise<Seller> {
     return mapPrismaSellerToDomain(
       await this.prisma.seller.delete({ where: { id } }),
-    );
+    ) as Seller;
   }
 }
 
@@ -76,7 +76,7 @@ export function mapPrismaSellerToDomain(
     id: prismaSeller.id,
     userId: prismaSeller.userId,
     email: prismaSeller.email,
-    status: prismaSeller.status as sellerStatausType,
+    status: prismaSeller.status as SellerStatusType,
     attributes: prismaSeller.attributes as Record<string, any>,
     createdAt: prismaSeller.createdAt,
     updatedAt: prismaSeller.updatedAt ?? undefined,

@@ -7,7 +7,7 @@ import { Shop as PrismaShop } from '@prisma/client';
 export class ShopRepository {
   constructor(private readonly prisma: DatabaseService) {}
 
-  async create(shop: Shop): Promise<Shop | null> {
+  async create(shop: Shop): Promise<Shop> {
     return mapPrismaShopToDomain(
       await this.prisma.shop.create({
         data: {
@@ -21,7 +21,7 @@ export class ShopRepository {
           createdAt: shop.createdAt ?? new Date(),
         },
       }),
-    );
+    ) as Shop;
   }
 
   async findAllBySellerId(sellerId: string): Promise<Shop[]> {
@@ -31,15 +31,15 @@ export class ShopRepository {
     return shops.map(mapPrismaShopToDomain) as Shop[];
   }
 
-  async findOne(id: string): Promise<Shop | null> {
+  async findOne(id: string): Promise<Shop> {
     return mapPrismaShopToDomain(
       await this.prisma.shop.findUnique({
         where: { id },
       }),
-    );
+    ) as Shop;
   }
 
-  async update(shop: Shop): Promise<Shop | null> {
+  async update(shop: Shop): Promise<Shop> {
     return mapPrismaShopToDomain(
       await this.prisma.shop.update({
         where: { id: shop.id },
@@ -54,15 +54,15 @@ export class ShopRepository {
           deletedAt: shop.deletedAt ?? null,
         },
       }),
-    );
+    ) as Shop;
   }
 
-  async remove(id: string): Promise<Shop | null> {
+  async remove(id: string): Promise<Shop> {
     return mapPrismaShopToDomain(
       await this.prisma.shop.delete({
         where: { id },
       }),
-    );
+    ) as Shop;
   }
 }
 

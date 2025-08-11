@@ -9,7 +9,7 @@ export class BuyerStripeAccountMappingRepository {
 
   async create(
     mapping: BuyerStripeAccountMapping,
-  ): Promise<BuyerStripeAccountMapping | null> {
+  ): Promise<BuyerStripeAccountMapping> {
     return mapPrismaBuyerStripeAccountMappingToDomain(
       await this.prisma.buyerStripeAccountMapping.create({
         data: {
@@ -19,15 +19,15 @@ export class BuyerStripeAccountMappingRepository {
           createdAt: mapping.createdAt ?? new Date(),
         },
       }),
-    );
+    ) as BuyerStripeAccountMapping;
   }
 
-  async findOne(id: string): Promise<BuyerStripeAccountMapping | null> {
+  async findOne(id: string): Promise<BuyerStripeAccountMapping> {
     return mapPrismaBuyerStripeAccountMappingToDomain(
       await this.prisma.buyerStripeAccountMapping.findUnique({
         where: { id },
       }),
-    );
+    ) as BuyerStripeAccountMapping;
   }
 
   async findByUserId(userId: string): Promise<BuyerStripeAccountMapping[]> {
@@ -41,7 +41,7 @@ export class BuyerStripeAccountMappingRepository {
 
   async update(
     mapping: BuyerStripeAccountMapping,
-  ): Promise<BuyerStripeAccountMapping | null> {
+  ): Promise<BuyerStripeAccountMapping> {
     return mapPrismaBuyerStripeAccountMappingToDomain(
       await this.prisma.buyerStripeAccountMapping.update({
         where: { id: mapping.id },
@@ -50,15 +50,15 @@ export class BuyerStripeAccountMappingRepository {
           identifyId: mapping.identifyId,
         },
       }),
-    );
+    ) as BuyerStripeAccountMapping;
   }
 
-  async remove(id: string): Promise<BuyerStripeAccountMapping | null> {
+  async remove(id: string): Promise<BuyerStripeAccountMapping> {
     return mapPrismaBuyerStripeAccountMappingToDomain(
       await this.prisma.buyerStripeAccountMapping.delete({
         where: { id },
       }),
-    );
+    ) as BuyerStripeAccountMapping;
   }
 }
 

@@ -2,14 +2,14 @@ type OptionalProperties<T> = {
   [K in keyof T]-?: undefined extends T[K] ? K : never;
 }[keyof T];
 
-export type sellerStatausType = 'ACTIVE' | 'DELETED' | 'SUSPENDED';
+export type SellerStatusType = 'ACTIVE' | 'DELETED' | 'SUSPENDED';
 
 export class Seller {
   id: string;
   userId: string;
   email: string;
 
-  status: sellerStatausType;
+  status: SellerStatusType;
 
   attributes: Record<string, any>;
   createdAt: Date;
