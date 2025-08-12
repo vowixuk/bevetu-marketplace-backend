@@ -110,6 +110,7 @@ export class AuthService {
      * If it is a web application: we get the token from cookies
      * If it is a mobile application: we get the token from header
      */
+
     if (tokenType == 'ACCESS') {
       return (
         req.cookies['BVT_SID'] ||

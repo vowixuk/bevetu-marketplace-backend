@@ -36,13 +36,13 @@ model User {
   // Joining Table
   Seller Seller[]
   BuyerStripeAccountMapping BuyerStripeAccountMapping[]
+  SellerStripeAccountMapping SellerStripeAccountMapping[]
 }
 
 
 model Seller {
   id        String   @id @default(cuid())
   userId    String
-  email     String   
   status   SellerStatus
   attributes Json
   createdAt DateTime @default(now())
@@ -57,6 +57,7 @@ model Seller {
 
 enum SellerStatus {
   ACTIVE 
+  PENDING
   DELETED
   SUSPENDED
 }
@@ -82,20 +83,22 @@ model Shop {
 
 model SellerStripeAccountMapping {
  id String   @id @default(cuid())
- sellerId String
+ sellerId String 
+ userId String @unique
  stripeAccountId String
  identifyId String
  createdAt DateTime @default(now())
 
   // Joining Table
   seller    Seller  @relation(fields: [sellerId], references: [id], onDelete:Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 
 
 model BuyerStripeAccountMapping {
  id String   @id @default(cuid())
- userId String
+ userId String @unique
  stripeCustomerId String
  identifyId String
  createdAt DateTime @default(now())

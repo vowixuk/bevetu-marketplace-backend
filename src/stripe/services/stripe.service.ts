@@ -1,4 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { CreateAccountSessionDto } from 'src/seller/dto/create-account-session.dto';
 import Stripe from 'stripe';
 
 /**
@@ -19,11 +20,11 @@ export class StripeService {
    * Embed the seller account to the marketpplace.
    * This session create an embedded component in the bevetu marketplace frontend seller
    */
-  async createAccountSession(account: any) {
+  async createAccountSession(createAccountSessionDto: CreateAccountSessionDto) {
     try {
       const accountSession = await this.stripe.accountSessions.create({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        account: account,
+        account: createAccountSessionDto.accountId,
         components: {
           account_onboarding: { enabled: true },
         },

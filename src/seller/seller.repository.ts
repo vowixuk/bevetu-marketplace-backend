@@ -15,7 +15,6 @@ export class SellerRepository {
       await this.prisma.seller.create({
         data: {
           userId: seller.userId,
-          email: seller.email,
           status: seller.status as PrismaSellerStatus,
           attributes: seller.attributes,
           createdAt: seller.createdAt ?? new Date(),
@@ -47,7 +46,6 @@ export class SellerRepository {
       await this.prisma.seller.update({
         where: { id: seller.id },
         data: {
-          email: seller.email,
           status: seller.status as PrismaSellerStatus,
           attributes: seller.attributes,
           updatedAt: new Date(),
@@ -75,7 +73,6 @@ export function mapPrismaSellerToDomain(
   return new Seller({
     id: prismaSeller.id,
     userId: prismaSeller.userId,
-    email: prismaSeller.email,
     status: prismaSeller.status as SellerStatusType,
     attributes: prismaSeller.attributes as Record<string, any>,
     createdAt: prismaSeller.createdAt,

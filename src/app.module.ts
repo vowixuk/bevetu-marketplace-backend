@@ -18,6 +18,7 @@ import { UserModule } from './user/user.module';
 import { StripeModule } from './stripe/stripe.module';
 import { SellerModule } from './seller/seller.module';
 import { ShopModule } from './shop/shop.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
@@ -37,6 +38,8 @@ import { ShopModule } from './shop/shop.module';
     AuthModule,
     UserModule,
     StripeModule,
+    SellerModule,
+    DatabaseModule,
     SellerModule,
     ShopModule,
   ],

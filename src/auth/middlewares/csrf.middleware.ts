@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // csrf.middleware.ts
 import {
   ForbiddenException,
@@ -62,14 +64,14 @@ export class CsrfMiddleware implements NestMiddleware {
 
     const isValid = this.authService.validateCsrfToken(
       csrfToken,
-      req.middleware.userId,
+      req.middleware.bvtUserId,
     );
 
     if (!isValid) {
       throw new ForbiddenException('Invalid CSRF token');
     }
 
-    this.setCsrfToken(req.middleware.userId, res);
+    this.setCsrfToken(req.middleware.bvtUserId, res);
 
     return next();
   }

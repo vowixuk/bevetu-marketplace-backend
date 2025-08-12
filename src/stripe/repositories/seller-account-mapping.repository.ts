@@ -14,6 +14,7 @@ export class SellerStripeAccountMappingRepository {
       await this.prisma.sellerStripeAccountMapping.create({
         data: {
           sellerId: mapping.sellerId,
+          userId: mapping.userId,
           stripeAccountId: mapping.stripeAccountId,
           identifyId: mapping.identifyId,
           createdAt: mapping.createdAt ?? new Date(),
@@ -30,11 +31,30 @@ export class SellerStripeAccountMappingRepository {
     );
   }
 
+  async findOneByUserId(
+    userId: string,
+  ): Promise<SellerStripeAccountMapping | null> {
+    return mapPrismaSellerStripeAccountMappingToDomain(
+      await this.prisma.sellerStripeAccountMapping.findUnique({
+        where: { userId },
+      }),
+    );
+  }
+
   async findBySellerId(
     sellerId: string,
   ): Promise<SellerStripeAccountMapping[]> {
     const mappings = await this.prisma.sellerStripeAccountMapping.findMany({
       where: { sellerId },
+    });
+    return mappings.map(
+      mapPrismaSellerStripeAccountMappingToDomain,
+    ) as SellerStripeAccountMapping[];
+  }
+
+  async findByUserId(userId: string): Promise<SellerStripeAccountMapping[]> {
+    const mappings = await this.prisma.sellerStripeAccountMapping.findMany({
+      where: { userId },
     });
     return mappings.map(
       mapPrismaSellerStripeAccountMappingToDomain,
@@ -70,6 +90,7 @@ export function mapPrismaSellerStripeAccountMappingToDomain(
   if (!prismaMapping) return null;
   return new SellerStripeAccountMapping({
     id: prismaMapping.id,
+    userId: prismaMapping.userId,
     sellerId: prismaMapping.sellerId,
     stripeAccountId: prismaMapping.stripeAccountId,
     identifyId: prismaMapping.identifyId,
