@@ -1,26 +1,153 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { IRequest } from '../middlewares/auth.middleware';
-
-export interface IJwtPayload {
-  email: string;
-  userId: string;
-  stripeCustomerId: string;
-  seller: {
-    id: string;
-    stripeAccountId: string;
-  } | null;
-}
+import { UserService } from 'src/user/user.service';
+import { StripeService } from 'src/stripe/services/stripe.service';
+import { IJwtPayload } from './auth.service';
+import { BuyerStripeAccountMappingService } from 'src/stripe/services/buyer-account-mapping.service';
+import { SellerStripeAccountMappingService } from 'src/stripe/services/seller-account-mapping.service';
+import { NotFoundError } from 'rxjs';
+import { User } from 'src/user/entities/user.entity';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { BuyerStripeAccountMapping } from 'src/stripe/entities/buyer-account-mapping.entity';
+import { CreateBuyerStripeAccountMappingDto } from 'src/stripe/dto/create-buyer-account-mapping.dto';
+import { SellerStripeAccountMapping } from 'src/stripe/entities/seller-account-mapping.entity';
 
 @Injectable()
-export class AuthService {
-  // private oauth2Client: OAuth2Client;
+export class AuthUseCase {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly stripeService: StripeService,
+    private readonly userService: UserService,
+    private readonly sellAccountMappingService: SellerStripeAccountMappingService,
+    private readonly buyerAccountMappingService: BuyerStripeAccountMappingService,
+  ) {}
 
-  constructor(private readonly jwtService: JwtService) {}
+  async marketplaceAccessSetup(
+    mainId: string,
+    email: string,
+  ): Promise<IJwtPayload> {
+    /********************
+     *    User Setup    *
+     * *****************/
+    // Step 1 - Check if marketplace user created
+    console.log('Check if marketplace user created');
+    let user: User | null = null;
+    try {
+      user = await this.userService.findOneByMainId(mainId);
+      console.log('User already created');
+    } catch (error) {
+        console.log(error,"<< error")
+      if (error instanceof NotFoundException) {
+        console.log('User not created');
+        user = null;
+      } else {
+        throw new InternalServerErrorException('Error when fetching user', {
+          cause: error,
+        });
+      }
+    }
+    // Step 2 - if not created, create one and get the userId
+    if (user == null) {
+
+      user = await this.userService.create(
+        Object.assign(new CreateUserDto(), {
+          mainId,
+          email,
+        }),
+      );
+      console.log('Create new user');
+    }
+    /*************************************
+     *     Stripe Buyer Account Setup    *
+     * ***********************************/
+    /**
+     * A Stripe customer account is created for each user
+     * the first time they access the system, to facilitate purchases.
+     */
+    // Step 3 - use the user id - check if buyer stripe account created
+    let buyerStripeAccountMapping: BuyerStripeAccountMapping | null = null;
+    try {
+      buyerStripeAccountMapping =
+        await this.buyerAccountMappingService.findOneByUserId(user.id);
+        console.log('has buyerStripeAccountMapping');
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        console.log('No buyerStripeAccountMapping');
+        buyerStripeAccountMapping = null;
+      } else {
+        throw new InternalServerErrorException(
+          'Error when fetching buyer mapping',
+          {
+            cause: error,
+          },
+        );
+      }
+    }
+    // Step 4 - if not created - create one from stripe.
+    if (buyerStripeAccountMapping == null) {
+        
+      const stripeCustomer = await this.stripeService.createStripeCustomer(
+        user.id,
+        email,
+        'marketplace',
+      );
+      console.log('Created new stripeCustomer');
+
+      buyerStripeAccountMapping = await this.buyerAccountMappingService.create(
+        user.id,
+        Object.assign(new CreateBuyerStripeAccountMappingDto(), {
+          stripeCustomerId: stripeCustomer.id,
+          identifyId: stripeCustomer.id,
+        }),
+      );
+      console.log('Created new buyerStripeAccountMapping');
+    }
+    /*************************************
+     *     Stripe Seller Account Setup    *
+     * ***********************************/
+    // Step 5 - Check if seller.
+    let sellerStripeAccountMapping: SellerStripeAccountMapping | null = null;
+    try {
+      sellerStripeAccountMapping =
+        await this.sellAccountMappingService.findOneByUserId(user.id);
+        console.log('has sellerStripeAccountMapping');
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        sellerStripeAccountMapping = null;
+        console.log('no sellerStripeAccountMapping');
+      } else {
+        throw new InternalServerErrorException(
+          'Error when fetching seller mapping',
+          {
+            cause: error,
+          },
+        );
+      }
+    }
+
+    /** Rturn a JWT playload for token generation */
+    return {
+      email,
+      userId: user.id,
+      stripeCustomerId: buyerStripeAccountMapping.stripeCustomerId,
+      seller: sellerStripeAccountMapping
+        ? {
+            id: sellerStripeAccountMapping.sellerId,
+            stripeAccountId: sellerStripeAccountMapping.stripeAccountId,
+          }
+        : null,
+    };
+  }
 
   verifyAccessToken(token: string): {
     email: string;
@@ -33,28 +160,10 @@ export class AuthService {
     });
   }
 
-  verifyMarketplaceToken(token: string): IJwtPayload {
-    return this.jwtService.verify(token, {
-      secret: process.env.JWT_MARKETPLACE_TOKEN_SECRET,
-    });
-  }
-
-  // verifyCommunityToken(token: string): IJwtPayload {
-  //   return this.jwtService.verify(token, {
-  //     secret: process.env.JWT_COMMUNITY_TOKEN_SECRET,
-  //   });
-  // }
-
-  // verifyInsuranceToken(token: string): IJwtPayload {
-  //   return this.jwtService.verify(token, {
-  //     secret: process.env.JWT_INSURANCE_TOKEN_SECRET,
-  //   });
-  // }
-
-  generateMarketPlaceToken(jwtPayload: IJwtPayload): string {
+  createMarketPlaceAccessToken(jwtPayload: IJwtPayload): string {
     return this.jwtService.sign(jwtPayload, {
-      secret: process.env.JWT_MARKETPLACE_TOKEN_SECRET,
-      expiresIn: `${process.env.JWT_MARKETPLACE_TOKEN_EXPIRY_DAY}d`,
+      secret: process.env.JWT_ACCESS_TOKEN_SECRET,
+      expiresIn: `${process.env.ACCESS_TOKEN_EXPIRY_DAY}d`,
     });
   }
 
@@ -127,25 +236,6 @@ export class AuthService {
       throw new ForbiddenException('CSRF token expired');
     }
     return true;
-  }
-
-  getMarketplaceToken(req: IRequest): string | undefined {
-    // If it is web app, the token will be in cookie
-    if (req.cookies['BVT_MKT']) {
-      return req.cookies['BVT_MKT'];
-    }
-
-    // For non web app, the token will be in the header (Get Request) or body.headers (Post Request)
-    if (typeof req.headers['X-Marketplace-Token'] === 'string') {
-      return req.headers['X-Marketplace-Token'].split(' ')[1];
-    }
-
-    const bodyToken: unknown = req.body?.headers?.['X-Marketplace-Token'];
-    if (typeof bodyToken === 'string') {
-      return bodyToken.split(' ')[1];
-    }
-
-    return undefined;
   }
 
   /**

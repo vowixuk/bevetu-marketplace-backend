@@ -83,7 +83,7 @@ model Shop {
 
 model SellerStripeAccountMapping {
  id String   @id @default(cuid())
- sellerId String 
+ sellerId String  @unique
  userId String @unique
  stripeAccountId String
  identifyId String

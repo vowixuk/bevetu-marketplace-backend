@@ -1,20 +1,5 @@
-import {
-  Controller,
-  // Get,
-  Post,
-  Body,
-  HttpCode,
-  Req,
-  Get,
-  // Patch,
-  // Param,
-  // Delete,
-} from '@nestjs/common';
-
-// import { CreateSellerDto } from './dto/create-seller.dto';
+import { Controller, Post, Body, HttpCode, Req, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-// import { UpdateSellerDto } from './dto/update-seller.dto';
-
 import { SellerUseCase } from './services/seller.useCase';
 
 import { CreateSellerConnectAccountDto } from './dto/create-seller-connected-account.dto';

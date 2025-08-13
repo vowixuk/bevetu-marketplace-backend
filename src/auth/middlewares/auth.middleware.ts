@@ -5,7 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '../services/auth.service';
+import { AuthService, IJwtPayload } from '../services/auth.service';
+import { AuthUseCase } from '../services/auth.useCase';
 
 /**
  *  @description Change the request structure.
@@ -16,13 +17,18 @@ import { AuthService } from '../services/auth.service';
 export interface IRequest extends Request {
   csrfToken(): string;
   middleware: {
-    bvtUserId: string;
+    mainId: string;
     userId: string;
     familyName: string;
     givenName: string;
     email: string;
     accessToken: string;
-    origin: 'VENDOR_URL' | 'BUYER_URL' | 'ADMIN_URL';
+    origin: 'SELLER_URL' | 'BUYER_URL' | 'ADMIN_URL';
+    stripeCustomerId: string;
+    seller: {
+      id: string;
+      stripeAccountId: string;
+    } | null;
   };
 }
 
@@ -56,47 +62,111 @@ export const authMiddlewareExclusionList = [
  */
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly authUseCase: AuthUseCase,
+  ) {}
 
-  use(req: IRequest, res: Response, next: NextFunction) {
+  async use(req: IRequest, res: Response, next: NextFunction) {
     /**
-     *  Step 1 . Get the token from cookies(web) or header(mobile)
+     *  Step 1. Get the token from cookies(web) or header(mobile)
      */
+    console.log(' Step 1. Get the token from cookies(web) or header(mobile)');
     const accessToken = this.authService.getToken('ACCESS', req);
-
     if (!accessToken) {
       throw new UnauthorizedException('No access token found');
     }
 
+    /**
+     *  Step 2. Verfiy the token and get user basic detail
+     */
+    console.log('Step 2. Verfiy the token and get user basic detail');
+    let email: string, familyName: string, givenName: string, userId: string;
     try {
-      // Step 1 : get the user data from access token
-      const { email, familyName, givenName, userId } =
-        this.authService.verifyAccessToken(accessToken);
-
-      // Step 2 : get the origin where the api is sent
-      let origin: IRequest['middleware']['origin'];
-      if (req.headers.origin === process.env.BUYER_URL) {
-        origin = 'BUYER_URL';
-      } else if (req.headers.origin === process.env.VENDOR_URL) {
-        origin = 'VENDOR_URL';
-      } else {
-        throw new UnauthorizedException('Invalid Origin');
-      }
-
-      // Step 3 : get the origin where the api is sent
-      req.middleware = {
-        bvtUserId: userId,
-        userId: '',
-        familyName,
-        givenName,
-        email,
-        accessToken,
-        origin,
-      };
-
-      next();
+      const payload = this.authService.verifyAccessToken(accessToken);
+      email = payload.email;
+      familyName = payload.familyName;
+      givenName = payload.givenName;
+      userId = payload.userId;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Invalid or expired access token');
     }
+    /**
+     * Step 3. get the origin where the api is sent
+     * */
+    console.log('Step 3. get the origin where the api is sent');
+    let origin: IRequest['middleware']['origin'];
+    if (req.headers.origin === process.env.BUYER_URL) {
+      origin = 'BUYER_URL';
+    } else if (req.headers.origin === process.env.SELLER_URL) {
+      origin = 'SELLER_URL';
+    } else {
+      throw new UnauthorizedException('Invalid Origin');
+    }
+
+    /**
+     *  Step 4. Get the marketplace token from cookies(web) or header(mobile)
+     */
+    console.log(
+      'Step 4. Get the marketplace token from cookies(web) or header(mobile)',
+    );
+    const marketplaceToken = this.authService.getMarketplaceToken(req);
+    let marketplaceSetupData: IJwtPayload | null = null;
+
+    /**
+     * Step 5a: If a marketplace token exists, verify it.
+     * It’s okay if the token is missing or invalid.
+     * The system will create a new token and set it in the cookies.
+     */
+    try {
+      console.log('Step 5. Verify marketplace token');
+      if (marketplaceToken && typeof marketplaceToken == 'string') {
+        marketplaceSetupData =
+          this.authService.verifyMarketplaceToken(marketplaceToken);
+        console.log('Step 5. Verify marketplace token successfully');
+      } else {
+        /**
+         *  Step 5b . If no marketplace token or verification fail, throw error
+         */
+        console.log('Step 5b. No marketplace token');
+        throw new Error();
+      }
+    } catch {
+      /**
+       *  Step 5c. If error, re-setup the marketplace data and set cookies
+       */
+      console.log('Step 5c. re-setup the marketplace data and set cookies');
+      marketplaceSetupData = await this.authUseCase.marketplaceAccessSetup(
+        userId,
+        email,
+      );
+      res.cookie(
+        'BVT_MKT',
+        this.authService.generateMarketPlaceToken(marketplaceSetupData),
+      );
+    }
+
+    /**
+     *  Step 7. set cookies in middleware
+     */
+    console.log('Step 7. set cookies in middleware');
+    req.middleware = {
+      // This is the id that used across all platforms
+      mainId: userId,
+
+      // This is the id that used in this platforms only
+      userId: marketplaceSetupData.userId,
+      familyName,
+      givenName,
+      email,
+      accessToken,
+      origin,
+      stripeCustomerId: marketplaceSetupData.stripeCustomerId,
+      seller: marketplaceSetupData.seller,
+    };
+
+    console.log(req.middleware);
+
+    next();
   }
 }

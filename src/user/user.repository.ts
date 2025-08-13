@@ -7,42 +7,43 @@ import { User as PrismaUser } from '@prisma/client';
 export class UserRepository {
   constructor(private readonly prisma: DatabaseService) {}
 
-  async create(user: User) {
+  async create(user: User): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.create({
         data: {
           email: user.email,
           mainId: user.mainId,
+          createdAt: user.createdAt,
         },
       }),
-    );
+    ) as User;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.findUnique({
         where: { id },
       }),
-    );
+    ) as User;
   }
 
-  async findOneByEmail(email: string) {
+  async findOneByEmail(email: string): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.findUnique({
         where: { email },
       }),
-    );
+    ) as User;
   }
 
-  async findOneByMainId(mainId: string) {
+  async findOneByMainId(mainId: string): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.findUnique({
         where: { mainId },
       }),
-    );
+    ) as User;
   }
 
-  async update(user: User) {
+  async update(user: User): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.update({
         where: { id: user.id },
@@ -51,18 +52,18 @@ export class UserRepository {
           mainId: user.mainId,
         },
       }),
-    );
+    ) as User;
   }
 
-  async delete(id: string) {
+  async remove(id: string): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.delete({
         where: { id },
       }),
-    );
+    ) as User;
   }
 
-  async softDelete(id: string) {
+  async softDelete(id: string): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.update({
         where: { id },
@@ -70,10 +71,10 @@ export class UserRepository {
           deletedAt: new Date(),
         },
       }),
-    );
+    ) as User;
   }
 
-  async restore(id: string) {
+  async restore(id: string): Promise<User> {
     return mapPrismaUserToDomain(
       await this.prisma.user.update({
         where: { id },
@@ -81,7 +82,7 @@ export class UserRepository {
           deletedAt: null,
         },
       }),
-    );
+    ) as User;
   }
 }
 

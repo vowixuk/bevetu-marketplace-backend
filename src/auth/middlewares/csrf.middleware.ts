@@ -64,14 +64,14 @@ export class CsrfMiddleware implements NestMiddleware {
 
     const isValid = this.authService.validateCsrfToken(
       csrfToken,
-      req.middleware.bvtUserId,
+      req.middleware.mainId,
     );
 
     if (!isValid) {
       throw new ForbiddenException('Invalid CSRF token');
     }
 
-    this.setCsrfToken(req.middleware.bvtUserId, res);
+    this.setCsrfToken(req.middleware.mainId, res);
 
     return next();
   }

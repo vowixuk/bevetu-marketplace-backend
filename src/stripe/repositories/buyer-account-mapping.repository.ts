@@ -30,13 +30,12 @@ export class BuyerStripeAccountMappingRepository {
     ) as BuyerStripeAccountMapping;
   }
 
-  async findByUserId(userId: string): Promise<BuyerStripeAccountMapping[]> {
-    const mappings = await this.prisma.buyerStripeAccountMapping.findMany({
-      where: { userId },
-    });
-    return mappings.map(
-      mapPrismaBuyerStripeAccountMappingToDomain,
-    ) as BuyerStripeAccountMapping[];
+  async findByUserId(userId: string): Promise<BuyerStripeAccountMapping> {
+    return mapPrismaBuyerStripeAccountMappingToDomain(
+      await this.prisma.buyerStripeAccountMapping.findUnique({
+        where: { userId },
+      }),
+    ) as BuyerStripeAccountMapping;
   }
 
   async update(

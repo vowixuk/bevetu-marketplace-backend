@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   ForbiddenException,
   Injectable,
@@ -6,7 +7,6 @@ import {
 import { BuyerStripeAccountMapping } from '../entities/buyer-account-mapping.entity';
 import { BuyerStripeAccountMappingRepository } from '../repositories/buyer-account-mapping.repository';
 import { CreateBuyerStripeAccountMappingDto } from '../dto/create-buyer-account-mapping.dto';
-// import { UpdateBuyerStripeAccountMappingDto } from './dto/update-buyer-stripe-account-mapping.dto';
 
 @Injectable()
 export class BuyerStripeAccountMappingService {
@@ -18,7 +18,7 @@ export class BuyerStripeAccountMappingService {
     userId: string,
     createDto: CreateBuyerStripeAccountMappingDto,
   ): Promise<BuyerStripeAccountMapping> {
-    const mapping = await this.buyerStripeAccountMappingRepository.create(
+    return await this.buyerStripeAccountMappingRepository.create(
       new BuyerStripeAccountMapping({
         id: '',
         userId,
@@ -27,7 +27,6 @@ export class BuyerStripeAccountMappingService {
         createdAt: new Date(),
       }),
     );
-    return mapping;
   }
 
   async findOne(
@@ -44,38 +43,19 @@ export class BuyerStripeAccountMappingService {
     return mapping;
   }
 
-  async findByUserId(userId: string): Promise<BuyerStripeAccountMapping[]> {
-    const mappings =
+  async findOneByUserId(userId: string): Promise<BuyerStripeAccountMapping> {
+    const mapping =
       await this.buyerStripeAccountMappingRepository.findByUserId(userId);
-    if (!mappings.length) {
-      return [];
-    }
-    return mappings;
-  }
-
-  // async update(
-  //   id: string,
-  //   updateDto: UpdateBuyerStripeAccountMappingDto,
-  // ): Promise<BuyerStripeAccountMapping> {
-  //   const existing = await this.buyerStripeAccountMappingRepository.findOne(id);
-  //   if (!existing) {
-  //     throw new NotFoundException('Mapping not found');
-  //   }
-  //   const updatedMapping =
-  //     await this.buyerStripeAccountMappingRepository.update({
-  //       ...existing,
-  //       ...updateDto,
-  //     });
-  //   return updatedMapping;
-  // }
-
-  async remove(id: string): Promise<BuyerStripeAccountMapping> {
-    const existing = await this.buyerStripeAccountMappingRepository.findOne(id);
-    if (!existing) {
+    if (!mapping) {
       throw new NotFoundException('Mapping not found');
     }
+    return mapping;
+  }
+
+  async remove(id: string, userId: string): Promise<BuyerStripeAccountMapping> {
+    const mapping = await this.findOne(id, userId);
     const deletedMapping =
-      await this.buyerStripeAccountMappingRepository.remove(id);
+      await this.buyerStripeAccountMappingRepository.remove(mapping.id);
     return deletedMapping;
   }
 }
