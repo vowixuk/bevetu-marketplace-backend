@@ -1,4 +1,16 @@
-import { Controller, Post, Body, HttpCode, Req, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  Req,
+  Get,
+  Res,
+  BadRequestException,
+} from '@nestjs/common';
+
+import express from 'express';
+
 import { ApiTags } from '@nestjs/swagger';
 import { SellerUseCase } from './services/seller.useCase';
 
@@ -10,7 +22,6 @@ import {
   ApiViewSellerStripeAccountId,
 } from './seller.swagger';
 import {
-  CreateAccountSchema,
   CreateAccountSessionSchema,
   ViewSellerStripeAccount,
 } from './seller.type';
@@ -27,15 +38,32 @@ export class SellerController {
   async createSellerConnectedAccount(
     @Req() req: IRequest,
     @Body() createSellerConnectedAccountDto: CreateSellerConnectAccountDto,
-  ): Promise<CreateAccountSchema> {
+    @Res() res: express.Response,
+  ) {
+    if (req.middleware.seller?.stripeAccountId) {
+      const accountLink = await this.sellerUseCase.checkSellerOnBoardStatus(
+        req.middleware.seller?.stripeAccountId,
+      );
+
+      res.status(200).send({
+        accountLink,
+      });
+
+      throw new BadRequestException('seller account already created !');
+    }
     const connectedAccountId =
       await this.sellerUseCase.createSellerConnectedAccount(
         req.middleware.userId,
         createSellerConnectedAccountDto,
       );
-    return {
-      stripeAccountId: connectedAccountId.id,
-    };
+
+    // Step 4 - Clear the cookie so that it can be reset by the middleware next time with updated seller info
+    res.cookie('BVT_MKT', '', { maxAge: 0, path: '/' });
+
+    console.log(connectedAccountId, '<< connectedAccountId');
+    res.status(201).send({
+      stripeAccountId: connectedAccountId,
+    });
   }
 
   @Post('account/session')

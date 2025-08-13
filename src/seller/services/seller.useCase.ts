@@ -2,6 +2,7 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { SellerRepository } from '../seller.repository';
@@ -30,7 +31,8 @@ export class SellerUseCase {
   async createSellerConnectedAccount(
     userId: string,
     createSellerConnectAccountDto: CreateSellerConnectAccountDto,
-  ): Promise<Stripe.Response<Stripe.Account>> {
+  ): Promise<string> {
+
     // Step 1 - Create Seller Account in Stripe
     const connectedAccount = await this.stripeService.createAccount(
       createSellerConnectAccountDto.country,
@@ -54,7 +56,7 @@ export class SellerUseCase {
       }),
     );
 
-    return connectedAccount;
+    return connectedAccount.id;
   }
 
   async createAccountSession(
@@ -72,5 +74,9 @@ export class SellerUseCase {
     userId: string,
   ): Promise<Omit<SellerStripeAccountMapping, 'userId'>> {
     return await this.sellerStripeAccountMappingService.findOneByUserId(userId);
+  }
+
+  async checkSellerOnBoardStatus(sellerAccountId: string) {
+    return await this.stripeService.checkSellerOnBoardStatus(sellerAccountId);
   }
 }

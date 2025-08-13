@@ -37,9 +37,8 @@ export class StripeService {
 
       return { client_secret: accountSession.client_secret };
     } catch (error) {
-      console.error('Stripe API error:', error);
       throw new InternalServerErrorException(
-        'Failed to create Stripe account session',
+        `Failed to create Stripe account session: ${error}`,
       );
     }
   }
@@ -89,6 +88,33 @@ export class StripeService {
         ...(platform ? { platform } : {}),
       },
     });
+  }
+
+  /**
+   * Checks if a seller is fully onboarded
+   */
+  async checkSellerOnBoardStatus(
+    sellerAccountId: string,
+  ): Promise<Stripe.Response<Stripe.AccountLink>> {
+    const account = await this.stripe.accounts.retrieve(sellerAccountId);
+
+    console.log(account.requirements, '<< requirements');
+    console.log(account.requirements?.currently_due, '<< current due');
+    console.log(account.requirements?.past_due, '<< past due');
+    // const hasNoPendingRequirements =
+    //   account.requirements?.currently_due?.length === 0 &&
+    //   account.requirements?.past_due?.length === 0;
+
+    // const hasActiveTransfers = account.capabilities?.transfers === 'active';
+
+    const accountLink = await this.stripe.accountLinks.create({
+      account: sellerAccountId, // the connected account's ID
+      refresh_url: 'https://yourdomain.com/reauth', // where they go if they cancel
+      return_url: 'https://yourdomain.com/success', // where they go when done
+      type: 'account_onboarding', // same type as initial onboarding
+    });
+
+    return accountLink;
   }
 
   /* *********************************************************************

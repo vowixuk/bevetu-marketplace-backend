@@ -140,9 +140,12 @@ export class AuthMiddleware implements NestMiddleware {
         userId,
         email,
       );
+      const cookieoption = this.authService.marketplaceTokenCookieOptions();
+      console.log(cookieoption, '<< cookieoption');
       res.cookie(
         'BVT_MKT',
         this.authService.generateMarketPlaceToken(marketplaceSetupData),
+        cookieoption,
       );
     }
 

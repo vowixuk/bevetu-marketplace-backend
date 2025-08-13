@@ -120,7 +120,7 @@ export class AuthUseCase {
     try {
       sellerStripeAccountMapping =
         await this.sellAccountMappingService.findOneByUserId(user.id);
-        console.log('has sellerStripeAccountMapping');
+      console.log('has sellerStripeAccountMapping');
     } catch (error) {
       if (error instanceof NotFoundException) {
         sellerStripeAccountMapping = null;

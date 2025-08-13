@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { SellerRepository } from '../seller.repository';
 import { CreateSellerDto } from '../dto/create-seller.dto';
-import { Seller } from '../entities/seller.entity';
+import { Seller, SellerStatusType } from '../entities/seller.entity';
 import { UpdateSellerDto } from '../dto/update-seller.dto';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class SellerService {
       new Seller({
         id: '',
         userId,
-        status: 'ACTIVE',
+        status: createSellerDto.status as SellerStatusType,
         attributes: createSellerDto.attributes || {},
         createdAt: new Date(),
       }),

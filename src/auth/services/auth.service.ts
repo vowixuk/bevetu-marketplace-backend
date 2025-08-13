@@ -5,6 +5,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { IRequest } from '../middlewares/auth.middleware';
+import { CookieOptions } from 'express';
 
 export interface IJwtPayload {
   email: string;
@@ -127,6 +128,21 @@ export class AuthService {
       throw new ForbiddenException('CSRF token expired');
     }
     return true;
+  }
+
+  marketplaceTokenCookieOptions(): CookieOptions {
+    return {
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'TRUE',
+      secure: process.env.COOKIE_SECURE === 'TRUE',
+      maxAge:
+        Number(process.env.JWT_MARKETPLACE_TOKEN_EXPIRY_DAY) *
+        24 *
+        60 *
+        60 *
+        1000,
+      sameSite: process.env.COOKIE_SAME_SITE as CookieOptions['sameSite'],
+      domain: process.env.COOKIE_DOMAIN,
+    };
   }
 
   getMarketplaceToken(req: IRequest): string | undefined {
