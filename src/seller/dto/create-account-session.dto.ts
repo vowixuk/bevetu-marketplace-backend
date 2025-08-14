@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { IsIn, IsString, Matches } from 'class-validator';
+import stripeConnectUiSessionKeys from 'src/stripe/entities/stripe-connect-ui-session-keys.vo';
+
+export type StripeSessionKeys = (typeof stripeConnectUiSessionKeys)[number];
 
 export class CreateAccountSessionDto {
   @ApiProperty({
@@ -10,4 +13,15 @@ export class CreateAccountSessionDto {
   @IsString()
   @Matches(/^[a-zA-Z0-9_]*$/, { message: 'Invalid account ID format' })
   accountId: string;
+
+  @ApiProperty({
+    description: 'The Stripe embedded session component to create.',
+    example: 'createPayoutsSession',
+    enum: stripeConnectUiSessionKeys,
+  })
+  @IsString()
+  @IsIn(stripeConnectUiSessionKeys, {
+    message: 'Invalid Stripe session method',
+  })
+  sessionMethod: StripeSessionKeys;
 }

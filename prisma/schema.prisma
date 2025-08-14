@@ -66,7 +66,7 @@ model Shop {
   id          String   @id @default(cuid())
   name        String
   description String   @db.Text
-  sellerId    String
+  sellerId    String   @unique
   country     String
   shopUrl     String
   attributes  Json

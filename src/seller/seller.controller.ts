@@ -17,6 +17,7 @@ import { SellerUseCase } from './services/seller.useCase';
 import { CreateSellerConnectAccountDto } from './dto/create-seller-connected-account.dto';
 import type { IRequest } from '../auth/middlewares/auth.middleware';
 import {
+  ApiCheckIsSellerFullyOnBoarded,
   ApiCreateAccountSession,
   ApiCreateSellerAccount,
   ApiViewSellerStripeAccountId,
@@ -41,14 +42,6 @@ export class SellerController {
     @Res() res: express.Response,
   ) {
     if (req.middleware.seller?.stripeAccountId) {
-      const accountLink = await this.sellerUseCase.checkSellerOnBoardStatus(
-        req.middleware.seller?.stripeAccountId,
-      );
-
-      res.status(200).send({
-        accountLink,
-      });
-
       throw new BadRequestException('seller account already created !');
     }
     const connectedAccountId =
@@ -57,7 +50,6 @@ export class SellerController {
         createSellerConnectedAccountDto,
       );
 
-    // Step 4 - Clear the cookie so that it can be reset by the middleware next time with updated seller info
     res.cookie('BVT_MKT', '', { maxAge: 0, path: '/' });
 
     console.log(connectedAccountId, '<< connectedAccountId');
@@ -72,7 +64,7 @@ export class SellerController {
     @Req() req: IRequest,
     @Body() createAccountSessionDto: CreateAccountSessionDto,
   ): Promise<CreateAccountSessionSchema> {
-    const session = await this.sellerUseCase.createAccountSession(
+    const session = await this.sellerUseCase.createStripeSession(
       createAccountSessionDto,
     );
     return {
@@ -80,16 +72,16 @@ export class SellerController {
     };
   }
 
-  // @Post()
-  // create(@Body() createSellerDto: CreateSellerDto) {
-  //   return this.sellerService.create(createSellerDto);
-  // }
-
   @Get('stripe/account-id')
   @ApiViewSellerStripeAccountId()
   async viewSellerStripeAccountId(
     @Req() req: IRequest,
   ): Promise<ViewSellerStripeAccount> {
+    if (req.middleware.seller?.stripeAccountId) {
+      return {
+        stripeAccountId: req.middleware.seller?.stripeAccountId,
+      };
+    }
     const { stripeAccountId } =
       await this.sellerUseCase.findSellerStripeAccountByUserId(
         req.middleware.userId,
@@ -97,6 +89,19 @@ export class SellerController {
     return {
       stripeAccountId,
     };
+  }
+
+  @Get('fully-onboarded')
+  @ApiCheckIsSellerFullyOnBoarded()
+  async checkIsSellerFullyOnBoarded(@Req() req: IRequest): Promise<boolean> {
+    if (!req.middleware.seller?.stripeAccountId) {
+      throw new BadRequestException('No seller id founded');
+    }
+    return await this.sellerUseCase.checkIsSellerFullyOnBoarded(
+      req.middleware.userId,
+      req.middleware.seller.id,
+      req.middleware.seller?.stripeAccountId,
+    );
   }
 
   // @Get(':id')

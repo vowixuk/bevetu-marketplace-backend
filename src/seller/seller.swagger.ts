@@ -75,3 +75,23 @@ export function ApiViewSellerStripeAccountId() {
     }),
   );
 }
+
+export function ApiCheckIsSellerFullyOnBoarded() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Check if seller has completed Stripe onboarding',
+      description:
+        'Verifies whether the seller’s Stripe Connected Account has satisfied all currently required onboarding requirements, has no overdue items, and is fully enabled to process charges and payouts.',
+      tags: ['Seller'],
+      deprecated: false,
+    }),
+    ApiResponse({
+      status: 200,
+      description:
+        'Returns true if the seller is fully onboarded and enabled; otherwise returns false.',
+      schema: {
+        example: true,
+      },
+    }),
+  );
+}

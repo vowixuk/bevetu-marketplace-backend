@@ -60,6 +60,28 @@ export class SellerRepository {
       await this.prisma.seller.delete({ where: { id } }),
     ) as Seller;
   }
+
+  async softDelete(id: string): Promise<Seller> {
+    return mapPrismaSellerToDomain(
+      await this.prisma.seller.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+        },
+      }),
+    ) as Seller;
+  }
+
+  async restore(id: string): Promise<Seller> {
+    return mapPrismaSellerToDomain(
+      await this.prisma.seller.update({
+        where: { id },
+        data: {
+          deletedAt: null,
+        },
+      }),
+    ) as Seller;
+  }
 }
 
 /**

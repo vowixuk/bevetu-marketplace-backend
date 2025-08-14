@@ -43,12 +43,15 @@ export class SellerService {
     });
   }
 
-  async findOne(sellerId: string): Promise<Omit<Seller, 'userId'>> {
+  async findOne(
+    userid: string,
+    sellerId: string,
+  ): Promise<Omit<Seller, 'userId'>> {
     const seller = await this.sellerRepository.findOne(sellerId);
     if (!seller) {
       throw new NotFoundException('Seller not found');
     }
-    if (seller.id !== sellerId) {
+    if (seller.userId !== userid) {
       throw new ForbiddenException('Seller does not belong to this user');
     }
     const { userId, ...sellerWithoutId } = seller;
@@ -56,24 +59,38 @@ export class SellerService {
   }
 
   async update(
+    userId: string,
     sellerId: string,
     updateSellerDto: UpdateSellerDto,
   ): Promise<Omit<Seller, 'userId'>> {
-    const seller = await this.findOne(sellerId);
+    const seller = await this.findOne(userId, sellerId);
 
     const updatedSeller = await this.sellerRepository.update({
       ...(seller as Seller),
       ...updateSellerDto,
     });
 
-    const { userId, ...sellerWithoutId } = updatedSeller;
+    const { userId: id, ...sellerWithoutId } = updatedSeller;
     return sellerWithoutId;
   }
 
-  async remove(sellerId: string): Promise<Omit<Seller, 'userId'>> {
-    const seller = await this.findOne(sellerId);
+  async softDelete(userId: string, sellerId: string) {
+    await this.findOne(userId, sellerId);
+    return this.sellerRepository.softDelete(sellerId);
+  }
+
+  async restore(userId: string, sellerId: string) {
+    await this.findOne(userId, sellerId);
+    return this.sellerRepository.restore(sellerId);
+  }
+
+  async remove(
+    userId: string,
+    sellerId: string,
+  ): Promise<Omit<Seller, 'userId'>> {
+    const seller = await this.findOne(userId, sellerId);
     const deletedSeller = await this.sellerRepository.remove(sellerId);
-    const { userId, ...sellerWithoutId } = deletedSeller;
+    const { userId: id, ...sellerWithoutId } = deletedSeller;
     return sellerWithoutId;
   }
 }

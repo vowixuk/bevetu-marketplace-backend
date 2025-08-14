@@ -17,7 +17,7 @@ export class ShopService {
     const shop = await this.shopRepository.create(
       new Shop({
         id: '',
-        sellerId: createShopDto.sellerId,
+        sellerId: sellerId,
         name: createShopDto.name,
         description: createShopDto.description,
         country: createShopDto.country,
@@ -45,6 +45,14 @@ export class ShopService {
     }
     if (shop.sellerId !== sellerId) {
       throw new ForbiddenException('Shop does not belong to this seller');
+    }
+    return shop;
+  }
+
+  async findOneBySellerId(sellerId: string): Promise<Shop> {
+    const shop = await this.shopRepository.findOneBySellerId(sellerId);
+    if (!shop) {
+      throw new NotFoundException('Shop not found');
     }
     return shop;
   }

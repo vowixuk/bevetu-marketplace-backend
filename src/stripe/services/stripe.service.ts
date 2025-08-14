@@ -7,10 +7,6 @@ import { TestEnvironmentGuard } from 'src/guards/testing-environmet.guard';
 import { CreateAccountSessionDto } from 'src/seller/dto/create-account-session.dto';
 import Stripe from 'stripe';
 
-/**
- * https://docs.stripe.com/connect/onboarding/quickstart?lang=node&connect-onboarding-surface=embedded&connect-dashboard-type=none&connect-economic-model=buy-rate&connect-loss-liability-owner=platform&connect-charge-type=destination#init-stripe
- */
-
 @Injectable()
 export class StripeService {
   private stripe: Stripe;
@@ -19,28 +15,6 @@ export class StripeService {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
       apiVersion: '2025-07-30.basil',
     });
-  }
-
-  /**
-   * Embed the seller account to the marketpplace.
-   * This session create an embedded component in the bevetu marketplace frontend seller
-   */
-  async createAccountSession(createAccountSessionDto: CreateAccountSessionDto) {
-    try {
-      const accountSession = await this.stripe.accountSessions.create({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        account: createAccountSessionDto.accountId,
-        components: {
-          account_onboarding: { enabled: true },
-        },
-      });
-
-      return { client_secret: accountSession.client_secret };
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Failed to create Stripe account session: ${error}`,
-      );
-    }
   }
 
   /**
@@ -62,6 +36,9 @@ export class StripeService {
           requirement_collection: 'application',
         },
         capabilities: {
+          card_payments: {
+            requested: true,
+          },
           transfers: { requested: true },
         },
         country,
@@ -93,29 +70,240 @@ export class StripeService {
   /**
    * Checks if a seller is fully onboarded
    */
-  async checkSellerOnBoardStatus(
-    sellerAccountId: string,
-  ): Promise<Stripe.Response<Stripe.AccountLink>> {
+  async checkIsSellerFullyOnBoarded(sellerAccountId: string): Promise<boolean> {
     const account = await this.stripe.accounts.retrieve(sellerAccountId);
 
-    console.log(account.requirements, '<< requirements');
-    console.log(account.requirements?.currently_due, '<< current due');
-    console.log(account.requirements?.past_due, '<< past due');
-    // const hasNoPendingRequirements =
-    //   account.requirements?.currently_due?.length === 0 &&
-    //   account.requirements?.past_due?.length === 0;
+    if (!account.requirements) {
+      throw new InternalServerErrorException(
+        'Unable to fetch data from Stripe',
+      );
+    }
 
-    // const hasActiveTransfers = account.capabilities?.transfers === 'active';
+    const isFullyOnboarded =
+      account.requirements.currently_due?.length === 0 &&
+      account.requirements.past_due?.length === 0 &&
+      account.requirements.disabled_reason === null;
 
-    const accountLink = await this.stripe.accountLinks.create({
-      account: sellerAccountId, // the connected account's ID
-      refresh_url: 'https://yourdomain.com/reauth', // where they go if they cancel
-      return_url: 'https://yourdomain.com/success', // where they go when done
-      type: 'account_onboarding', // same type as initial onboarding
+    return isFullyOnboarded;
+  }
+
+  /* *********************************************************************
+   *                   ----- Stripe Connect UI -----
+   * The following methods request Embeded UI components from Stripe Connect,
+   * primarily for displaying the Stripe Seller Dashboard.
+   *
+   * After add/remove the functions below, remember to update the key list
+   * /src/stripe/entities/stripe-connect-ui-session-keys.vo.ts
+   *
+   * Make sure each route below is protected with
+   * @UseGuards(seller) to restrict access to authorized sellers only.
+   * *********************************************************************/
+
+  /**
+   * Onboarding
+   * Stripe Docs:
+   * https://docs.stripe.com/connect/onboarding/quickstart?lang=node&connect-onboarding-surface=embedded&connect-dashboard-type=none&connect-economic-model=buy-rate&connect-loss-liability-owner=platform&connect-charge-type=destination#init-stripe
+   */
+  async createOnBoardSession(createAccountSessionDto: CreateAccountSessionDto) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        account_onboarding: { enabled: true },
+      },
     });
 
-    return accountLink;
+    return { client_secret: accountSession.client_secret };
   }
+
+  /**
+   * Account Management
+   * Stripe Docs:
+   * https://docs.stripe.com/connect/supported-embedded-components/account-management
+   */
+  async createAccountManagementSession(
+    createAccountSessionDto: CreateAccountSessionDto,
+  ) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        account_management: {
+          enabled: true,
+          features: {
+            external_account_collection: true,
+          },
+        },
+      },
+    });
+
+    return { client_secret: accountSession.client_secret };
+  }
+
+  /**
+   * Notification Banner
+   * Stripe Docs:
+   * https://docs.stripe.com/connect/supported-embedded-components/notification-banner
+   */
+  async createNotificationBannerSession(
+    createAccountSessionDto: CreateAccountSessionDto,
+  ) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        notification_banner: {
+          enabled: true,
+          features: {
+            external_account_collection: true,
+          },
+        },
+      },
+    });
+
+    return { client_secret: accountSession.client_secret };
+  }
+
+  /**
+   * Payment Details
+   */
+  async createPaymentDetailsSession(
+    createAccountSessionDto: CreateAccountSessionDto,
+  ) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        payment_details: {
+          enabled: true,
+          features: {
+            refund_management: true,
+            dispute_management: true,
+            capture_payments: true,
+            destination_on_behalf_of_charge_management: true,
+          },
+        },
+      },
+    });
+    return { client_secret: accountSession.client_secret };
+  }
+  /**
+   * Payment Disputes
+   * Stripe Docs:
+   * https://stripe.com/docs/connect/supported-embedded-components/payment-disputes
+   */
+  async createPaymentDisputesSession(
+    createAccountSessionDto: CreateAccountSessionDto,
+  ) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        payment_disputes: {
+          enabled: true,
+          features: {
+            refund_management: true,
+            dispute_management: true,
+            destination_on_behalf_of_charge_management: false,
+          },
+        },
+      },
+    });
+
+    return { client_secret: accountSession.client_secret };
+  }
+
+  /**
+   * Disputes List
+   * Stripe Docs:
+   * https://stripe.com/docs/connect/supported-embedded-components/disputes-list
+   */
+  async createDisputesListSession(
+    createAccountSessionDto: CreateAccountSessionDto,
+  ) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        disputes_list: {
+          enabled: true,
+          features: {
+            refund_management: true,
+            dispute_management: true,
+            capture_payments: true,
+            destination_on_behalf_of_charge_management: false,
+          },
+        },
+      },
+    });
+
+    return { client_secret: accountSession.client_secret };
+  }
+
+  /**
+   * Payouts
+   * Stripe Docs:
+   * https://stripe.com/docs/connect/supported-embedded-components/payouts
+   */
+  async createPayoutsSession(createAccountSessionDto: CreateAccountSessionDto) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        payouts: {
+          enabled: true,
+          features: {
+            instant_payouts: true,
+            standard_payouts: true,
+            edit_payout_schedule: true,
+            external_account_collection: true,
+          },
+        },
+      },
+    });
+
+    return { client_secret: accountSession.client_secret };
+  }
+
+  /**
+   * Payouts List
+   * Stripe Docs:
+   * https://stripe.com/docs/connect/supported-embedded-components/payouts-list
+   */
+  async createPayoutsListSession(
+    createAccountSessionDto: CreateAccountSessionDto,
+  ) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        payouts_list: {
+          enabled: true,
+        },
+      },
+    });
+
+    return { client_secret: accountSession.client_secret };
+  }
+
+  /**
+   * Balances
+   * Stripe Docs:
+   * https://stripe.com/docs/connect/supported-embedded-components/balances
+   */
+  async createBalancesSession(
+    createAccountSessionDto: CreateAccountSessionDto,
+  ) {
+    const accountSession = await this.stripe.accountSessions.create({
+      account: createAccountSessionDto.accountId,
+      components: {
+        balances: {
+          enabled: true,
+          features: {
+            instant_payouts: true,
+            standard_payouts: true,
+            edit_payout_schedule: true,
+            external_account_collection: true,
+          },
+        },
+      },
+    });
+
+    return { client_secret: accountSession.client_secret };
+  }
+  /** (End) ----- Stripe Connect UI -----  (End)*/
 
   /* *********************************************************************
    *                        ----- Testing use -----
@@ -161,4 +349,5 @@ export class StripeService {
       ...(testClock ? { test_clock: testClock.id } : {}),
     });
   }
+  /** (End) ----- Testing use ----- (End)*/
 }

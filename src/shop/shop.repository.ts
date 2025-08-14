@@ -39,6 +39,14 @@ export class ShopRepository {
     ) as Shop;
   }
 
+  async findOneBySellerId(sellerId: string): Promise<Shop> {
+    return mapPrismaShopToDomain(
+      await this.prisma.shop.findUnique({
+        where: { sellerId },
+      }),
+    ) as Shop;
+  }
+
   async update(shop: Shop): Promise<Shop> {
     return mapPrismaShopToDomain(
       await this.prisma.shop.update({

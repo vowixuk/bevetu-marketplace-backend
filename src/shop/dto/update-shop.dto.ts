@@ -1,11 +1,6 @@
-import { PartialType, OmitType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/mapped-types';
 import { CreateShopDto } from './create-shop.dto';
-import { IsOptional, IsDate } from 'class-validator';
+// import { IsOptional, IsDate } from 'class-validator';
+// import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateShopDto extends OmitType(PartialType(CreateShopDto), [
-  'sellerId',
-] as const) {
-  @IsOptional()
-  @IsDate()
-  deletedAt?: Date;
-}
+export class UpdateShopDto extends PartialType(CreateShopDto) {}
