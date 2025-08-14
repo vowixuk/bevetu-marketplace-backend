@@ -16,10 +16,16 @@ import {
   ViewOneShopReturnSchema,
   UpdateShopReturnSchema,
 } from './shop.type';
-import { ApiCreateShop, ApiViewShop, ApiUpdateShop } from './shop.swagger';
+import {
+  ApiCreateShop,
+  ApiViewShop,
+  ApiUpdateShop,
+  ApiViewShopByUserId,
+} from './shop.swagger';
 import { UpdateShopDto } from './dto/update-shop.dto';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('Shop')
+@ApiTags('Shop')
 @Controller({ path: 'shops', version: '1' })
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}
@@ -27,7 +33,7 @@ export class ShopController {
   @Post()
   @ApiCreateShop()
   @HttpCode(201)
-  async create(
+  async createShop(
     @Req() req: IRequest,
     @Body() createShopDto: CreateShopDto,
   ): Promise<CreateShopReturnSchema> {
@@ -43,7 +49,7 @@ export class ShopController {
 
   @Get(':shopId')
   @ApiViewShop()
-  async ViewOne(
+  async viewOneShop(
     @Req() req: IRequest,
     @Param('shopId') shopId: string,
   ): Promise<ViewOneShopReturnSchema> {
@@ -53,9 +59,19 @@ export class ShopController {
     );
   }
 
+  @Get()
+  @ApiViewShopByUserId()
+  async viewOneShopByUserId(
+    @Req() req: IRequest,
+  ): Promise<ViewOneShopReturnSchema> {
+    return await this.shopService.findOneBySellerId(
+      req.middleware.seller?.id || '',
+    );
+  }
+
   @Patch(':shopId')
   @ApiUpdateShop()
-  async update(
+  async updateShop(
     @Req() req: IRequest,
     @Param('shopId') shopId: string,
     @Body() updateShopDto: UpdateShopDto,

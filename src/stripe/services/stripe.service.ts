@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   UseGuards,
 } from '@nestjs/common';
-import { TestEnvironmentGuard } from 'src/guards/testing-environmet.guard';
+import { TestEnvironmentGuard } from 'src/share/guards/testing-environmet.guard';
 import { CreateAccountSessionDto } from 'src/seller/dto/create-account-session.dto';
 import Stripe from 'stripe';
 

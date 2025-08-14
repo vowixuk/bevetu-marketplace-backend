@@ -21,10 +21,11 @@ export class ShopService {
         name: createShopDto.name,
         description: createShopDto.description,
         country: createShopDto.country,
-        shopUrl: createShopDto.shopUrl,
-        website: createShopDto.website,
-        attributes: createShopDto.attributes || {},
         createdAt: new Date(),
+        attributes: createShopDto.attributes || {},
+        shopUrl: '',
+        // ...(createShopDto.shopUrl ? { shopUrl: createShopDto.shopUrl } : 'N/A'),
+        ...(createShopDto.website ? { website: createShopDto.website } : {}),
       }),
     );
     return shop;

@@ -32,6 +32,39 @@ export function ApiCreateShop() {
   );
 }
 
+export function ApiViewShopByUserId() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'View shop details',
+      description:
+        'Fetches detailed information about a shop by userId, including its ID, name, description, seller ID, country, shop URL, attributes, optional website, and timestamps for creation and updates.',
+      tags: ['Shop'],
+      deprecated: false,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Returns the shop details.',
+      schema: {
+        example: {
+          id: 'shop_01H8KJ2T6YQZ7X1ABCDEF',
+          name: 'My Awesome Shop',
+          description:
+            'A shop that sells eco-friendly and sustainable products for everyday use.',
+          sellerId: 'seller_01H8KJ2T6YQZ7X1ABCDE',
+          country: 'US',
+          shopUrl: 'my-awesome-shop',
+          attributes: {},
+          website: 'https://www.myawesomeshop.com',
+          createdAt: '2025-08-14T10:00:00.000Z',
+          updatedAt: '2025-08-14T12:30:00.000Z',
+          deletedAt: null,
+        } as unknown as ViewOneShopReturnSchema,
+      },
+    }),
+  );
+}
+
+
 export function ApiViewShop() {
   return applyDecorators(
     ApiOperation({

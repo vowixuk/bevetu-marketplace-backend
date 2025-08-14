@@ -74,6 +74,7 @@ export class AuthMiddleware implements NestMiddleware {
     console.log(' Step 1. Get the token from cookies(web) or header(mobile)');
     const accessToken = this.authService.getToken('ACCESS', req);
     if (!accessToken) {
+      res.cookie('BVT_MKT', '', { maxAge: 0, path: '/' });
       throw new UnauthorizedException('No access token found');
     }
 
@@ -89,6 +90,7 @@ export class AuthMiddleware implements NestMiddleware {
       givenName = payload.givenName;
       userId = payload.userId;
     } catch {
+      res.cookie('BVT_MKT', '', { maxAge: 0, path: '/' });
       throw new UnauthorizedException('Invalid or expired access token');
     }
     /**
