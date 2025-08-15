@@ -55,7 +55,7 @@ export class AuthService {
   generateMarketPlaceToken(jwtPayload: IJwtPayload): string {
     return this.jwtService.sign(jwtPayload, {
       secret: process.env.JWT_MARKETPLACE_TOKEN_SECRET,
-      expiresIn: `${process.env.JWT_MARKETPLACE_TOKEN_EXPIRY_DAY}d`,
+      expiresIn: `${process.env.JWT_MARKETPLACE_TOKEN_EXPIRY_DAY}h`,
     });
   }
 
@@ -134,12 +134,15 @@ export class AuthService {
     return {
       httpOnly: process.env.COOKIE_HTTP_ONLY === 'TRUE',
       secure: process.env.COOKIE_SECURE === 'TRUE',
+      // maxAge:
+      //   Number(process.env.JWT_MARKETPLACE_TOKEN_EXPIRY_DAY) *
+      //   24 *
+      //   60 *
+      //   60 *
+      //   1000,
+      // expire in 1 hour
       maxAge:
-        Number(process.env.JWT_MARKETPLACE_TOKEN_EXPIRY_DAY) *
-        24 *
-        60 *
-        60 *
-        1000,
+        Number(process.env.JWT_MARKETPLACE_TOKEN_EXPIRY_DAY) * 60 * 60 * 1000,
       sameSite: process.env.COOKIE_SAME_SITE as CookieOptions['sameSite'],
       domain: process.env.COOKIE_DOMAIN,
     };

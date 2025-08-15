@@ -74,7 +74,10 @@ export class AuthMiddleware implements NestMiddleware {
     console.log(' Step 1. Get the token from cookies(web) or header(mobile)');
     const accessToken = this.authService.getToken('ACCESS', req);
     if (!accessToken) {
-      res.cookie('BVT_MKT', '', { maxAge: 0, path: '/' });
+      res.clearCookie('BVT_MKT', {
+        ...this.authService.marketplaceTokenCookieOptions(),
+        maxAge: 0,
+      });
       throw new UnauthorizedException('No access token found');
     }
 
@@ -90,7 +93,10 @@ export class AuthMiddleware implements NestMiddleware {
       givenName = payload.givenName;
       userId = payload.userId;
     } catch {
-      res.cookie('BVT_MKT', '', { maxAge: 0, path: '/' });
+      res.clearCookie('BVT_MKT', {
+        ...this.authService.marketplaceTokenCookieOptions(),
+        maxAge: 0,
+      });
       throw new UnauthorizedException('Invalid or expired access token');
     }
     /**
@@ -142,12 +148,15 @@ export class AuthMiddleware implements NestMiddleware {
         userId,
         email,
       );
-      const cookieoption = this.authService.marketplaceTokenCookieOptions();
-      console.log(cookieoption, '<< cookieoption');
+      this.authService.marketplaceTokenCookieOptions();
+      console.log(
+        this.authService.marketplaceTokenCookieOptions(),
+        '<this.authService.marketplaceTokenCookieOptions();< cookieoption',
+      );
       res.cookie(
         'BVT_MKT',
         this.authService.generateMarketPlaceToken(marketplaceSetupData),
-        cookieoption,
+        this.authService.marketplaceTokenCookieOptions(),
       );
     }
 

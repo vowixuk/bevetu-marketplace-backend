@@ -1,11 +1,6 @@
-// import { ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
-// import { GoogleLoginDto } from './dto/google-login.dto';
-// import { applyDecorators } from '@nestjs/common';
-// import {
-//   CheckSessionReturnSchema,
-//   LoginWithGoogleReturnSchema,
-//   RegenerateAccessTokenReturnSchema,
-// } from './auth.type';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { applyDecorators } from '@nestjs/common';
+
 
 // export function ApiGoogleLogin() {
 //   return applyDecorators(
@@ -67,25 +62,7 @@
 //   );
 // }
 
-// export function ApiLogout() {
-//   return applyDecorators(
-//     ApiOperation({
-//       summary:
-//         'Logs the user out, removes the cookies and terminates the session',
-//       description:
-//         'This endpoint allows the user to log out of their account. It terminates the active session and invalidates the associated tokens. Once the request is successful, the user will no longer be authenticated and will need to log in again to access protected resources.',
-//     }),
-//     ApiResponse({
-//       status: 200,
-//       description: 'Logout successful',
-//       schema: {
-//         example: {
-//           message: 'Logout successful',
-//         },
-//       },
-//     }),
-//   );
-// }
+
 
 // export function ApiGoogleLoginMock() {
 //   return applyDecorators(
@@ -136,3 +113,21 @@
 //     }),
 //   );
 // }
+
+export function ApiLogout() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Remove the marketplace cookies',
+      description: 'Remove the marketplace cookies',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Logout successful',
+      schema: {
+        example: {
+          message: 'Logout successful',
+        },
+      },
+    }),
+  );
+}
