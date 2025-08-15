@@ -1,7 +1,6 @@
 import {
   Injectable,
   NestMiddleware,
-  RequestMethod,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
@@ -39,7 +38,7 @@ export interface IRequest extends Request {
  *  @description Paths in this list will be exclused to pass throught 'AuthMiddleware' Normaly, pages inside this list does not need to use the jwt (i.e. jwt = BVT_SID = access Token)
  */
 export const authMiddlewareExclusionList = [
-  { path: '', method: RequestMethod.GET },
+  // { path: '', method: RequestMethod.GET },
   // { path: 'v1/auth/google', method: RequestMethod.POST },
   // { path: 'v1/auth/google-mock', method: RequestMethod.POST },
   // { path: 'v1/auth/logout', method: RequestMethod.POST },

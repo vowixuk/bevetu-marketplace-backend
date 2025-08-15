@@ -19,6 +19,8 @@ import { StripeModule } from './stripe/stripe.module';
 import { SellerModule } from './seller/seller.module';
 import { ShopModule } from './shop/shop.module';
 import { DatabaseModule } from './database/database.module';
+import { ProductModule } from './product/product.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { DatabaseModule } from './database/database.module';
     DatabaseModule,
     SellerModule,
     ShopModule,
+    ProductModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [
