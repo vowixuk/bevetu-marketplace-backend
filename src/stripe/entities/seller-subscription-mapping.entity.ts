@@ -25,9 +25,9 @@ export class SellerSubscriptionMapping {
   // these can be changed if no longer using stripe for payment.
   // eg: paypalCustomerId.. etc
   // We can adopt the same `SubscriptionMapping` structure for integration
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  stripeSubscriptionItems?: StripeSubscriptionItems[]; // it can have more then one item  under the same subscription
+  stripeCustomerId: string;
+  stripeSubscriptionId: string;
+  stripeSubscriptionItems: StripeSubscriptionItems[]; // it can have more then one item  under the same subscription
 
   createdAt: Date;
 

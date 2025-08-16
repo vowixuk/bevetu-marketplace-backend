@@ -33,7 +33,8 @@ export class BuyerStripeCustomerAccountMappingService {
     id: string,
     userId: string,
   ): Promise<BuyerStripeCustomerAccountMapping> {
-    const mapping = await this.BuyerStripeCustomerAccountMappingRepository.findOne(id);
+    const mapping =
+      await this.BuyerStripeCustomerAccountMappingRepository.findOne(id);
     if (!mapping) {
       throw new NotFoundException('Mapping not found');
     }
@@ -47,7 +48,9 @@ export class BuyerStripeCustomerAccountMappingService {
     userId: string,
   ): Promise<BuyerStripeCustomerAccountMapping> {
     const mapping =
-      await this.BuyerStripeCustomerAccountMappingRepository.findByUserId(userId);
+      await this.BuyerStripeCustomerAccountMappingRepository.findByUserId(
+        userId,
+      );
     if (!mapping) {
       throw new NotFoundException('Mapping not found');
     }

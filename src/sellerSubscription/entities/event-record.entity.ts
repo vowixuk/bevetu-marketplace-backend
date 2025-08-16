@@ -1,5 +1,3 @@
-import { OptionalProperties } from './seller-subscription.entity';
-
 export type MetadataSchema = {
   CREATE: {
     productCode: string;

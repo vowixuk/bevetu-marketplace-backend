@@ -176,8 +176,9 @@ model SellerSubscriptionMapping {
  id String   @id @default(cuid())
  sellerId String
  bevetuSubscriptionId String 
- stripeCustomerId String
+
  identifyId String
+ stripeCustomerId String
  stripeSubscriptionId String @unique
  stripeSubscriptionItem Json
 
