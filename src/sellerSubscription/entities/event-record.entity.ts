@@ -60,18 +60,13 @@ export class SubscriptionEventRecord<T extends EventRecordType> {
   type: T;
   metadata?: MetadataSchema[T] | null;
 
-  constructor(
-    init: Omit<
-      SubscriptionEventRecord<T>,
-      OptionalProperties<SubscriptionEventRecord<T>>
-    > &
-      Partial<
-        Pick<
-          SubscriptionEventRecord<T>,
-          OptionalProperties<SubscriptionEventRecord<T>>
-        >
-      >,
-  ) {
+  constructor(init: {
+    id: string;
+    subscriptionId: string;
+    createdAt: Date;
+    type: T;
+    metadata?: MetadataSchema[T] | null;
+  }) {
     Object.assign(this, init);
   }
 }

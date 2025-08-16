@@ -8,7 +8,6 @@ import { SellerSubscriptionRepository } from './../repositories/seller-subscript
 import { SellerSubscription } from '../entities/seller-subscription.entity';
 import { CreateSellerSubscriptionDto } from '../dto/create-seller-subscription.dto';
 import { UpdateSellerSubscriptionDto } from '../dto/update-seller-subscription.dto';
-import { SubscriptionStatusType } from '../entities/vo/subscription-status.vo';
 
 @Injectable()
 export class SellerSubscriptionService {
