@@ -13,13 +13,13 @@ import { IRequest } from '../middlewares/auth.middleware';
 import { UserService } from 'src/user/user.service';
 import { StripeService } from 'src/stripe/services/stripe.service';
 import { IJwtPayload } from './auth.service';
-import { BuyerStripeAccountMappingService } from 'src/stripe/services/buyer-account-mapping.service';
+import { BuyerStripeCustomerAccountMappingService } from 'src/stripe/services/buyer-account-mapping.service';
 import { SellerStripeAccountMappingService } from 'src/stripe/services/seller-account-mapping.service';
 import { NotFoundError } from 'rxjs';
 import { User } from 'src/user/entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { BuyerStripeAccountMapping } from 'src/stripe/entities/buyer-account-mapping.entity';
-import { CreateBuyerStripeAccountMappingDto } from 'src/stripe/dto/create-buyer-account-mapping.dto';
+import { BuyerStripeCustomerAccountMapping } from 'src/stripe/entities/buyer-customer-account-mapping.entity';
+import { CreateBuyerStripeCustomerAccountMappingDto } from 'src/stripe/dto/create-buyer-account-mapping.dto';
 import { SellerStripeAccountMapping } from 'src/stripe/entities/seller-account-mapping.entity';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class AuthUseCase {
     private readonly stripeService: StripeService,
     private readonly userService: UserService,
     private readonly sellAccountMappingService: SellerStripeAccountMappingService,
-    private readonly buyerAccountMappingService: BuyerStripeAccountMappingService,
+    private readonly buyerAccountMappingService: BuyerStripeCustomerAccountMappingService,
   ) {}
 
   async marketplaceAccessSetup(
@@ -46,7 +46,7 @@ export class AuthUseCase {
       user = await this.userService.findOneByMainId(mainId);
       console.log('User already created');
     } catch (error) {
-        console.log(error,"<< error")
+      console.log(error, '<< error');
       if (error instanceof NotFoundException) {
         console.log('User not created');
         user = null;
@@ -75,15 +75,15 @@ export class AuthUseCase {
      * the first time they access the system, to facilitate purchases.
      */
     // Step 3 - use the user id - check if buyer stripe account created
-    let buyerStripeAccountMapping: BuyerStripeAccountMapping | null = null;
+    let BuyerStripeCustomerAccountMapping: BuyerStripeCustomerAccountMapping | null = null;
     try {
-      buyerStripeAccountMapping =
+      BuyerStripeCustomerAccountMapping =
         await this.buyerAccountMappingService.findOneByUserId(user.id);
-        console.log('has buyerStripeAccountMapping');
+        console.log('has BuyerStripeCustomerAccountMapping');
     } catch (error) {
       if (error instanceof NotFoundException) {
-        console.log('No buyerStripeAccountMapping');
-        buyerStripeAccountMapping = null;
+        console.log('No BuyerStripeCustomerAccountMapping');
+        BuyerStripeCustomerAccountMapping = null;
       } else {
         throw new InternalServerErrorException(
           'Error when fetching buyer mapping',
@@ -94,7 +94,7 @@ export class AuthUseCase {
       }
     }
     // Step 4 - if not created - create one from stripe.
-    if (buyerStripeAccountMapping == null) {
+    if (BuyerStripeCustomerAccountMapping == null) {
         
       const stripeCustomer = await this.stripeService.createStripeCustomer(
         user.id,
@@ -103,14 +103,14 @@ export class AuthUseCase {
       );
       console.log('Created new stripeCustomer');
 
-      buyerStripeAccountMapping = await this.buyerAccountMappingService.create(
+      BuyerStripeCustomerAccountMapping = await this.buyerAccountMappingService.create(
         user.id,
-        Object.assign(new CreateBuyerStripeAccountMappingDto(), {
+        Object.assign(new CreateBuyerStripeCustomerAccountMappingDto(), {
           stripeCustomerId: stripeCustomer.id,
           identifyId: stripeCustomer.id,
         }),
       );
-      console.log('Created new buyerStripeAccountMapping');
+      console.log('Created new BuyerStripeCustomerAccountMapping');
     }
     /*************************************
      *     Stripe Seller Account Setup    *
@@ -139,7 +139,7 @@ export class AuthUseCase {
     return {
       email,
       userId: user.id,
-      stripeCustomerId: buyerStripeAccountMapping.stripeCustomerId,
+      stripeCustomerId: BuyerStripeCustomerAccountMapping.stripeCustomerId,
       seller: sellerStripeAccountMapping
         ? {
             id: sellerStripeAccountMapping.sellerId,

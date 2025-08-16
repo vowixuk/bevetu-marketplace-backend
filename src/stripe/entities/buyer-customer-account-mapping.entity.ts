@@ -2,7 +2,7 @@ type OptionalProperties<T> = {
   [K in keyof T]: undefined extends T[K] ? K : never;
 }[keyof T];
 
-export class BuyerStripeAccountMapping {
+export class BuyerStripeCustomerAccountMapping {
   id: string;
   userId: string;
   stripeCustomerId: string;
@@ -11,13 +11,13 @@ export class BuyerStripeAccountMapping {
 
   constructor(
     init: Omit<
-      BuyerStripeAccountMapping,
-      OptionalProperties<BuyerStripeAccountMapping>
+      BuyerStripeCustomerAccountMapping,
+      OptionalProperties<BuyerStripeCustomerAccountMapping>
     > &
       Partial<
         Pick<
-          BuyerStripeAccountMapping,
-          OptionalProperties<BuyerStripeAccountMapping>
+          BuyerStripeCustomerAccountMapping,
+          OptionalProperties<BuyerStripeCustomerAccountMapping>
         >
       >,
   ) {

@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty } from 'class-validator';
 
-export class CreateBuyerStripeAccountMappingDto {
+export class CreateBuyerStripeCustomerAccountMappingDto {
   @IsString()
   @IsNotEmpty()
   stripeCustomerId: string;

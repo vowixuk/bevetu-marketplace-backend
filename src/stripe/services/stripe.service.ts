@@ -1,16 +1,16 @@
 import {
-  BadRequestException,
   ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
   InternalServerErrorException,
-  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
 import { TestEnvironmentGuard } from 'src/share/guards/testing-environmet.guard';
 import { CreateAccountSessionDto } from 'src/seller/dto/create-account-session.dto';
 import Stripe from 'stripe';
+import { CreateCheckoutSessionDto } from '../dto/create-checkout-session.dto';
+import { PreviewProrationAmountDto } from '../dto/preview-proation-amount.dto';
 
 @Injectable()
 export class StripeService {
@@ -54,30 +54,39 @@ export class StripeService {
   async createCheckoutSession(
     userId: string,
     email: string,
-    stripePriceId: string,
     createCheckoutSessionDto: CreateCheckoutSessionDto,
   ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
     try {
+      const {
+        stripePriceId,
+        mode,
+        quantity,
+        success_url,
+        cancel_url,
+        promotionCode,
+        metadata,
+      } = createCheckoutSessionDto;
+
+      // Ensure customer exists
       const customer = await this.createStripeCustomer(userId, email);
+
+      // Create the checkout session
       const session = await this.stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
           {
             price: stripePriceId,
-            quantity: createCheckoutSessionDto.seatNo,
+            quantity,
           },
         ],
-        mode: 'subscription',
-        success_url: `${process.env.SUCCESS_URL}?src=payment_success`,
-        cancel_url: process.env.CANCEL_URL,
+        mode,
+        success_url,
+        cancel_url,
         allow_promotion_codes: true,
-        metadata: {
-          email,
-          userId,
-          productCode: createCheckoutSessionDto.productCode,
-          seatNo: createCheckoutSessionDto.seatNo,
-          action: 'SUBSCRIPTION',
-        },
+        discounts: promotionCode
+          ? [{ promotion_code: promotionCode }]
+          : undefined, // apply if present
+        metadata,
         customer: customer.id,
       });
 
@@ -180,8 +189,11 @@ export class StripeService {
   }
 
   /**
-   *  This function get the proation amount to pay
-   *  before user confirm the payment of adding seat number
+   *  Preview the proration amount for a subscription change before confirming payment.
+   *  Calculates the immediate charge or refund for quantity/plan changes.
+   *
+   *  @param previewProrationAmountDto - Contains subscription and quantity info
+   *  @returns Object containing proration date, next payment date, total refund/charge, and next cycle amount
    */
   async previewProrationAmount(
     previewProrationAmountDto: PreviewProrationAmountDto,
@@ -193,61 +205,74 @@ export class StripeService {
     nextPaymentQty: number | null;
     nextPaymentAmount: number | null;
   }> {
-    // Step 1: Retrieve the subscription from Stripe
+    // Step 1: Retrieve the subscription
     const subscription = await this.stripe.subscriptions.retrieve(
       previewProrationAmountDto.stripeSubscriptionId,
     );
 
-    // Step 2: Check if the customer ID matches the expected owner
-    // This is step is to make sure update the subscription for the correct customer
+    // Step 2: Verify the subscription belongs to the correct customer
     if (subscription.customer !== previewProrationAmountDto.stripeCustomerId) {
       throw new ForbiddenException(
         'This subscription does not belong to the correct owner.',
       );
     }
-    const invoice = await this.stripe.invoices.retrieveUpcoming({
+    // Step 3: Retrieve the upcoming invoice preview
+    const previewInvoice = await this.stripe.invoices.createPreview({
       customer: previewProrationAmountDto.stripeCustomerId,
-      subscription: previewProrationAmountDto.stripeSubscriptionId,
-      subscription_items: [
-        {
-          id: previewProrationAmountDto.stripeSubscriptionItemId,
-          quantity: previewProrationAmountDto.newSeatNo,
-        },
-      ],
-      subscription_proration_date: Math.floor(Date.now() / 1000),
+      subscription_details: {
+        // subscription: previewProrationAmountDto.stripeSubscriptionId, // the current subscription
+        proration_date: Math.floor(Date.now() / 1000), // now
+        items: [
+          {
+            id: previewProrationAmountDto.stripeSubscriptionItemId, // subscription.items.data[0].id (from Plan A)
+            price: previewProrationAmountDto.newPriceId, // the new plan's price ID
+          },
+        ],
+      },
     });
 
-    const { data } = invoice.lines;
+    // Step 4: Extract invoice lines
+    const { data: lines } = previewInvoice.lines;
 
-    const refundLines = data.filter(
-      (item) =>
-        item.proration === true &&
-        item.amount < 0 &&
-        item.type === 'invoiceitem',
+    // Step 5: Calculate refunds and charges
+    const refundLines = lines.filter(
+      (item) => item.parent?.invoice_item_details?.proration && item.amount < 0,
     );
-
-    const prorationChargeLines = data.filter(
-      (item) =>
-        item.proration === true &&
-        item.amount > 0 &&
-        item.type === 'invoiceitem',
+    const chargeLines = lines.filter(
+      (item) => item.parent?.invoice_item_details?.proration && item.amount > 0,
     );
-    const nextBillingLines = data.filter(
-      (item) => item.proration === false && item.type === 'subscription',
+    const nextBillingLines = lines.filter(
+      (item) =>
+        item.parent?.invoice_item_details?.proration &&
+        item.description === 'subscription',
     );
 
     const totalRefund =
       refundLines.reduce((sum, item) => sum + item.amount, 0) / 100;
     const totalCharge =
-      prorationChargeLines.reduce((sum, item) => sum + item.amount, 0) / 100;
+      chargeLines.reduce((sum, item) => sum + item.amount, 0) / 100;
+
+    const nextLine = nextBillingLines[0];
+
+    // return {
+    // prorationDate: previewInvoice.lines.data[0].parent?.subscription_item_details?.p
+    //   ? new Date(previewInvoice.subscription_proration_date * 1000)
+    //   : null,
+    // nextPaymentDate: previewInvoice.next_payment_attempt
+    //   ? new Date(previewInvoice.next_payment_attempt * 1000)
+    //   : null,
+    // totalRefund: totalRefund || null,
+    // totalCharge: totalCharge || null,
+    // nextPaymentQty: nextLine?.quantity ?? null,
+    // nextPaymentAmount: nextLine ? nextLine.amount / 100 : null,
+    // };
     return {
-      prorationDate:
-        new Date(invoice.subscription_proration_date * 1000) ?? null,
-      nextPaymentDate: new Date(invoice.next_payment_attempt * 1000) ?? null,
-      totalRefund: totalRefund ?? null,
-      totalCharge: totalCharge ?? null,
-      nextPaymentQty: nextBillingLines[0].quantity ?? null,
-      nextPaymentAmount: nextBillingLines[0].amount / 100,
+      prorationDate: new Date(),
+      nextPaymentDate: new Date(),
+      totalRefund: totalRefund || null,
+      totalCharge: totalCharge || null,
+      nextPaymentQty: nextLine?.quantity ?? null,
+      nextPaymentAmount: nextLine ? nextLine.amount / 100 : null,
     };
   }
 

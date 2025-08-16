@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { CreateSellerSubscriptionDto } from './dto/create-seller-Subscription.dto';
+import { UpdateSellerSubscriptionDto } from './dto/update-seller-Subscription.dto';
 
 @Injectable()
 export class SubscriptionService {
-  create(createSubscriptionDto: CreateSubscriptionDto) {
+  create(CreateSellerSubscriptionDto: CreateSellerSubscriptionDto) {
     return 'This action adds a new subscription';
   }
 
@@ -16,7 +16,7 @@ export class SubscriptionService {
     return `This action returns a #${id} subscription`;
   }
 
-  update(id: number, updateSubscriptionDto: UpdateSubscriptionDto) {
+  update(id: number, UpdateSellerSubscriptionDto: UpdateSellerSubscriptionDto) {
     return `This action updates a #${id} subscription`;
   }
 

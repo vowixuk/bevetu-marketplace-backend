@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
-import { BuyerStripeAccountMapping } from '../entities/buyer-account-mapping.entity';
-import { BuyerStripeAccountMapping as PrismaBuyerStripeAccountMapping } from '@prisma/client';
+import { BuyerStripeCustomerAccountMapping } from '../entities/buyer-customer-account-mapping.entity';
+import { BuyerStripeCustomerAccountMapping as PrismaBuyerStripeCustomerAccountMapping } from '@prisma/client';
 
 @Injectable()
-export class BuyerStripeAccountMappingRepository {
+export class BuyerStripeCustomerAccountMappingRepository {
   constructor(private readonly prisma: DatabaseService) {}
 
   async create(
-    mapping: BuyerStripeAccountMapping,
-  ): Promise<BuyerStripeAccountMapping> {
-    return mapPrismaBuyerStripeAccountMappingToDomain(
-      await this.prisma.buyerStripeAccountMapping.create({
+    mapping: BuyerStripeCustomerAccountMapping,
+  ): Promise<BuyerStripeCustomerAccountMapping> {
+    return mapPrismaBuyerStripeCustomerAccountMappingToDomain(
+      await this.prisma.buyerStripeCustomerAccountMapping.create({
         data: {
           userId: mapping.userId,
           stripeCustomerId: mapping.stripeCustomerId,
@@ -19,53 +19,55 @@ export class BuyerStripeAccountMappingRepository {
           createdAt: mapping.createdAt ?? new Date(),
         },
       }),
-    ) as BuyerStripeAccountMapping;
+    ) as BuyerStripeCustomerAccountMapping;
   }
 
-  async findOne(id: string): Promise<BuyerStripeAccountMapping> {
-    return mapPrismaBuyerStripeAccountMappingToDomain(
-      await this.prisma.buyerStripeAccountMapping.findUnique({
+  async findOne(id: string): Promise<BuyerStripeCustomerAccountMapping> {
+    return mapPrismaBuyerStripeCustomerAccountMappingToDomain(
+      await this.prisma.buyerStripeCustomerAccountMapping.findUnique({
         where: { id },
       }),
-    ) as BuyerStripeAccountMapping;
+    ) as BuyerStripeCustomerAccountMapping;
   }
 
-  async findByUserId(userId: string): Promise<BuyerStripeAccountMapping> {
-    return mapPrismaBuyerStripeAccountMappingToDomain(
-      await this.prisma.buyerStripeAccountMapping.findUnique({
+  async findByUserId(
+    userId: string,
+  ): Promise<BuyerStripeCustomerAccountMapping> {
+    return mapPrismaBuyerStripeCustomerAccountMappingToDomain(
+      await this.prisma.buyerStripeCustomerAccountMapping.findUnique({
         where: { userId },
       }),
-    ) as BuyerStripeAccountMapping;
+    ) as BuyerStripeCustomerAccountMapping;
   }
 
   async update(
-    mapping: BuyerStripeAccountMapping,
-  ): Promise<BuyerStripeAccountMapping> {
-    return mapPrismaBuyerStripeAccountMappingToDomain(
-      await this.prisma.buyerStripeAccountMapping.update({
+    mapping: BuyerStripeCustomerAccountMapping,
+  ): Promise<BuyerStripeCustomerAccountMapping> {
+    return mapPrismaBuyerStripeCustomerAccountMappingToDomain(
+      await this.prisma.buyerStripeCustomerAccountMapping.update({
         where: { id: mapping.id },
         data: {
           stripeCustomerId: mapping.stripeCustomerId,
           identifyId: mapping.identifyId,
         },
       }),
-    ) as BuyerStripeAccountMapping;
+    ) as BuyerStripeCustomerAccountMapping;
   }
 
-  async remove(id: string): Promise<BuyerStripeAccountMapping> {
-    return mapPrismaBuyerStripeAccountMappingToDomain(
-      await this.prisma.buyerStripeAccountMapping.delete({
+  async remove(id: string): Promise<BuyerStripeCustomerAccountMapping> {
+    return mapPrismaBuyerStripeCustomerAccountMappingToDomain(
+      await this.prisma.buyerStripeCustomerAccountMapping.delete({
         where: { id },
       }),
-    ) as BuyerStripeAccountMapping;
+    ) as BuyerStripeCustomerAccountMapping;
   }
 }
 
-export function mapPrismaBuyerStripeAccountMappingToDomain(
-  prismaMapping?: PrismaBuyerStripeAccountMapping | null,
-): BuyerStripeAccountMapping | null {
+export function mapPrismaBuyerStripeCustomerAccountMappingToDomain(
+  prismaMapping?: PrismaBuyerStripeCustomerAccountMapping | null,
+): BuyerStripeCustomerAccountMapping | null {
   if (!prismaMapping) return null;
-  return new BuyerStripeAccountMapping({
+  return new BuyerStripeCustomerAccountMapping({
     id: prismaMapping.id,
     userId: prismaMapping.userId,
     stripeCustomerId: prismaMapping.stripeCustomerId,

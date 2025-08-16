@@ -35,11 +35,33 @@ model User {
 
   // Joining Table
   Seller Seller[]
-  BuyerStripeAccountMapping BuyerStripeAccountMapping[]
+  BuyerStripeCustomerAccountMapping BuyerStripeCustomerAccountMapping[]
   SellerStripeAccountMapping SellerStripeAccountMapping[]
+
 }
 
+//-----  Below are the model for Buyer's use ----- //
+model BuyerStripeCustomerAccountMapping {
+ id String   @id @default(cuid())
+ userId String @unique
+ stripeCustomerId String
+ identifyId String
+ createdAt DateTime @default(now())
 
+  // Joining Table
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// model BuyerShippingAddress {
+//   id String   @id @default(cuid())
+//   userId String @unique
+
+//    // Joining Table
+//   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+// }
+
+
+//-----  Below are the model for seller's use ----- //
 model Seller {
   id        String   @id @default(cuid())
   userId    String
@@ -53,6 +75,8 @@ model Seller {
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   SellerStripeAccountMapping SellerStripeAccountMapping[]
   Shop Shop[]
+
+  SellerSubscription SellerSubscription[]
 }
 
 enum SellerStatus {
@@ -60,6 +84,19 @@ enum SellerStatus {
   PENDING
   DELETED
   SUSPENDED
+}
+
+model SellerStripeAccountMapping {
+ id String   @id @default(cuid())
+ sellerId String  @unique
+ userId String @unique
+ stripeAccountId String
+ identifyId String
+ createdAt DateTime @default(now())
+
+  // Joining Table
+  seller    Seller  @relation(fields: [sellerId], references: [id], onDelete:Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Shop {
@@ -81,28 +118,93 @@ model Shop {
 
 
 
-model SellerStripeAccountMapping {
- id String   @id @default(cuid())
- sellerId String  @unique
- userId String @unique
- stripeAccountId String
- identifyId String
- createdAt DateTime @default(now())
+model SellerSubscription {
+  id    String   @id @default(cuid())
+  sellerId String
+  nextPaymentDate DateTime
+  status SellerSubscriptionStatusType
+  createdAt DateTime @default(now())
+  items Json
+  eventRecords SellerSubscriptionEventRecord[] // !! `EventRecord`  is not joinging table. this is part of the entity
+  updatedAt DateTime @updatedAt
+  cancelAt DateTime?
+  
+  // Joining Table
+  sellerStripeSubscription SellerSubscriptionMapping[]
+  seller  Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+enum  SellerSubscriptionStatusType {
+  ACTIVE
+  CANCELLED
+  CANCELLING
+  PAYMENT_FAILED
+}
+
+
+model SellerSubscriptionEventRecord {
+  id String   @id @default(cuid())
+  subscriptionId String
+  type SellerEventRecordType
+  metadata Json
+  createdAt DateTime @default(now())
 
   // Joining Table
-  seller    Seller  @relation(fields: [sellerId], references: [id], onDelete:Cascade)
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription  SellerSubscription  @relation(fields: [subscriptionId], references: [id], onDelete:Cascade)
+}
+
+enum SellerEventRecordType {
+  CREATE
+  PAYMENT
+  PENDING_CANCEL
+  PAYMENT_FAIL
+  PAYMENT_SUCCESS
+  EXPIRY
+  CANCELLED
+  RESTORE
+  REACTIVATE
+  // Unused so far
+  ERROR
+  OTHER
+  REFUND
+  MODE_CHANGE
 }
 
 
 
-model BuyerStripeAccountMapping {
+model SellerSubscriptionMapping {
  id String   @id @default(cuid())
- userId String @unique
+ sellerId String
+ bevetuSubscriptionId String 
  stripeCustomerId String
  identifyId String
+ stripeSubscriptionId String @unique
+ stripeSubscriptionItem Json
+
  createdAt DateTime @default(now())
 
   // Joining Table
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sellerSubscription    SellerSubscription  @relation(fields: [bevetuSubscriptionId], references: [id], onDelete:Cascade)
 }
+
+//-----  Below are the model for Product's use ----- //
+// model Product {
+
+// }
+
+// model ProductDiscount {
+
+// }
+
+// model ProductVariants {
+
+// }
+
+// model ProductReview {}
+
+// model ProductReviewReply{}
+
+//-----  Below are the model for Both's use ----- //
+// model Order{}
+
+

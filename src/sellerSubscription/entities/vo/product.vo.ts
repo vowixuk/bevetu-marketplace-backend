@@ -21,6 +21,7 @@ export interface IProduct {
   listingNo: number;
 }
 
+/** Listing Plan code */
 export type IProductCode =
   | 'BRONZE_MONTHLY_HKD'
   | 'BRONZE_MONTHLY_USD'

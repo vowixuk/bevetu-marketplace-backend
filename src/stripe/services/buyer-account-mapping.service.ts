@@ -4,22 +4,22 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BuyerStripeAccountMapping } from '../entities/buyer-account-mapping.entity';
-import { BuyerStripeAccountMappingRepository } from '../repositories/buyer-account-mapping.repository';
-import { CreateBuyerStripeAccountMappingDto } from '../dto/create-buyer-account-mapping.dto';
+import { BuyerStripeCustomerAccountMapping } from '../entities/buyer-customer-account-mapping.entity';
+import { BuyerStripeCustomerAccountMappingRepository } from '../repositories/buyer-account-mapping.repository';
+import { CreateBuyerStripeCustomerAccountMappingDto } from '../dto/create-buyer-account-mapping.dto';
 
 @Injectable()
-export class BuyerStripeAccountMappingService {
+export class BuyerStripeCustomerAccountMappingService {
   constructor(
-    private readonly buyerStripeAccountMappingRepository: BuyerStripeAccountMappingRepository,
+    private readonly BuyerStripeCustomerAccountMappingRepository: BuyerStripeCustomerAccountMappingRepository,
   ) {}
 
   async create(
     userId: string,
-    createDto: CreateBuyerStripeAccountMappingDto,
-  ): Promise<BuyerStripeAccountMapping> {
-    return await this.buyerStripeAccountMappingRepository.create(
-      new BuyerStripeAccountMapping({
+    createDto: CreateBuyerStripeCustomerAccountMappingDto,
+  ): Promise<BuyerStripeCustomerAccountMapping> {
+    return await this.BuyerStripeCustomerAccountMappingRepository.create(
+      new BuyerStripeCustomerAccountMapping({
         id: '',
         userId,
         stripeCustomerId: createDto.stripeCustomerId,
@@ -32,8 +32,8 @@ export class BuyerStripeAccountMappingService {
   async findOne(
     id: string,
     userId: string,
-  ): Promise<BuyerStripeAccountMapping> {
-    const mapping = await this.buyerStripeAccountMappingRepository.findOne(id);
+  ): Promise<BuyerStripeCustomerAccountMapping> {
+    const mapping = await this.BuyerStripeCustomerAccountMappingRepository.findOne(id);
     if (!mapping) {
       throw new NotFoundException('Mapping not found');
     }
@@ -43,19 +43,24 @@ export class BuyerStripeAccountMappingService {
     return mapping;
   }
 
-  async findOneByUserId(userId: string): Promise<BuyerStripeAccountMapping> {
+  async findOneByUserId(
+    userId: string,
+  ): Promise<BuyerStripeCustomerAccountMapping> {
     const mapping =
-      await this.buyerStripeAccountMappingRepository.findByUserId(userId);
+      await this.BuyerStripeCustomerAccountMappingRepository.findByUserId(userId);
     if (!mapping) {
       throw new NotFoundException('Mapping not found');
     }
     return mapping;
   }
 
-  async remove(id: string, userId: string): Promise<BuyerStripeAccountMapping> {
+  async remove(
+    id: string,
+    userId: string,
+  ): Promise<BuyerStripeCustomerAccountMapping> {
     const mapping = await this.findOne(id, userId);
     const deletedMapping =
-      await this.buyerStripeAccountMappingRepository.remove(mapping.id);
+      await this.BuyerStripeCustomerAccountMappingRepository.remove(mapping.id);
     return deletedMapping;
   }
 }

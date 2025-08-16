@@ -1,58 +1,42 @@
-import { EventRecord, EventRecordType } from './event-record.entity';
-import { IProductCode } from './product.vo';
+/* eslint-disable prettier/prettier */
+import {
+  SubscriptionEventRecord,
+  EventRecordType,
+} from './event-record.entity';
+import { IProductCode } from './vo/product.vo';
+import { SubscriptionStatusType } from './vo/subscription-status.vo';
 
 export type OptionalProperties<T> = {
   [K in keyof T]-?: undefined extends T[K] ? K : never;
 }[keyof T];
 
-export type SubscriptionStatusType =
-  /**
-   * The subscription is still effective
-   */
-  | 'ACTIVE'
-
-  /**
-   * The subscription is cancelling. Subscription will be effective untill the end of the subscription period
-   */
-  | 'CANCELLING'
-
-  /**
-   * The subscription is completely cancelled. Subscription is not effective anymore
-   */
-  | 'CANCELLED'
-
-  /**
-   * Billing Error. Subscription is not effective untill payment is made.
-   */
-  | 'PAYMENT_FAILED'
-
-  /**
-   * Free Trial expired. The Subscription in not effective
-   */
-  | 'FREE_TRIAL_EXPIRED';
-
-export class Subscription {
+export class SellerSubscription {
   id: string;
-  userId: string;
-  productCode: IProductCode;
+  sellerId: string;
   nextPaymentDate: Date;
   status: SubscriptionStatusType;
+  items: subscriptionItems[];
   createdAt: Date;
 
+  eventRecords?: SubscriptionEventRecord<EventRecordType>[];
   //optional properties
-  eventRecords?: EventRecord<EventRecordType>[] | null;
   updatedAt?: Date | null;
   cancelAt?: Date | null;
 
   constructor(
-    init: Omit<Subscription, OptionalProperties<Subscription>> &
-      Partial<Pick<Subscription, OptionalProperties<Subscription>>>,
+    init: Omit<SellerSubscription, OptionalProperties<SellerSubscription>> &
+      Partial<Pick<SellerSubscription, OptionalProperties<SellerSubscription>>>,
   ) {
     Object.assign(this, init);
   }
 }
 
 
+export type subscriptionItems = {
+  quantity: number;
+  category: 'LISTING_PLAN';
+  name: IProductCode;
+};
 
 
 // const tiers = [
