@@ -8,8 +8,8 @@ import {
   Delete,
 } from '@nestjs/common';
 import { SubscriptionService } from './sellerSubscription.service';
-import { CreateSellerSubscriptionDto } from './dto/create-seller-Subscription.dto';
-import { UpdateSellerSubscriptionDto } from './dto/update-seller-Subscription.dto';
+import { CreateSellerSubscriptionDto } from './dto/create-seller-subscription.dto';
+import { UpdateSellerSubscriptionDto } from './dto/update-seller-subscription.dto';
 
 @Controller('subscription')
 export class SubscriptionController {
