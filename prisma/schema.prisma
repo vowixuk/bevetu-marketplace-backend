@@ -40,7 +40,9 @@ model User {
 
 }
 
-//-----  Below are the model for Buyer's use ----- //
+/************************************************************
+ *                        Buyer MODELS                      *
+ ************************************************************/
 model BuyerStripeCustomerAccountMapping {
  id String   @id @default(cuid())
  userId String @unique
@@ -61,7 +63,9 @@ model BuyerStripeCustomerAccountMapping {
 // }
 
 
-//-----  Below are the model for seller's use ----- //
+/************************************************************
+ *                        Seller MODELS                      *
+ ************************************************************/
 model Seller {
   id        String   @id @default(cuid())
   userId    String
@@ -117,6 +121,10 @@ model Shop {
 }
 
 
+
+/************************************************************
+ *                Seller Subscription MODELS                *
+ ************************************************************/
 
 model SellerSubscription {
   id    String   @id @default(cuid())
@@ -188,7 +196,10 @@ model SellerSubscriptionMapping {
   sellerSubscription    SellerSubscription  @relation(fields: [bevetuSubscriptionId], references: [id], onDelete:Cascade)
 }
 
-//-----  Below are the model for Product's use ----- //
+
+/************************************************************
+ *                       PRODUCT MODELS                     *
+ ************************************************************/
 model Product {
   id             String    @id @default(uuid())
   shopId         String
@@ -245,12 +256,94 @@ model ProductReviewReply {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  // Relation back to review
-  review     ProductReview @relation(fields: [reviewId], references: [id])
+  // Joining Table
+  review     ProductReview @relation(fields: [reviewId], references: [id],onDelete: Cascade)
 
   @@index([sellerId])
 }
-//-----  Below are the model for Both's use ----- //
-// model Order{}
+
+/************************************************************
+ *                        ORDER MODELS                      *
+ ************************************************************/
+model Order {
+  id             String           @id @default(cuid())
+  buyerId        String
+  shopId         String
+  totalAmount    Float
+  currency       String
+  paymentStatus  OrderPaymentStatus
+  paymentMethod  String
+  orderStatus    OrderStatus
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  items          OrderItem[]
+  eventRecords   OrderEventRecord[]
+}
+enum OrderPaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum OrderStatus {
+  CREATED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id             String   @id @default(cuid())
+  orderId        String
+  productId      String
+  varientId      String
+  productName    String
+  quantity       Int
+  price          Float
+
+  refundedQuantity Int     @default(0)
+  refundedAmount   Float   @default(0)
+  refundStatus     OrderRefundStatus @default(NONE)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Joining Table
+  order          Order    @relation(fields: [orderId], references: [id],onDelete: Cascade)
+}
+
+
+enum OrderRefundStatus {
+  NONE
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+
+model OrderEventRecord {
+  id             String           @id @default(cuid())
+  orderId        String
+  createdAt      DateTime         @default(now())
+  type           OrderEventRecordType
+  metadata       Json?
+
+  // Joining Table
+  order          Order            @relation(fields: [orderId], references: [id],onDelete: Cascade)
+}
+
+
+
+enum OrderEventRecordType {
+  CREATE
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  REFUND_REQUEST
+  REFUND_COMPLETED
+  REFUND_REJECTED
+}
+
 
 

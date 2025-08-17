@@ -22,6 +22,7 @@ import { DatabaseModule } from './database/database.module';
 import { ProductModule } from './product/product.module';
 import { SubscriptionModule } from './seller-subscription/sellerSubscription.module';
 import { ProductReviewModule } from './product-review/product-review.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ProductReviewModule } from './product-review/product-review.module';
     ProductModule,
     SubscriptionModule,
     ProductReviewModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [
