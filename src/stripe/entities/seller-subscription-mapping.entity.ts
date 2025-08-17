@@ -1,4 +1,4 @@
-import { IProductCode } from '../../sellerSubscription/entities/vo/product.vo';
+import { IProductCode } from '../../seller-subscription/entities/vo/product.vo';
 
 export type OptionalProperties<T> = {
   [K in keyof T]-?: undefined extends T[K] ? K : never;

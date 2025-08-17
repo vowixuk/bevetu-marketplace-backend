@@ -1,7 +1,7 @@
 import { IsString, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StripeSubscriptionItems } from '../entities/seller-subscription-mapping.entity';
-import type { IProductCode } from 'src/sellerSubscription/entities/vo/product.vo';
+import type { IProductCode } from 'src/seller-subscription/entities/vo/product.vo';
 
 export class CreateSellerSubscriptionMappingDto {
   @IsString()

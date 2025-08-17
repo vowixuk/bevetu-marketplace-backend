@@ -6,7 +6,6 @@ export class DatabaseService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  BuyerStripeCustomerAccountMapping: any;
   async onModuleInit() {
     await this.$connect();
     console.log('Prisma connected to the database');

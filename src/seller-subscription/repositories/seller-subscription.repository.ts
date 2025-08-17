@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
-import { SellerSubscription } from './../entities/seller-subscription.entity';
-import type { subscriptionItems } from './../entities/seller-subscription.entity';
+import { SellerSubscription } from '../entities/seller-subscription.entity';
+import type { subscriptionItems } from '../entities/seller-subscription.entity';
 import {
   SellerSubscription as PrismaSellerSubscription,
   SellerSubscriptionEventRecord as PrismaSellerSubscriptionEventRecord,

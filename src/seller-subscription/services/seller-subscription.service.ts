@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SellerSubscriptionRepository } from './../repositories/seller-subscription.repository';
+import { SellerSubscriptionRepository } from '../repositories/seller-subscription.repository';
 import { SellerSubscription } from '../entities/seller-subscription.entity';
 import { CreateSellerSubscriptionDto } from '../dto/create-seller-subscription.dto';
 import { UpdateSellerSubscriptionDto } from '../dto/update-seller-subscription.dto';

@@ -6,6 +6,8 @@ import {
 import { SellerSubscriptionMappingRepository } from '../repositories/seller-subscription-mapping.repository';
 import { SellerSubscriptionMapping } from '../entities/seller-subscription-mapping.entity';
 import { CreateSellerSubscriptionMappingDto } from '../dto/create-seller-subscrption-mapping.dto';
+
+Injectable();
 export class SellerSubscriptionMappingService {
   constructor(
     private readonly sellerSubscriptionMappingRepository: SellerSubscriptionMappingRepository,
