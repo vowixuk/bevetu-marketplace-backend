@@ -15,6 +15,7 @@ export class Order {
   updatedAt: Date;
   eventRecords: OrderEventRecord<EventRecordType>[]; // Order events
   items: OrderItem[]; // Products in this order
+  attributes?: Record<string, any>;
 
   constructor(
     init: Omit<Order, OptionalProperties<Order>> &

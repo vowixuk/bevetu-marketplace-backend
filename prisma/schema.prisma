@@ -118,6 +118,9 @@ model Shop {
 
   // Joining Table
   seller      Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  CartItem    CartItem[]
+
+  Product Product[]
 }
 
 
@@ -226,6 +229,10 @@ model Product {
   updatedAt      DateTime  @updatedAt
 
   @@index([shopId])
+  
+  // Joining Table
+  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
 }
 
 model ProductReview {
@@ -278,6 +285,9 @@ model Order {
   updatedAt      DateTime         @updatedAt
   items          OrderItem[]
   eventRecords   OrderEventRecord[]
+  attributes     Json
+
+  Cart Cart[]
 }
 enum OrderPaymentStatus {
   PENDING
@@ -347,3 +357,33 @@ enum OrderEventRecordType {
 
 
 
+/************************************************************
+ *                        CART MODELS                      *
+ ************************************************************/
+model Cart {
+  id         String     @id @default(cuid())
+  userId     String
+  isCheckout Boolean    @default(false)
+  orderId    String?    // only populated after checkout
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime?  @updatedAt
+
+  items      CartItem[]
+
+  // Joining Table
+  order          Order?   @relation(fields: [orderId], references: [id],onDelete: Cascade)
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  shopId    String
+  cartId    String
+  productId String
+  varientId String
+  quantity  Int
+  price     Float
+
+  // Joining Table
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}

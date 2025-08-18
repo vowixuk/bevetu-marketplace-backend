@@ -18,4 +18,6 @@ export class CreateOrderDto {
 
   @IsEnum(['CREATED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'])
   orderStatus: 'CREATED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+
+  attributes?: Record<string, any>;
 }

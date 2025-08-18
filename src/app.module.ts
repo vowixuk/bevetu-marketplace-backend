@@ -23,6 +23,7 @@ import { ProductModule } from './product/product.module';
 import { SubscriptionModule } from './seller-subscription/sellerSubscription.module';
 import { ProductReviewModule } from './product-review/product-review.module';
 import { OrderModule } from './order/order.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { OrderModule } from './order/order.module';
     SubscriptionModule,
     ProductReviewModule,
     OrderModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [

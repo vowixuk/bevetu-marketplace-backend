@@ -14,44 +14,25 @@ export class OrderRepository {
   constructor(private readonly prisma: DatabaseService) {}
 
   async create(order: Order): Promise<Order> {
-    return mapPrismaOrderToDomain(
-      await this.prisma.order.create({
-        data: {
-          buyerId: order.buyerId,
-          shopId: order.shopId,
-          totalAmount: order.totalAmount,
-          currency: order.currency,
-          paymentStatus: order.paymentStatus as PrismaOrderPaymentStatus,
-          paymentMethod: order.paymentMethod,
-          orderStatus: order.orderStatus as PrismaOrderStatus,
-          createdAt: order.createdAt ?? new Date(),
-          items: {
-            create: order.items.map((item) => ({
-              productId: item.productId,
-              varientId: item.varientId,
-              productName: item.productName,
-              quantity: item.quantity,
-              price: item.price,
-              refundedQuantity: item.refundedQuantity ?? 0,
-              refundedAmount: item.refundedAmount ?? 0,
-              refundStatus: item.refundStatus ?? 'NONE',
-              createdAt: item.createdAt ?? new Date(),
-            })),
-          },
-          eventRecords: {
-            create: order.eventRecords.map((record) => ({
-              type: record.type,
-              metadata: record.metadata ?? {},
-              createdAt: record.createdAt ?? new Date(),
-            })),
-          },
-        },
-        include: {
-          items: true,
-          eventRecords: true,
-        },
-      }),
-    ) as Order;
+    const prismaOrder = await this.prisma.order.create({
+      data: {
+        buyerId: order.buyerId,
+        shopId: order.shopId,
+        totalAmount: order.totalAmount,
+        currency: order.currency,
+        paymentStatus: order.paymentStatus as PrismaOrderPaymentStatus,
+        paymentMethod: order.paymentMethod,
+        orderStatus: order.orderStatus as PrismaOrderStatus,
+        createdAt: order.createdAt ?? new Date(),
+        attributes: order.attributes ?? {},
+      },
+      include: {
+        items: true,
+        eventRecords: true,
+      },
+    });
+
+    return mapPrismaOrderToDomain(prismaOrder) as Order;
   }
 
   async findAll(): Promise<Order[]> {

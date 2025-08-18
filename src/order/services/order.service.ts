@@ -22,6 +22,7 @@ export class OrderService {
       paymentStatus: createDto.paymentStatus,
       paymentMethod: createDto.paymentMethod,
       orderStatus: createDto.orderStatus,
+      attributes: createDto.attributes ?? {},
       items: [],
       eventRecords: [],
       createdAt: new Date(),
@@ -31,7 +32,7 @@ export class OrderService {
     return this.orderRepository.create(order);
   }
 
-  async findOne(id: string, buyerId?: string): Promise<Order> {
+  async findOne(id: string, buyerId: string): Promise<Order> {
     const order = await this.orderRepository.findOne(id);
     if (!order) {
       throw new NotFoundException('Order not found');
@@ -52,7 +53,6 @@ export class OrderService {
     updateDto: UpdateOrderDto,
   ): Promise<Order> {
     const existingOrder = await this.findOne(orderId, buyerId);
-
     // merge changes
     const updatedOrder = new Order({
       ...existingOrder,
