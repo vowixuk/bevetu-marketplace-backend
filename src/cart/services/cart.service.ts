@@ -1,14 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CartRepository } from '../repositories/cart.repository';
 import { CartItemService } from './cart-item.service';
 import { Cart } from '../entities/cart.entity';
 import { CartItem } from '../entities/cart-item.entity';
+import { ProductService } from 'src/product/product.services';
+import { isInstance } from 'class-validator';
 
 @Injectable()
 export class CartService {
   constructor(
     private readonly cartRepository: CartRepository,
     private readonly cartItemService: CartItemService,
+    private readonly productService: ProductService,
   ) {}
 
   /**
@@ -29,14 +36,30 @@ export class CartService {
   /**
    * Add an item to the cart
    */
-  async addItem(cartId: string, item: Omit<CartItem, 'id'>): Promise<Cart> {
-    // Ensure the cart exists
-    const cart = await this.cartRepository.findOne(cartId);
-    if (!cart) throw new NotFoundException('Cart not found');
+  async addItem(userId: string, item: Omit<CartItem, 'id'>): Promise<Cart> {
+    const cart = await this.findUncheckoutCart(userId);
 
-    await this.cartItemService.create(cartId, item);
+    const product = await this.productService.findOne(
+      item.productId,
+      item.shopId,
+    );
 
-    return this.cartRepository.findOne(cartId) as Promise<Cart>;
+    if (product.stock <= 0) {
+      throw new ConflictException(
+        `Product ${product.name} has insufficient stock`,
+      );
+    }
+    await this.cartItemService.create(cart.id, item);
+    return this.cartRepository.findOne(cart.id) as Promise<Cart>;
+  }
+
+  async findUncheckoutCart(userId: string): Promise<Cart> {
+    const carts = await this.cartRepository.findManyByUserId(userId);
+    let cart = carts.find((cart) => cart.isCheckout == false);
+    if (!cart) {
+      cart = await this.create(userId);
+    }
+    return cart;
   }
 
   /**

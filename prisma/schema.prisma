@@ -370,6 +370,8 @@ model Cart {
 
   items      CartItem[]
 
+  @@index([userId])
+
   // Joining Table
   order          Order?   @relation(fields: [orderId], references: [id],onDelete: Cascade)
 }

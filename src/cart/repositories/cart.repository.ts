@@ -30,6 +30,14 @@ export class CartRepository {
     );
   }
 
+  async findManyByUserId(userId: string): Promise<Cart[]> {
+    const carts = await this.prisma.cart.findMany({
+      where: { userId },
+      include: { items: true },
+    });
+    return carts.map((cart) => mapPrismaCartToDomain(cart)) as Cart[];
+  }
+
   async findByUserId(userId: string): Promise<Cart[]> {
     return (
       await this.prisma.cart.findMany({
