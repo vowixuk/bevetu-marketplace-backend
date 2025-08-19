@@ -12,7 +12,7 @@ export interface IProduct {
   features: IFeature[];
   price: number;
   currency: 'USD' | 'GBP' | 'HKD';
-  mode: 'Annual' | 'Monthly';
+  mode: 'ANNUAL' | 'MONTHLY';
   stripePriceId: string;
   /**
    * display in production
@@ -71,7 +71,7 @@ export const Products: Record<IProductCode, IProduct> = (() => {
     'DIAMOND',
     'ENTERPRISE',
   ] as const;
-  const modes = ['MONTHLY', 'ANNUAL'] as const;
+  const modes = ['MONTHLY'] as const;
   const currencies = ['GBP', 'USD', 'HKD'] as const;
 
   tiers.forEach((tier) => {
@@ -95,7 +95,7 @@ export const Products: Record<IProductCode, IProduct> = (() => {
           features: [],
           price: priceEnv ? Number(priceEnv) : 0,
           currency,
-          mode: mode as 'Monthly' | 'Annual',
+          mode: mode as 'MONTHLY' | 'ANNUAL',
           stripePriceId: stripeId,
           display: true,
           listingNo: listingNoEnv ? Number(listingNoEnv) : 0,

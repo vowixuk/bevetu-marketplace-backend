@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   ForbiddenException,
   HttpException,
@@ -11,6 +13,11 @@ import { CreateAccountSessionDto } from 'src/seller/dto/create-account-session.d
 import Stripe from 'stripe';
 import { CreateCheckoutSessionDto } from '../dto/create-checkout-session.dto';
 import { PreviewProrationAmountDto } from '../dto/preview-proation-amount.dto';
+import {
+  Products,
+  IProductCode,
+} from '../../seller-subscription/entities/vo/product.vo';
+
 
 @Injectable()
 export class StripeService {
@@ -29,12 +36,14 @@ export class StripeService {
     userId: string,
     email: string,
     platform?: string,
+    attributes?: Record<string, string>,
   ): Promise<Stripe.Customer> {
     return await this.stripe.customers.create({
       email,
       metadata: {
         userId,
-        ...(platform ? { platform } : {}),
+        ...(platform && { platform }),
+        ...(attributes && attributes),
       },
     });
   }
