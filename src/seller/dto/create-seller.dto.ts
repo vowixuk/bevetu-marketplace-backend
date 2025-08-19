@@ -4,8 +4,7 @@ export class CreateSellerDto {
   @IsEnum(['ACTIVE', 'PENDING', 'DELETED', 'SUSPENDED'], {
     message: 'status must be ACTIVE, DELETED, or SUSPENDED',
   })
-  @IsOptional()
-  status?: SellerStatusType;
+  status: SellerStatusType;
 
   @IsObject()
   @IsOptional()

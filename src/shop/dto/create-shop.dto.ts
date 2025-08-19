@@ -38,7 +38,6 @@ export class CreateShopDto {
   })
   @IsString()
   @IsOptional()
-  @IsNotEmpty({ message: 'Shop URL is required' })
   shopUrl?: string;
 
   @ApiPropertyOptional({

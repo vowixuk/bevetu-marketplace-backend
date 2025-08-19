@@ -21,7 +21,7 @@ export class SellerService {
       new Seller({
         id: '',
         userId,
-        status: createSellerDto.status as SellerStatusType,
+        status: createSellerDto.status,
         attributes: createSellerDto.attributes || {},
         createdAt: new Date(),
       }),
@@ -32,16 +32,16 @@ export class SellerService {
     return sellerWithoutId;
   }
 
-  async findAll(): Promise<Omit<Seller, 'userId'>[]> {
-    const sellers = await this.sellerRepository.findAll();
-    if (sellers.length === 0) {
-      return [];
-    }
-    return sellers.map((seller) => {
-      const { userId, ...sellerWithoutId } = seller;
-      return sellerWithoutId;
-    });
-  }
+  // async findAll(): Promise<Omit<Seller, 'userId'>[]> {
+  //   const sellers = await this.sellerRepository.findAll();
+  //   if (sellers.length === 0) {
+  //     return [];
+  //   }
+  //   return sellers.map((seller) => {
+  //     const { userId, ...sellerWithoutId } = seller;
+  //     return sellerWithoutId;
+  //   });
+  // }
 
   async findOne(
     userid: string,

@@ -101,7 +101,7 @@ export function mapPrismaUserToDomain(
     email: prismaUser.email,
     mainId: prismaUser.mainId,
     createdAt: prismaUser.createdAt,
-    updatedAt: prismaUser.updatedAt || null,
-    deletedAt: prismaUser.deletedAt || null,
+    updatedAt: prismaUser.updatedAt ?? undefined,
+    deletedAt: prismaUser.deletedAt ?? undefined,
   });
 }

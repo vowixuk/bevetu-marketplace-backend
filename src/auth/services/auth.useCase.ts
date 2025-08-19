@@ -26,7 +26,6 @@ import { UpdateBuyerDto } from 'src/buyer/dto/update-buyer.dto';
 
 @Injectable()
 export class AuthUseCase {
-
   constructor(
     private readonly jwtService: JwtService,
     private readonly stripeService: StripeService,
@@ -73,13 +72,13 @@ export class AuthUseCase {
     /*************************************
      *      Buyer Account Setup    *
      * ***********************************/
-     /**
+    /**
      * Check if buyer account is setup
      */
     // Step 3 - use the user id - check if buyer  account created
     let buyer: Buyer | null = null;
     try {
-      buyer =  await this.buyerService.findByUserId(user.id);
+      buyer = await this.buyerService.findByUserId(user.id);
       console.log('has buyer account');
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -97,9 +96,7 @@ export class AuthUseCase {
     // Step 4 - if buyer account not created - create one.
     if (buyer == null) {
       try {
-        buyer = await this.buyerService.create(
-          user.id,
-        );
+        buyer = await this.buyerService.create(user.id);
         console.log('Created new buyerAccount');
       } catch (error) {
         console.log('Error new create buyer account');
@@ -112,11 +109,8 @@ export class AuthUseCase {
       }
     }
 
-
-  
-
     /**
-     * Up to this point, buyer account must exsit. 
+     * Up to this point, buyer account must exsit.
      * Now check if stripe customer account.
      * One user acount has only one stripe customer account
      * A Stripe customer account is created for each user
@@ -144,7 +138,7 @@ export class AuthUseCase {
     }
     // Step 4 - if not created - create one from stripe.
     if (BuyerStripeCustomerAccountMapping == null) {
-      // create in stripe account 
+      // create in stripe account
       const stripeCustomer = await this.stripeService.createStripeCustomer(
         user.id,
         email,
@@ -152,7 +146,7 @@ export class AuthUseCase {
       );
       console.log('Created new stripeCustomer');
 
-      // create in stripe - db mapping 
+      // create in stripe - db mapping
       BuyerStripeCustomerAccountMapping =
         await this.buyerAccountMappingService.create(
           buyer.id,
@@ -168,18 +162,15 @@ export class AuthUseCase {
       await this.buyerService.update(
         buyer.id,
         user.id,
-        Object.assign(
-          new UpdateBuyerDto(),{
-            paymentMethod : {
-              stripe:{
-                stripeCustomerId:stripeCustomer.id
-              }
-            }
-          }
-        )
-      )
+        Object.assign(new UpdateBuyerDto(), {
+          paymentMethod: {
+            stripe: {
+              stripeCustomerId: stripeCustomer.id,
+            },
+          },
+        }),
+      );
       console.log('update Mapping to buy account');
-
     }
     /*************************************
      *     Stripe Seller Account Setup    *

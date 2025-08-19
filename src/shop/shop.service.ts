@@ -24,20 +24,19 @@ export class ShopService {
         createdAt: new Date(),
         attributes: createShopDto.attributes || {},
         shopUrl: '',
-        // ...(createShopDto.shopUrl ? { shopUrl: createShopDto.shopUrl } : 'N/A'),
         ...(createShopDto.website ? { website: createShopDto.website } : {}),
       }),
     );
     return shop;
   }
 
-  async findAllBySellerId(sellerId: string): Promise<Shop[]> {
-    const shops = await this.shopRepository.findAllBySellerId(sellerId);
-    if (shops.length === 0) {
-      return [];
-    }
-    return shops;
-  }
+  // async findAllBySellerId(sellerId: string): Promise<Shop[]> {
+  //   const shops = await this.shopRepository.findAllBySellerId(sellerId);
+  //   if (shops.length === 0) {
+  //     return [];
+  //   }
+  //   return shops;
+  // }
 
   async findOne(shopId: string, sellerId: string): Promise<Shop> {
     const shop = await this.shopRepository.findOne(shopId);

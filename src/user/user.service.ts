@@ -42,17 +42,6 @@ export class UserService {
     return user;
   }
 
-  // async update(id: string, updateUserDto: UpdateUserDto) {
-  //   // Ensure the user exists before updating
-  //   await this.findOne(id);
-  //   const user = new User({
-  //     id,
-  //     ...updateUserDto,
-  //     updatedAt: new Date(),
-  //   });
-  //   return this.userRepository.update(user);
-  // }
-
   async remove(id: string) {
     // This is a hard delete — not usually recommended unless necessary
     await this.findOne(id);
