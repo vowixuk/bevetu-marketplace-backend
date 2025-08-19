@@ -4,7 +4,7 @@ type OptionalProperties<T> = {
 
 export class BuyerStripeCustomerAccountMapping {
   id: string;
-  userId: string;
+  buyerId: string;
   stripeCustomerId: string;
   identifyId: string;
   createdAt: Date;

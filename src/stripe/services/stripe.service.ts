@@ -27,6 +27,7 @@ export class StripeService {
    */
   async createStripeCustomer(
     userId: string,
+    buyerId: string,
     email: string,
     platform?: string,
   ): Promise<Stripe.Customer> {
@@ -34,6 +35,7 @@ export class StripeService {
       email,
       metadata: {
         userId,
+        buyerId,
         ...(platform ? { platform } : {}),
       },
     });

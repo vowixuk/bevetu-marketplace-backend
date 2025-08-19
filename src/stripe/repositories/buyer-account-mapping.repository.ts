@@ -13,7 +13,7 @@ export class BuyerStripeCustomerAccountMappingRepository {
     return mapPrismaBuyerStripeCustomerAccountMappingToDomain(
       await this.prisma.buyerStripeCustomerAccountMapping.create({
         data: {
-          userId: mapping.userId,
+          buyerId: mapping.buyerId,
           stripeCustomerId: mapping.stripeCustomerId,
           identifyId: mapping.identifyId,
           createdAt: mapping.createdAt ?? new Date(),
@@ -30,12 +30,12 @@ export class BuyerStripeCustomerAccountMappingRepository {
     ) as BuyerStripeCustomerAccountMapping;
   }
 
-  async findByUserId(
-    userId: string,
+  async findByBuyerId(
+    buyerId: string,
   ): Promise<BuyerStripeCustomerAccountMapping> {
     return mapPrismaBuyerStripeCustomerAccountMappingToDomain(
       await this.prisma.buyerStripeCustomerAccountMapping.findUnique({
-        where: { userId },
+        where: { buyerId },
       }),
     ) as BuyerStripeCustomerAccountMapping;
   }
@@ -69,7 +69,7 @@ export function mapPrismaBuyerStripeCustomerAccountMappingToDomain(
   if (!prismaMapping) return null;
   return new BuyerStripeCustomerAccountMapping({
     id: prismaMapping.id,
-    userId: prismaMapping.userId,
+    buyerId: prismaMapping.buyerId,
     stripeCustomerId: prismaMapping.stripeCustomerId,
     identifyId: prismaMapping.identifyId,
     createdAt: prismaMapping.createdAt,

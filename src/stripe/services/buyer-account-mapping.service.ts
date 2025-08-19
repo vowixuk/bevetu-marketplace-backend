@@ -15,13 +15,13 @@ export class BuyerStripeCustomerAccountMappingService {
   ) {}
 
   async create(
-    userId: string,
+    buyerId: string,
     createDto: CreateBuyerStripeCustomerAccountMappingDto,
   ): Promise<BuyerStripeCustomerAccountMapping> {
     return await this.BuyerStripeCustomerAccountMappingRepository.create(
       new BuyerStripeCustomerAccountMapping({
         id: '',
-        userId,
+        buyerId,
         stripeCustomerId: createDto.stripeCustomerId,
         identifyId: createDto.identifyId,
         createdAt: new Date(),
@@ -31,25 +31,25 @@ export class BuyerStripeCustomerAccountMappingService {
 
   async findOne(
     id: string,
-    userId: string,
+    buyerId: string,
   ): Promise<BuyerStripeCustomerAccountMapping> {
     const mapping =
       await this.BuyerStripeCustomerAccountMappingRepository.findOne(id);
     if (!mapping) {
       throw new NotFoundException('Mapping not found');
     }
-    if (mapping.userId !== userId) {
-      throw new ForbiddenException('Mapping does not belong to this user');
+    if (mapping.buyerId !== buyerId) {
+      throw new ForbiddenException('Mapping does not belong to this buyer');
     }
     return mapping;
   }
 
-  async findOneByUserId(
-    userId: string,
+  async findOneByBuyerId(
+    buyerId: string,
   ): Promise<BuyerStripeCustomerAccountMapping> {
     const mapping =
-      await this.BuyerStripeCustomerAccountMappingRepository.findByUserId(
-        userId,
+      await this.BuyerStripeCustomerAccountMappingRepository.findByBuyerId(
+        buyerId,
       );
     if (!mapping) {
       throw new NotFoundException('Mapping not found');
@@ -59,9 +59,9 @@ export class BuyerStripeCustomerAccountMappingService {
 
   async remove(
     id: string,
-    userId: string,
+    buyerId: string,
   ): Promise<BuyerStripeCustomerAccountMapping> {
-    const mapping = await this.findOne(id, userId);
+    const mapping = await this.findOne(id, buyerId);
     const deletedMapping =
       await this.BuyerStripeCustomerAccountMappingRepository.remove(mapping.id);
     return deletedMapping;

@@ -11,6 +11,12 @@ export interface IJwtPayload {
   email: string;
   userId: string;
   stripeCustomerId: string;
+  buyer: {
+    id: string;
+    payment: {
+      stripeCustomerId: string;
+    };
+  };
   seller: {
     id: string;
     stripeAccountId: string;

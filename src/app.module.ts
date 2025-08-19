@@ -24,6 +24,8 @@ import { SubscriptionModule } from './seller-subscription/sellerSubscription.mod
 import { ProductReviewModule } from './product-review/product-review.module';
 import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
+import { BuyerModule } from './buyer/buyer.module';
+import { SellerShippingModule } from './seller-shipping/seller-shipping.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { CartModule } from './cart/cart.module';
     ProductReviewModule,
     OrderModule,
     CartModule,
+    BuyerModule,
+    SellerShippingModule,
   ],
   controllers: [AppController],
   providers: [

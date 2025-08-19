@@ -34,33 +34,37 @@ model User {
   deletedAt  DateTime? 
 
   // Joining Table
+  Buyer Buyer[]
   Seller Seller[]
-  BuyerStripeCustomerAccountMapping BuyerStripeCustomerAccountMapping[]
-  SellerStripeAccountMapping SellerStripeAccountMapping[]
-
 }
 
 /************************************************************
  *                        Buyer MODELS                      *
  ************************************************************/
+
+model Buyer {
+  id String   @id @default(cuid())
+  userId String @unique
+  address Json?
+  paymentMethod  Json?
+
+   // Joining Table
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  BuyerStripeCustomerAccountMapping BuyerStripeCustomerAccountMapping[]
+}
+
 model BuyerStripeCustomerAccountMapping {
  id String   @id @default(cuid())
- userId String @unique
+ buyerId String @unique
  stripeCustomerId String
  identifyId String
  createdAt DateTime @default(now())
 
   // Joining Table
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buyer      Buyer @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 }
 
-// model BuyerShippingAddress {
-//   id String   @id @default(cuid())
-//   userId String @unique
 
-//    // Joining Table
-//   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-// }
 
 
 /************************************************************
@@ -100,7 +104,6 @@ model SellerStripeAccountMapping {
 
   // Joining Table
   seller    Seller  @relation(fields: [sellerId], references: [id], onDelete:Cascade)
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Shop {
@@ -118,9 +121,7 @@ model Shop {
 
   // Joining Table
   seller      Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  CartItem    CartItem[]
-
-  Product Product[]
+  product Product[]
 }
 
 
@@ -200,6 +201,51 @@ model SellerSubscriptionMapping {
 }
 
 
+model SellerShipping {
+  id        String                   @id @default(uuid())
+  shopId    String
+  sellerId  String
+  shippingProfiles SellerShippingProfile[]
+  freeShippingOption Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SellerShippingProfile {
+  id                 String        @id @default(uuid())
+  shopId             String
+  sellerId           String
+  sellerShippingId   String
+  name               String
+  feeType            SellerShippingFeeType
+  feeAmount          Float
+  currency           String
+  originCountry      String
+  originZip          String
+  buyerPickUp        Boolean?      
+  buyerPickUpLocation String?
+  supportedRegions   String[]      // array of country codes or regions
+  estimatedDeliveryMinDays Int?
+  estimatedDeliveryMaxDays Int?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Joining Table
+  sellerShipping SellerShipping @relation(fields: [sellerShippingId], references: [id], onDelete: Cascade)
+
+  product Product[]
+}
+
+
+enum SellerShippingFeeType {
+  flat
+  per_item
+  by_weight
+  free
+}
+
+
 /************************************************************
  *                       PRODUCT MODELS                     *
  ************************************************************/
@@ -219,11 +265,14 @@ model Product {
   isActive       Boolean
   isApproved     Boolean   @default(false)
 
+  sellerShippingProfileid String?
+
   // JSON for complex types
   variants       Json
   discount       Json
-
   categories     Json
+
+
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -232,6 +281,10 @@ model Product {
   
   // Joining Table
   shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  // join table
+  sellerShippingProfile SellerShippingProfile?  @relation(fields: [sellerShippingProfileid], references: [id])
+
 
 }
 
@@ -287,7 +340,7 @@ model Order {
   eventRecords   OrderEventRecord[]
   attributes     Json
 
-  Cart Cart[]
+  cart Cart[]
 }
 enum OrderPaymentStatus {
   PENDING
@@ -387,5 +440,4 @@ model CartItem {
 
   // Joining Table
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
 }
