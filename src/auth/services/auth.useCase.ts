@@ -21,7 +21,8 @@ import { BuyerStripeCustomerAccountMapping } from 'src/stripe/entities/buyer-cus
 import { CreateBuyerStripeCustomerAccountMappingDto } from 'src/stripe/dto/create-buyer-account-mapping.dto';
 import { SellerStripeAccountMapping } from 'src/stripe/entities/seller-account-mapping.entity';
 import { Buyer } from 'src/buyer/entities/buyer.entity';
-import { BuyerService } from 'src/buyer/buyer.service';
+import { BuyerService } from 'src/buyer/services/buyer.service';
+import { UpdateBuyerDto } from 'src/buyer/dto/update-buyer.dto';
 
 @Injectable()
 export class AuthUseCase {
@@ -164,6 +165,21 @@ export class AuthUseCase {
 
       // update buyer account
 
+      await this.buyerService.update(
+        buyer.id,
+        user.id,
+        Object.assign(
+          new UpdateBuyerDto(),{
+            paymentMethod : {
+              stripe:{
+                stripeCustomerId:stripeCustomer.id
+              }
+            }
+          }
+        )
+      )
+      console.log('update Mapping to buy account');
+
     }
     /*************************************
      *     Stripe Seller Account Setup    *
@@ -192,13 +208,10 @@ export class AuthUseCase {
     return {
       email,
       userId: user.id,
-      stripeCustomerId: BuyerStripeCustomerAccountMapping.stripeCustomerId,
       buyer: {
-        id: string;
-        payment: {
-          stripeCustomerId: string;
-        };
-      };
+        id: buyer.id,
+        stripeCustomerId: BuyerStripeCustomerAccountMapping.stripeCustomerId,
+      },
       seller: sellerStripeAccountMapping
         ? {
             id: sellerStripeAccountMapping.sellerId,

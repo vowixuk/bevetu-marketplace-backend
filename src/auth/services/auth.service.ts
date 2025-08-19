@@ -10,12 +10,9 @@ import { CookieOptions } from 'express';
 export interface IJwtPayload {
   email: string;
   userId: string;
-  stripeCustomerId: string;
   buyer: {
     id: string;
-    payment: {
-      stripeCustomerId: string;
-    };
+    stripeCustomerId: string;
   };
   seller: {
     id: string;

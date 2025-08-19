@@ -9,7 +9,7 @@ export class CreateCheckoutSessionDto {
     email: string;
     userId: string;
     productCode: string;
-    seatNo?: string;
+    quantity?: string;
     action: string;
     [key: string]: any; // Allows other optional metadata fields
   };

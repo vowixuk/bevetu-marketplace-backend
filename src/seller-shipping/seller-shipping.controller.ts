@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SellerShippingService } from './seller-shipping.service';
+import { SellerShippingService } from './services/seller-shipping.service';
+// import { SellerShippingService } from './seller-shipping.service';
 // import { CreateSellerShippingDto } from './dto/create-seller-shipping.dto';
 // import { UpdateSellerShippingDto } from './dto/update-seller-shipping.dto';
 

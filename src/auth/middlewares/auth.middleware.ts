@@ -25,11 +25,8 @@ export interface IRequest extends Request {
     origin: 'SELLER_URL' | 'BUYER_URL' | 'ADMIN_URL';
     buyer: {
       id: string;
-      payment: {
-        stripeCustomerId: string;
-      };
+      stripeCustomerId: string;
     };
-
     seller: {
       id: string;
       stripeAccountId: string;
@@ -180,7 +177,7 @@ export class AuthMiddleware implements NestMiddleware {
       email,
       accessToken,
       origin,
-      stripeCustomerId: marketplaceSetupData.buyer,
+      buyer: marketplaceSetupData.buyer,
 
       seller: marketplaceSetupData.seller,
     };

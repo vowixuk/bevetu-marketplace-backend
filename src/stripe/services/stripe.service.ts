@@ -27,7 +27,6 @@ export class StripeService {
    */
   async createStripeCustomer(
     userId: string,
-    buyerId: string,
     email: string,
     platform?: string,
   ): Promise<Stripe.Customer> {
@@ -35,7 +34,6 @@ export class StripeService {
       email,
       metadata: {
         userId,
-        buyerId,
         ...(platform ? { platform } : {}),
       },
     });
@@ -55,6 +53,7 @@ export class StripeService {
 
   async createCheckoutSession(
     userId: string,
+    buyerId: string,
     email: string,
     createCheckoutSessionDto: CreateCheckoutSessionDto,
   ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
