@@ -5,11 +5,7 @@
 
 import 'dotenv/config';
 import Stripe from 'stripe';
-import {
-  Products,
-  IProductCode,
-  IProduct,
-} from '../seller-subscription/entities/vo/product.vo';
+import { Products } from '../seller-subscription/entities/vo/product.vo';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',

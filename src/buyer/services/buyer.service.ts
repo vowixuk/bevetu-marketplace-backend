@@ -54,10 +54,10 @@ export class BuyerService {
 
     const updatedBuyer = new Buyer({
       ...existingBuyer,
-      ...(updateDto.address ? { address: updateDto.address } : {}),
-      ...(updateDto.paymentMethod
-        ? { paymentMethod: updateDto.paymentMethod }
-        : {}),
+      ...(updateDto.address && { address: updateDto.address }),
+      ...(updateDto.paymentMethod && {
+        paymentMethod: updateDto.paymentMethod,
+      }),
     });
 
     return this.buyerRepository.update(updatedBuyer);

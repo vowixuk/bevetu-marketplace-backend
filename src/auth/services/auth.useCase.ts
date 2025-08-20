@@ -23,11 +23,13 @@ import { SellerStripeAccountMapping } from 'src/stripe/entities/seller-account-m
 import { Buyer } from 'src/buyer/entities/buyer.entity';
 import { BuyerService } from 'src/buyer/services/buyer.service';
 import { UpdateBuyerDto } from 'src/buyer/dto/update-buyer.dto';
+import { BuyerUseCase } from 'src/buyer/services/buyer.usecase';
 
 @Injectable()
 export class AuthUseCase {
   constructor(
     private readonly jwtService: JwtService,
+    private readonly buyerUseCase: BuyerUseCase,
     private readonly stripeService: StripeService,
     private readonly userService: UserService,
     private readonly buyerService: BuyerService,
@@ -72,106 +74,25 @@ export class AuthUseCase {
     /*************************************
      *      Buyer Account Setup    *
      * ***********************************/
-    /**
-     * Check if buyer account is setup
-     */
-    // Step 3 - use the user id - check if buyer  account created
-    let buyer: Buyer | null = null;
-    try {
-      buyer = await this.buyerService.findByUserId(user.id);
-      console.log('has buyer account');
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        console.log('No Buyer account');
-        buyer = null;
-      } else {
-        throw new InternalServerErrorException(
-          'Error when fetching buyer account',
-          {
-            cause: error,
-          },
-        );
-      }
-    }
-    // Step 4 - if buyer account not created - create one.
-    if (buyer == null) {
-      try {
-        buyer = await this.buyerService.create(user.id);
-        console.log('Created new buyerAccount');
-      } catch (error) {
-        console.log('Error new create buyer account');
-        throw new InternalServerErrorException(
-          'Error when fetching buyer account',
-          {
-            cause: error,
-          },
-        );
-      }
-    }
 
-    /**
-     * Up to this point, buyer account must exsit.
-     * Now check if stripe customer account.
-     * One user acount has only one stripe customer account
-     * A Stripe customer account is created for each user
-     * when the first time they access the system, to facilitate purchases.
-     */
-    // Step 5 - use the user id - check if buyer stripe account created
-    let BuyerStripeCustomerAccountMapping: BuyerStripeCustomerAccountMapping | null =
-      null;
+    let buyerAccountSetUpData: {
+      buyer: Buyer;
+      buyerStripeCustomerAccountMapping: BuyerStripeCustomerAccountMapping;
+    } | null = null;
     try {
-      BuyerStripeCustomerAccountMapping =
-        await this.buyerAccountMappingService.findOneByBuyerId(buyer.id);
-      console.log('has BuyerStripeCustomerAccountMapping');
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        console.log('No BuyerStripeCustomerAccountMapping');
-        BuyerStripeCustomerAccountMapping = null;
-      } else {
-        throw new InternalServerErrorException(
-          'Error when fetching buyer mapping',
-          {
-            cause: error,
-          },
-        );
-      }
-    }
-    // Step 4 - if not created - create one from stripe.
-    if (BuyerStripeCustomerAccountMapping == null) {
-      // create in stripe account
-      const stripeCustomer = await this.stripeService.createStripeCustomer(
+      buyerAccountSetUpData = await this.buyerUseCase.setUpBuyerAccount(
         user.id,
         email,
-        'marketplace',
       );
-      console.log('Created new stripeCustomer');
-
-      // create in stripe - db mapping
-      BuyerStripeCustomerAccountMapping =
-        await this.buyerAccountMappingService.create(
-          buyer.id,
-          Object.assign(new CreateBuyerStripeCustomerAccountMappingDto(), {
-            stripeCustomerId: stripeCustomer.id,
-            identifyId: stripeCustomer.id,
-          }),
-        );
-      console.log('Created new BuyerStripeCustomerAccountMapping');
-
-      // update buyer account
-
-      await this.buyerService.update(
-        buyer.id,
-        user.id,
-        Object.assign(new UpdateBuyerDto(), {
-          paymentMethod: {
-            stripe: {
-              stripeCustomerId: stripeCustomer.id,
-            },
-          },
-        }),
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error when fetching buyer account',
+        {
+          cause: error,
+        },
       );
-      console.log('update Mapping to buy account');
     }
+
     /*************************************
      *     Stripe Seller Account Setup    *
      * ***********************************/
@@ -200,8 +121,10 @@ export class AuthUseCase {
       email,
       userId: user.id,
       buyer: {
-        id: buyer.id,
-        stripeCustomerId: BuyerStripeCustomerAccountMapping.stripeCustomerId,
+        id: buyerAccountSetUpData.buyer.id,
+        stripeCustomerId:
+          buyerAccountSetUpData.buyerStripeCustomerAccountMapping
+            .stripeCustomerId,
       },
       seller: sellerStripeAccountMapping
         ? {

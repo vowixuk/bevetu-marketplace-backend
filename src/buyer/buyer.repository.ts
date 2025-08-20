@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Buyer } from './entities/buyer.entity';
-import { Buyer as PrismaBuyer } from '@prisma/client';
+import { Prisma, Buyer as PrismaBuyer } from '@prisma/client';
 
 @Injectable()
 export class BuyerRepository {
@@ -42,9 +42,13 @@ export class BuyerRepository {
       await this.prisma.buyer.update({
         where: { id: buyer.id },
         data: {
-          userId: buyer.userId,
-          ...(buyer.address ? buyer.address : {}),
-          ...(buyer.paymentMethod ? buyer.paymentMethod : {}),
+          ...(buyer.address !== undefined && {
+            address: buyer.address as unknown as Prisma.InputJsonValue,
+          }),
+          ...(buyer.paymentMethod !== undefined && {
+            paymentMethod:
+              buyer.paymentMethod as unknown as Prisma.InputJsonValue,
+          }),
         },
       }),
     ) as Buyer;

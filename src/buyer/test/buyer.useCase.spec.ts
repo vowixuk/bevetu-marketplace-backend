@@ -1,7 +1,7 @@
 /**
  *  To run this test solely:
  *
- *  npm run test -- subscription/test/subscription.service.spec.ts
+ *  npm run test -- buyer/test/buyer.useCase.spec.ts
  */
 
 import { CacheModule } from '@nestjs/cache-manager';
@@ -34,18 +34,28 @@ import {
   createTestUser_2,
   removeTestingUser,
 } from '../../../test/helper/user-helper';
+import { Buyer } from '../entities/buyer.entity';
+import { CreateBuyerStripeCustomerAccountMappingDto } from '../../stripe/dto/create-buyer-account-mapping.dto';
+import { BuyerStripeCustomerAccountMapping } from '../../stripe/entities/buyer-customer-account-mapping.entity';
+import { BuyerStripeCustomerAccountMappingService } from '../../stripe/services/buyer-account-mapping.service';
+import { UpdateBuyerDto } from '../dto/update-buyer.dto';
+import { BuyerUseCase } from '../services/buyer.usecase';
+import { BuyerModule } from '../buyer.module';
+import { BuyerService } from '../services/buyer.service';
+import { BuyerRepository } from '../buyer.repository';
 
-describe('SubscriptionService', () => {
-  let sellerService: SellerService;
+describe('BuyerUseCase', () => {
+  // Service instances
   let userService: UserService;
-  let sellerUseCase: SellerUseCase;
-  let testUser: User;
-  let stripeSellerAccountId: string;
-  let sellerAccountId: string;
-  let seller: Omit<Seller, 'userId'>;
+  let buyerService: BuyerService;
+  let buyerUseCase: BuyerUseCase;
+  let buyerStripeAccountMappingService: BuyerStripeCustomerAccountMappingService;
   let stripeService: StripeService;
-  let anotherUser: User;
-  let sellerStripeAccountMappingService: SellerStripeAccountMappingService;
+
+  // Global variable used in the test
+  let testUser: User;
+  let buyerStripeCustomerId: string | null;
+  let buyer: Buyer;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -59,6 +69,7 @@ describe('SubscriptionService', () => {
         UserModule,
         StripeModule,
         SubscriptionModule,
+        BuyerModule,
       ],
       providers: [
         SellerService,
@@ -69,80 +80,57 @@ describe('SubscriptionService', () => {
         ShopService,
         ShopRepository,
         SellerStripeAccountMappingRepository,
+        BuyerUseCase,
+        BuyerService,
+        BuyerRepository,
       ],
     }).compile();
 
-    sellerService = module.get<SellerService>(SellerService);
-    sellerUseCase = module.get<SellerUseCase>(SellerUseCase);
+    buyerService = module.get<BuyerService>(BuyerService);
+    buyerUseCase = module.get<BuyerUseCase>(BuyerUseCase);
     stripeService = module.get<StripeService>(StripeService);
     userService = module.get<UserService>(UserService);
-    sellerStripeAccountMappingService =
-      module.get<SellerStripeAccountMappingService>(
-        SellerStripeAccountMappingService,
+    buyerStripeAccountMappingService =
+      module.get<BuyerStripeCustomerAccountMappingService>(
+        BuyerStripeCustomerAccountMappingService,
       );
 
     // Create a dummy user
     testUser = await createTestUser_1(userService);
-    anotherUser = await createTestUser_2(userService);
-
-    // Create a buyer account for the user
-    buyer = await this.buyerService.create(user.id);
-    stripeCustomer = await this.stripeService.createStripeCustomer(
-      user.id,
-      email,
-      'marketplace',
-    );
-
-     BuyerStripeCustomerAccountMapping =
-            await this.buyerAccountMappingService.create(
-              buyer.id,
-              Object.assign(new CreateBuyerStripeCustomerAccountMappingDto(), {
-                stripeCustomerId: stripeCustomer.id,
-                identifyId: stripeCustomer.id,
-              }),
-            );
-
-             await this.buyerService.update(
-                    buyer.id,
-                    user.id,
-                    Object.assign(new UpdateBuyerDto(), {
-                      paymentMethod: {
-                        stripe: {
-                          stripeCustomerId: stripeCustomer.id,
-                        },
-                      },
-                    }),
-                  );
-
-    // Create a seller account for the user
-    stripeSellerAccountId = await sellerUseCase.createSellerConnectedAccount(
-      testUser.id,
-      Object.assign(new CreateSellerConnectAccountDto(), {
-        country: 'GB',
-        defaultCurrency: 'GBP',
-      }),
-    );
-
-    const sellerStripeAccountMapping =
-      await sellerStripeAccountMappingService.findOneByUserId(testUser.id);
-    sellerAccountId = sellerStripeAccountMapping.sellerId;
-    seller = await sellerService.findOne(testUser.id, sellerAccountId);
+    buyerStripeCustomerId = null;
   });
 
   afterAll(async () => {
-    await removeTestingUser(userService, testUser.id);
-    await removeTestingUser(userService, anotherUser.id);
-    if (stripeSellerAccountId) {
-      await stripeService.removeAccount(stripeSellerAccountId);
-      console.log('Seller account removed from stripe');
+    if (testUser && testUser.id) {
+      await removeTestingUser(userService, testUser.id);
+    }
+
+    if (buyerStripeCustomerId) {
+      await stripeService.removeStripeCustomer(buyerStripeCustomerId);
+      console.log(
+        `customer account ${buyerStripeCustomerId} removed from stripe`,
+      );
     }
   });
 
-  it('test 1 - should be defined', () => {
-    expect(sellerService).toBeDefined();
-    expect(sellerUseCase).toBeDefined();
-    expect(userService).toBeDefined();
-    expect(sellerStripeAccountMappingService).toBeDefined();
+  it('test 1 - should be defined the testUser', () => {
+    expect(testUser.email).toBeDefined();
+    expect(testUser.id).toBeDefined();
+  });
+
+  it('test 2 - should be able to go through the buy account set up process', async () => {
+    const { buyer: _b, buyerStripeCustomerAccountMapping: _bscam } =
+      await buyerUseCase.setUpBuyerAccount(testUser.id, testUser.email);
+
+    expect(_b).toBeDefined();
+    expect(_bscam).toBeDefined();
+    expect(typeof _bscam.stripeCustomerId).toBe('string');
+
+    buyerStripeCustomerId = _bscam.stripeCustomerId;
+    buyer = _b;
+
+    console.log(_b, '<<_b');
+    console.log(_bscam, '<<buyerStripeCustomerAccountMapping');
   });
 
   // it('test 2 - should be able to create a seller account record in database', async () => {});

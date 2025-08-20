@@ -8,16 +8,11 @@ import {
   InternalServerErrorException,
   UseGuards,
 } from '@nestjs/common';
-import { TestEnvironmentGuard } from 'src/share/guards/testing-environmet.guard';
-import { CreateAccountSessionDto } from 'src/seller/dto/create-account-session.dto';
+import { TestEnvironmentGuard } from '../../share/guards/testing-environmet.guard';
+import { CreateAccountSessionDto } from '../../seller/dto/create-account-session.dto';
 import Stripe from 'stripe';
 import { CreateCheckoutSessionDto } from '../dto/create-checkout-session.dto';
 import { PreviewProrationAmountDto } from '../dto/preview-proation-amount.dto';
-import {
-  Products,
-  IProductCode,
-} from '../../seller-subscription/entities/vo/product.vo';
-
 
 @Injectable()
 export class StripeService {
@@ -46,6 +41,26 @@ export class StripeService {
         ...(attributes && attributes),
       },
     });
+  }
+
+  /**
+   *  Remove a Stripe customer for user/buyer
+   */
+  async removeStripeCustomer(
+    stripeCustomerId: string,
+  ): Promise<Stripe.DeletedCustomer> {
+    try {
+      return await this.stripe.customers.del(stripeCustomerId);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(
+          `❌ Failed to delete Stripe customer ${stripeCustomerId}: ${error.message}`,
+        );
+      }
+      throw new InternalServerErrorException(
+        'Failed to remove Stripe customer',
+      );
+    }
   }
 
   /* (End) ----- Stripe Onboarding ----- (End) */
@@ -472,6 +487,33 @@ export class StripeService {
     } catch (error: any) {
       console.error('Error creating Stripe account:', error);
       throw new InternalServerErrorException('Failed to create Stripe account');
+    }
+  }
+
+  /**
+   *  Remove a connected account for sellers
+   */
+  async removeAccount(accountId: string) {
+    try {
+      const deleted = await this.stripe.accounts.del(accountId);
+
+      if (!deleted?.deleted) {
+        throw new InternalServerErrorException(
+          `Stripe did not confirm deletion of account: ${accountId}`,
+        );
+      }
+
+      return deleted;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(
+          `Error deleting Stripe account ${accountId}:`,
+          error.message,
+        );
+      } else {
+        console.error(`Error deleting Stripe account ${accountId}:`, error);
+      }
+      throw new InternalServerErrorException('Failed to delete Stripe account');
     }
   }
   /**

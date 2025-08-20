@@ -2,13 +2,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateSellerDto } from '../dto/create-seller.dto';
 import { CreateSellerConnectAccountDto } from '../dto/create-seller-connected-account.dto';
-import { StripeService } from 'src/stripe/services/stripe.service';
+import { StripeService } from '../../stripe/services/stripe.service';
 import { SellerService } from './seller.service';
-import { ShopService } from 'src/shop/shop.service';
+import { ShopService } from '../../shop/shop.service';
 import { SellerStripeAccountMapping } from '@prisma/client';
-import { SellerStripeAccountMappingService } from 'src/stripe/services/seller-account-mapping.service';
+import { SellerStripeAccountMappingService } from '../../stripe/services/seller-account-mapping.service';
 import { CreateAccountSessionDto } from '../dto/create-account-session.dto';
-import { CreateSellerStripeAccountMappingDto } from 'src/stripe/dto/create-seller-account-mapping.dto';
+import { CreateSellerStripeAccountMappingDto } from '../../stripe/dto/create-seller-account-mapping.dto';
 import { UpdateSellerDto } from '../dto/update-seller.dto';
 
 @Injectable()
@@ -32,11 +32,11 @@ export class SellerUseCase {
       createSellerConnectAccountDto.country,
     );
 
-    // Step 2 - Create Seller Account in bevetu (Pending Status)
+    // Step 2 - Create Seller Account in bevetu
     const seller = await this.sellerService.create(
       userId,
       Object.assign(new CreateSellerDto(), {
-        status: 'PENDING',
+        status: 'ACTIVE',
       }),
     );
 
@@ -85,6 +85,8 @@ export class SellerUseCase {
 
   /**
    * Check if the user is fully onboarded
+   * This is to confirm the onbaord flow is fully go throught in frontend
+   * after that
    */
   async checkIsSellerFullyOnBoarded(
     userId: string,
@@ -95,7 +97,6 @@ export class SellerUseCase {
       await this.stripeService.checkIsSellerFullyOnBoarded(sellerAccountId);
 
     if (isFullyOnBoarded) {
-      // Step 2 - Create Seller Account in bevetu (Pending Status)
       const seller = await this.sellerService.update(
         userId,
         sellId,
@@ -106,5 +107,23 @@ export class SellerUseCase {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Check if the user is fully onboarded (MOCK)
+   */
+  async checkIsSellerFullyOnBoardedMock(
+    userId: string,
+    sellId: string,
+    sellerAccountId: string,
+  ): Promise<boolean> {
+    const seller = await this.sellerService.update(
+      userId,
+      sellId,
+      Object.assign(new UpdateSellerDto(), {
+        status: 'ACTIVE',
+      }),
+    );
+    return true;
   }
 }
