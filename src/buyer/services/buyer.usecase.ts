@@ -96,7 +96,7 @@ export class BuyerUseCase {
       const stripeCustomer = await this.stripeService.createStripeCustomer(
         userId,
         email,
-        'marketplace',
+        process.env.PLATFORM || 'NA',
       );
       console.log('Created new stripeCustomer');
 

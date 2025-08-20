@@ -21,7 +21,6 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:stripe": "ts-node -r tsconfig-paths/register src/stripe/stripe.seeding.ts"
-
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.0.1",
@@ -40,6 +39,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.13.0",
+    "puppeteer": "^24.16.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "stripe": "^18.4.0"

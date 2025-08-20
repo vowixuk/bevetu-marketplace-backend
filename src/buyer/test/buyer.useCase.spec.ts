@@ -24,21 +24,15 @@ import { SellerStripeAccountMappingService } from '../../stripe/services/seller-
 import { ShopService } from '../../shop/shop.service';
 import { UserService } from '../../user/user.service';
 
-import { Seller } from '../../seller/entities/seller.entity';
 import { User } from '../../user/entities/user.entity';
 
-import { CreateSellerConnectAccountDto } from '../../seller/dto/create-seller-connected-account.dto';
 
 import {
   createTestUser_1,
-  createTestUser_2,
   removeTestingUser,
 } from '../../../test/helper/user-helper';
 import { Buyer } from '../entities/buyer.entity';
-import { CreateBuyerStripeCustomerAccountMappingDto } from '../../stripe/dto/create-buyer-account-mapping.dto';
-import { BuyerStripeCustomerAccountMapping } from '../../stripe/entities/buyer-customer-account-mapping.entity';
 import { BuyerStripeCustomerAccountMappingService } from '../../stripe/services/buyer-account-mapping.service';
-import { UpdateBuyerDto } from '../dto/update-buyer.dto';
 import { BuyerUseCase } from '../services/buyer.usecase';
 import { BuyerModule } from '../buyer.module';
 import { BuyerService } from '../services/buyer.service';
@@ -55,7 +49,7 @@ describe('BuyerUseCase', () => {
   // Global variable used in the test
   let testUser: User;
   let buyerStripeCustomerId: string | null;
-  let buyer: Buyer;
+  let buyer: Buyer | null;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -98,6 +92,7 @@ describe('BuyerUseCase', () => {
     // Create a dummy user
     testUser = await createTestUser_1(userService);
     buyerStripeCustomerId = null;
+    buyer = null;
   });
 
   afterAll(async () => {
@@ -128,9 +123,6 @@ describe('BuyerUseCase', () => {
 
     buyerStripeCustomerId = _bscam.stripeCustomerId;
     buyer = _b;
-
-    console.log(_b, '<<_b');
-    console.log(_bscam, '<<buyerStripeCustomerAccountMapping');
   });
 
   // it('test 2 - should be able to create a seller account record in database', async () => {});

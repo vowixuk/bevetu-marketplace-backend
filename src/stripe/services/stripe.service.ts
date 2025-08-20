@@ -76,9 +76,7 @@ export class StripeService {
    * *********************************************************************/
 
   async createCheckoutSession(
-    userId: string,
-    buyerId: string,
-    email: string,
+    stripeCustomerId: string,
     createCheckoutSessionDto: CreateCheckoutSessionDto,
   ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
     try {
@@ -91,9 +89,6 @@ export class StripeService {
         promotionCode,
         metadata,
       } = createCheckoutSessionDto;
-
-      // Ensure customer exists
-      const customer = await this.createStripeCustomer(userId, email);
 
       // Create the checkout session
       const session = await this.stripe.checkout.sessions.create({
@@ -112,7 +107,7 @@ export class StripeService {
           ? [{ promotion_code: promotionCode }]
           : undefined, // apply if present
         metadata,
-        customer: customer.id,
+        customer: stripeCustomerId,
       });
 
       return session;
@@ -400,24 +395,70 @@ export class StripeService {
     }
   }
 
-  // async getNextPaymentDetails(
-  //   stripeCustomerId: string,
-  // ): Promise<{ nextPaymentDate: Date; nextPaymentAmount: number }> {
-  //   try {
-  //     const upcomingInvoice = await this.stripe.invoices.retrieveUpcoming({
-  //       customer: stripeCustomerId,
-  //     });
+  async getSubscriptionDetailsByCustomerId(stripeCustomerId: string) {
+    const subscriptions = await this.stripe.subscriptions.list({
+      customer: stripeCustomerId,
+      limit: 1,
+    });
 
-  //     const nextPaymentDate = new Date(upcomingInvoice.created * 1000); // Convert timestamp to Date object
-  //     const nextPaymentAmount = upcomingInvoice.amount_due / 100; // Amount is in cents, convert to dollars
-  //     return {
-  //       nextPaymentDate: nextPaymentDate,
-  //       nextPaymentAmount: nextPaymentAmount,
-  //     };
-  //   } catch (error) {
-  //     this.stripeException(error);
-  //   }
-  // }
+    if (!subscriptions.data.length) throw new Error('No subscriptions found');
+
+    const subscription = subscriptions.data[0];
+
+    // Then retrieve product separately
+    const firstItem = subscription.items.data[0];
+
+    return {
+      stripeCustomerId: subscription.customer as string,
+      stripeSubscriptionId: subscription.id,
+      stripeSubscriptionItemId: firstItem.id,
+      amount: (firstItem.price.unit_amount ?? 0) / 100,
+      currency: firstItem.price.currency,
+      quantity: firstItem.quantity ?? 1,
+    };
+  }
+
+  async getSubscriptionItemDetails(
+    stripeCustomerId: string,
+    stripeSubscriptionId: string,
+    stripeSubscriptionItemId: string,
+  ) {
+    // Retrieve the specific subscription item
+    const subscriptionItem = await this.stripe.subscriptionItems.retrieve(
+      stripeSubscriptionItemId,
+      { expand: ['price.product'] }, // expand product metadata
+    );
+
+    return {
+      stripeCustomerId,
+      stripeSubscriptionId,
+      stripeSubscriptionItemId: subscriptionItem.id,
+      productCode: (subscriptionItem.price.product as Stripe.Product).metadata
+        .code,
+      amount: (subscriptionItem.price.unit_amount ?? 0) / 100,
+      currency: subscriptionItem.price.currency,
+      quantity: subscriptionItem.quantity ?? 1,
+    };
+  }
+
+  async getNextPaymentDetails(
+    stripeCustomerId: string,
+    stripeSubscriptionId: string,
+  ): Promise<{ nextPaymentDate: Date; nextPaymentAmount: number }> {
+    try {
+      const preview = await this.stripe.invoices.createPreview({
+        customer: stripeCustomerId,
+        subscription: stripeSubscriptionId,
+      });
+
+      const nextPaymentDate = new Date(preview.created * 1000);
+      const nextPaymentAmount = (preview.amount_due ?? 0) / 100;
+
+      return { nextPaymentDate, nextPaymentAmount };
+    } catch (error) {
+      this.stripeException(error);
+    }
+  }
   /* (End) ----- Subscription Management ----- (End) */
   /**/
   /**/

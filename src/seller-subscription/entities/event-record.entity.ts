@@ -11,6 +11,7 @@ export type MetadataSchema = {
     productCode: string;
     quantity: number;
     nextPaymentDate: Date;
+    nextPaymentAmount: Date;
   };
   PENDING_CANCEL: {
     productCode: string;
@@ -25,6 +26,8 @@ export type MetadataSchema = {
     productCode: string;
     paidAt: Date;
     paidAmount: number;
+    nextPaymentDate: Date;
+    nextPaymentAmount: Date;
   };
   EXPIRY: {
     productCode: string;

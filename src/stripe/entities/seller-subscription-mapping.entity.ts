@@ -50,6 +50,6 @@ export class SellerSubscriptionMapping {
 export type StripeSubscriptionItems = {
   stripItemId: string;
   quantity: number;
-  category: 'LISTING_PLAN';
+  category: 'LISTING_SUBSCRIPTION';
   name: IProductCode;
 };

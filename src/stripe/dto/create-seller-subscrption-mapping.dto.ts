@@ -30,7 +30,7 @@ export class StripeSubscriptionItemDto {
   quantity: number;
 
   @IsString()
-  category: 'LISTING_PLAN';
+  category: 'LISTING_SUBSCRIPTION';
 
   @IsString()
   name: IProductCode;

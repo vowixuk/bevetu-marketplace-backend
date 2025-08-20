@@ -11,18 +11,13 @@ import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { IRequest } from '../middlewares/auth.middleware';
 import { UserService } from 'src/user/user.service';
-import { StripeService } from 'src/stripe/services/stripe.service';
 import { IJwtPayload } from './auth.service';
-import { BuyerStripeCustomerAccountMappingService } from 'src/stripe/services/buyer-account-mapping.service';
 import { SellerStripeAccountMappingService } from 'src/stripe/services/seller-account-mapping.service';
 import { User } from 'src/user/entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { BuyerStripeCustomerAccountMapping } from 'src/stripe/entities/buyer-customer-account-mapping.entity';
-import { CreateBuyerStripeCustomerAccountMappingDto } from 'src/stripe/dto/create-buyer-account-mapping.dto';
 import { SellerStripeAccountMapping } from 'src/stripe/entities/seller-account-mapping.entity';
 import { Buyer } from 'src/buyer/entities/buyer.entity';
-import { BuyerService } from 'src/buyer/services/buyer.service';
-import { UpdateBuyerDto } from 'src/buyer/dto/update-buyer.dto';
 import { BuyerUseCase } from 'src/buyer/services/buyer.usecase';
 
 @Injectable()
@@ -30,11 +25,8 @@ export class AuthUseCase {
   constructor(
     private readonly jwtService: JwtService,
     private readonly buyerUseCase: BuyerUseCase,
-    private readonly stripeService: StripeService,
     private readonly userService: UserService,
-    private readonly buyerService: BuyerService,
     private readonly sellAccountMappingService: SellerStripeAccountMappingService,
-    private readonly buyerAccountMappingService: BuyerStripeCustomerAccountMappingService,
   ) {}
 
   async marketplaceAccessSetup(
