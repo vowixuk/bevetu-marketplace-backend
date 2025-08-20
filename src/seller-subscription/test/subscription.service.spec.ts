@@ -43,6 +43,7 @@ import { SellerSubscriptionMappingService } from '../../stripe/services/seller-s
 import { CompleteSellerListingSubscriptionEnrollmentDto } from '../dto/complete-seller-listing-subscription-enrollment.dto';
 import { IProductCode } from '../entities/vo/product.vo';
 import { SellerSubscriptionMappingRepository } from '../../stripe/repositories/seller-subscription-mapping.repository';
+import { ForbiddenException } from '@nestjs/common';
 
 describe('SubscriptionService', () => {
   // Service instances
@@ -282,52 +283,34 @@ describe('SubscriptionService', () => {
     expect(eventRecords![2].type).toBe('PAYMENT_SUCCESS');
   });
 
-  it('test 9 - should not be able to enroll another listing plan via payment link if currently have active listing plan', async () => {}),
+  it('test 5 - should not be able to enroll another listing plan via payment link if currently have active listing plan', async () => {
+    try {
+      await sellerSubscriptionService.getListingSubscriptionPaymentLink(
+        testUser.id,
+        seller!.id,
+        buyerStripeCustomerId!,
+        testUser.email,
+        'DIAMOND_MONTHLY_HKD',
+        null,
+      );
+      fail('Should throw error');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ForbiddenException);
+    }
+  });
 
-  it('test 10 - should be able to upgrade the plan', async () => {}),
+  it('test 6 - should be able to upgrade the plan', async () => {});
 
-  it('test 11 - should be able to downgrade change the plan', async () => {}),
+  it('test 7 - should be able to downgrade change the plan', async () => {});
 
-  it('test 12 - should not be able to change the plan with currency different from the current plan curency', async () => {}),
+  it('test 8 - should not be able to change the plan with currency different from the current plan curency', async () => {});
 
-  it('test 13 - should be able to cancel the plan', async () => {}),
+  it('test 9 - should be able to cancel the plan', async () => {});
 
-  it('test 14 - should be able to restore the cancelling plan', async () => {}),
+  it('test 10 - should be able to restore the cancelling plan', async () => {});
 
-  it('test 15 - should be able to immediately cancel the plan', async () => {}),
+  it('test 11 - should be able to immediately cancel the plan', async () => {});
 
-  it('test 15 - should be able to reactive the cancelled plan', async () => {}),
-
-
-
-
-  // it('test 9 - should be able to create subscriptionMapping record in database Record', async () => {
-  //   const { subscriptionMapping } =
-  //     await subscriptionUseCase.findSubscriptionMappingByBevetuSubscriptionId(
-  //       user.id,
-  //       bevetuSubscriptionId,
-  //     );
-
-  //   expect(subscriptionMapping.bevetuSubscriptionId).toBe(bevetuSubscriptionId);
-  //   expect(subscriptionMapping.stripeCustomerId).toBe(customer.id);
-  //   expect(subscriptionMapping.stripeSubscriptionId).toBe(
-  //     stripeSubscription.id,
-  //   );
-  //   expect(subscriptionMapping.stripeSubscriptionItemId).toBe(
-  //     stripeSubscription.items.data[0].id,
-  //   );
-  // });
-
-  // it('test 10 - should be able to find the bevetuSubscriptionId in the stripe subscription metadata', async () => {
-  //   setTimeout(() => {}, 3000);
-  //   const result = await stripeService.getSubscriptionByEmail(user.email);
-  //   stripeSubscription = result.subscription;
-  //   expect(stripeSubscription.metadata).toEqual({
-  //     bevetuSubscriptionId,
-  //     userId: user.id,
-  //   });
-  // }, 3000);
-  // it('test 3 - should be able to create a seller account mapping record', async () => {});
-  // it('test 4 - should be able to create a seller account in stripe', async () => {});
-  // it('test 5 - should be able to create a shop record in database', async () => {});
+  it('test 12 - should be able to reactive the cancelled plan', async () => {});
+  it('test 13 - should be able to use coupon', async () => {});
 });

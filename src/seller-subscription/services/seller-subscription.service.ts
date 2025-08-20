@@ -104,6 +104,16 @@ export class SellerSubscriptionService {
     productCode: IProductCode,
     promotionCode?: null,
   ): Promise<string> {
+    // Step 1 - Check if the user already has an active subscription
+    const subscriptions = await this.findAllBySellerId(bevetuSellerId);
+    const hasActiveSubscription = subscriptions.some(
+      (sub) => sub.status === 'ACTIVE',
+    );
+    if (hasActiveSubscription) {
+      throw new ForbiddenException('Seller already has an active subscription');
+    }
+
+    // Step 2 - Get Paymentlink
     const stripePriceId = Products[productCode].stripePriceId;
     const session = await this.stripeService.createCheckoutSession(
       stripeCustomerIdOfSeller,
