@@ -20,6 +20,11 @@ export type MetadataSchema = {
     cancelReason: string;
     cancel_at: Date;
   };
+  PENDING_UPDATE: {
+    from: IProduct;
+    to: IProduct;
+    update_at: Date;
+  };
   PAYMENT_FAILED: {
     productCode: string;
     error: string;

@@ -397,6 +397,7 @@ export class SellerSubscriptionService {
     newProductCode: IProductCode,
   ) {
     const {
+      subscription,
       currentProduct,
       newProduct,
       subsriptionMapping,
@@ -417,13 +418,27 @@ export class SellerSubscriptionService {
     await this.subscriptionEventRecordService.create(
       bevetuSubscriptionId,
       Object.assign(new CreateSubscriptionEventRecordDto(), {
-        type: 'UPDATE',
+        type: 'PENDING_UPDATE',
         metadata: {
           from: currentProduct.code,
           to: newProductCode,
-          proration: false,
+          update_at: subscription.nextPaymentDate,
         },
       }),
+    );
+
+    // Step 4 - Add the bevetu's subscription id record in Stripe.
+    const pendingUpdateMetadata = {
+      sellerId,
+      bevetuSubscriptionId,
+      currentProductCode: currentProduct.code,
+      newProductCode,
+    };
+    await this.stripeService.addMetadataToSubscription(
+      subsriptionMapping.stripeSubscriptionId,
+      {
+        pending_update: JSON.stringify(pendingUpdateMetadata),
+      },
     );
 
     return downgadeSubscription;
@@ -554,25 +569,26 @@ export class SellerSubscriptionService {
     newProductCode: IProductCode,
     newStripeSubscriptionItemId: string,
   ) {
-    const {
-      currentProduct,
-      newProduct,
-      mode,
-      subsriptionMapping,
-      stripeSubscriptionItem,
-    } = await this.subscriptionUpdateGuard(
-      sellerId,
-      bevetuSubscriptionId,
+    const { subscription, currentProduct, subsriptionMapping } =
+      await this.subscriptionUpdateGuard(
+        sellerId,
+        bevetuSubscriptionId,
+        newProductCode,
+      );
+
+    // Step 4 - update the new subscription code id subscription record
+    await this.amendSellerSubscriotionItemsProductCodeForListingItemAfterSubscriptionUpdate(
+      subscription,
       newProductCode,
     );
-
+    // Step 5 - update the new subscription items id in Mapper
     await this.amendMappingStripeSubscriotionItemsIdForListingItemAfterSubscriptionUpdate(
       subsriptionMapping,
       newStripeSubscriptionItemId,
       newProductCode,
     );
 
-    // Step 4 - update event records
+    // Step 6 - update event records
     await this.subscriptionEventRecordService.create(
       bevetuSubscriptionId,
       Object.assign(new CreateSubscriptionEventRecordDto(), {
@@ -580,9 +596,14 @@ export class SellerSubscriptionService {
         metadata: {
           from: currentProduct.code,
           to: newProductCode,
-          proration: true,
+          proration: false,
         },
       }),
+    );
+
+    await this.stripeService.removeMetadataFromSubscription(
+      subsriptionMapping.stripeSubscriptionId,
+      'pending_update',
     );
   }
 

@@ -197,7 +197,6 @@ export class StripeService {
           billing_cycle_anchor: 'unchanged', // change takes effect next cycle
         },
       );
-
       return updatedSubscription;
     } catch (error) {
       this.stripeException(error);
@@ -425,6 +424,7 @@ export class StripeService {
       amount: (firstItem.price.unit_amount ?? 0) / 100,
       currency: firstItem.price.currency,
       quantity: firstItem.quantity ?? 1,
+      metadata: subscription.metadata,
     };
   }
 

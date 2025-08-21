@@ -440,7 +440,179 @@ describe('SubscriptionService', () => {
     );
   });
 
-  it('test 9 - should be able to downgrade change the plan', async () => {});
+  it('test 9 - should be able to downgrade change the plan', async () => {
+    //from "DIAMOND_MONTHLY_GBP"
+    //to "BRONZE_MONTHLY_GBP"
+
+    // ------------------------------
+    // Setup: Get existing subscription & mapping
+    // ------------------------------
+    const oldMapping =
+      await sellerSubscriptionMappingService.findByBevetuSubscriptionId(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    const oldItemInMapping = oldMapping.stripeSubscriptionItems.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
+
+    const oldSubscription = await sellerSubscriptionService.findOne(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+    const oldItemInSubscription = oldSubscription.items.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
+
+    // ------------------------------
+    // Action: Downgrade subscription
+    // ------------------------------
+    await sellerSubscriptionService.downgradeListingSubscription(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+      'BRONZE_MONTHLY_GBP',
+    );
+
+    // ------------------------------
+    // Retrieve updated subscription & mapping
+    // ------------------------------
+    let subscription = await sellerSubscriptionService.findOne(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+
+    let _evetrecord = subscription.eventRecords?.find(
+      (e) => e.type == 'PENDING_UPDATE',
+    );
+    expect(_evetrecord!.metadata!.from).toBe('DIAMOND_MONTHLY_GBP');
+    expect(_evetrecord!.metadata!.to).toBe('BRONZE_MONTHLY_GBP');
+
+    let mapping =
+      await sellerSubscriptionMappingService.findByBevetuSubscriptionId(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+    // No change yet as not effective immediately
+    expect(mapping).toEqual(oldMapping);
+
+    // ------------------------------
+    // Check if stripe updated
+    // ------------------------------
+    const stripeSubscription =
+      await stripeService.getSubscriptionDetailsByCustomerId(
+        buyerStripeCustomerId!,
+      );
+
+    const metadata = stripeSubscription.metadata;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const pendingUpdate = JSON.parse(metadata.pending_update);
+    expect(pendingUpdate).toEqual({
+      sellerId: seller!.id,
+      bevetuSubscriptionId: bevetuSellerSubscriptionId,
+      currentProductCode: 'DIAMOND_MONTHLY_GBP',
+      newProductCode: 'BRONZE_MONTHLY_GBP',
+    });
+
+    // ------------------------------
+    // Manually triggering webhook update
+    // ------------------------------
+    const newStripeSubscriptionItemId = 'Dummy_newStripeSubscriptionItemId';
+    await sellerSubscriptionService.completeDowngradeListingSubscription(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      pendingUpdate.sellerId,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      pendingUpdate.bevetuSubscriptionId,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      pendingUpdate.newProductCode,
+      newStripeSubscriptionItemId,
+    );
+
+    // ------------------------------
+    // Retrieve updated subscription & mapping
+    // ------------------------------
+    subscription = await sellerSubscriptionService.findOne(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+
+    mapping = await sellerSubscriptionMappingService.findByBevetuSubscriptionId(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+
+    // ------------------------------
+    // Sort events by creation time
+    // ------------------------------
+    const sortedEvents = subscription.eventRecords!.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+
+    // ------------------------------
+    // Assertions
+    // ------------------------------
+
+    // 1. Should have 6 events
+    expect(sortedEvents).toHaveLength(8);
+
+    // 2. Last three events should be UPDATE, REFUND, PAYMENT_SUCCESS
+    const lastThreeTypes = sortedEvents.slice(-2).map((e) => e.type);
+    expect(lastThreeTypes).toEqual(['PENDING_UPDATE', 'UPDATE']);
+
+    // 3. Check UPDATE event metadata
+    const updateEvents = subscription.eventRecords?.filter(
+      (e) => e.type == 'UPDATE',
+    );
+
+    const mostRecentUpdate = updateEvents!.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    )[0];
+
+    expect(updateEvents).toHaveLength(2);
+    expect(mostRecentUpdate.metadata!.from).toBe('DIAMOND_MONTHLY_GBP');
+    expect(mostRecentUpdate.metadata!.to).toBe('BRONZE_MONTHLY_GBP');
+    expect(mostRecentUpdate.metadata!.proration).toBe(false);
+
+    // 6. Check subscription mapping update
+    const newItemInMapping = mapping.stripeSubscriptionItems.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
+
+    expect(newItemInMapping?.productCode).not.toBe(
+      oldItemInMapping?.productCode,
+    );
+    expect(newItemInMapping?.stripItemId).toBe(newStripeSubscriptionItemId);
+
+    // 7. Check subscription update
+    const newItemInSubscription = subscription.items.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
+
+    expect(newItemInSubscription?.productCode).not.toBe(
+      oldItemInSubscription?.productCode,
+    );
+    expect(newItemInSubscription?.productCode).toBe('BRONZE_MONTHLY_GBP');
+
+
+    // 9. Check if the stripe subscription has metadata removed:
+    const stripeSubscription2 =
+      await stripeService.getSubscriptionDetailsByCustomerId(
+        buyerStripeCustomerId!,
+      );
+
+    // Stripe metadata is usually an object, not a JSON string, so no need to parse
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const metadata2 = stripeSubscription2.metadata;
+
+    // pending_update should be removed (undefined) or null
+    expect(
+      metadata2.pending_update === null ||
+        metadata2.pending_update === undefined,
+    ).toBe(true);
+
+    // bevetuSubscriptionId should still exist
+    expect(metadata2.bevetuSubscriptionId).toBe(bevetuSellerSubscriptionId!);
+  });
 
   // it('test 8 - should not be able to change the plan with currency different from the current plan curency', async () => {});
 
