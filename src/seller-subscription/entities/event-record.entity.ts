@@ -1,3 +1,5 @@
+import { IProduct } from './vo/product.vo';
+
 export type MetadataSchema = {
   CREATE: {
     productCode: string;
@@ -29,6 +31,16 @@ export type MetadataSchema = {
     nextPaymentDate: Date;
     nextPaymentAmount: Date;
   };
+  REFUND: {
+    refundReason: string;
+    amount: number;
+  };
+
+  UPDATE: {
+    from: IProduct;
+    to: IProduct;
+    proration: boolean;
+  };
   EXPIRY: {
     productCode: string;
     productName: string;
@@ -48,7 +60,7 @@ export type MetadataSchema = {
   /** Unused so far */
   ERROR: { [key: string]: any };
   OTHER: { [key: string]: any };
-  REFUND: null;
+
   MODE_CHANGE: null;
 };
 

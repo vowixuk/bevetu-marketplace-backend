@@ -35,7 +35,7 @@ export class SellerSubscription {
 export type subscriptionItems = {
   quantity: number;
   category: 'LISTING_SUBSCRIPTION';
-  name: IProductCode;
+  productCode: IProductCode;
 };
 
 

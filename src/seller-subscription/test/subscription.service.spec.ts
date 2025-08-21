@@ -136,16 +136,16 @@ describe('SubscriptionService', () => {
     testUser = await createTestUser_1(userService);
 
     // Create a buyer account for the user
-    const buyerSetup = await buyerUseCase.setUpBuyerAccount(
+    const buyerAccountSetup = await buyerUseCase.setUpBuyerAccount(
       testUser.id,
       testUser.email,
     );
 
-    buyer = buyerSetup.buyer;
+    buyer = buyerAccountSetup.buyer;
     buyerStripeCustomerId =
-      buyerSetup.buyerStripeCustomerAccountMapping.stripeCustomerId;
+      buyerAccountSetup.buyerStripeCustomerAccountMapping.stripeCustomerId;
 
-    // Create a seller account for the user
+    // Create a seller stripe account for the user
     sellerStripeAccountId = await sellerUseCase.createSellerConnectedAccount(
       testUser.id,
       Object.assign(new CreateSellerConnectAccountDto(), {
@@ -270,11 +270,13 @@ describe('SubscriptionService', () => {
     );
 
     expect(sellerSubscription.status).toBe('ACTIVE');
-    expect(sellerSubscription.items).toEqual({
-      name: productCode,
-      category: 'LISTING_SUBSCRIPTION',
-      quantity: 1,
-    });
+    expect(sellerSubscription.items).toEqual([
+      {
+        category: 'LISTING_SUBSCRIPTION',
+        productCode: 'SILVER_MONTHLY_GBP',
+        quantity: 1,
+      },
+    ]);
     expect(sellerSubscription.eventRecords).toHaveLength(3);
 
     const eventRecords = sellerSubscription.eventRecords;
@@ -299,18 +301,155 @@ describe('SubscriptionService', () => {
     }
   });
 
-  it('test 6 - should be able to upgrade the plan', async () => {});
+  it('test 6 - should throw error if change to other currency plan', async () => {
+    try {
+      await sellerSubscriptionService.subscriptionUpdateGuard(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+        'DIAMOND_MONTHLY_HKD',
+      );
+    } catch (error) {
+      expect(error).toBeInstanceOf(ForbiddenException);
+    }
+  });
 
-  it('test 7 - should be able to downgrade change the plan', async () => {});
+  it('test 7 - should be able to view the propration amount when update plan to higher price plan', async () => {
+    const proation = await sellerSubscriptionService.previewProrationAmount(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+      'DIAMOND_MONTHLY_GBP',
+    );
 
-  it('test 8 - should not be able to change the plan with currency different from the current plan curency', async () => {});
+    expect(proation.prorationPeriod?.start).toBeInstanceOf(Date);
+    expect(proation.prorationPeriod?.end).toBeInstanceOf(Date);
+    expect(proation.nextPaymentPeriod?.end).toBeInstanceOf(Date);
+    expect(proation.nextPaymentPeriod?.end).toBeInstanceOf(Date);
+    expect(proation.totalRefund).toBe(
+      0 - Number(process.env.SILVER_MONTHLY_GBP_PRICE!),
+    );
+    expect(proation.totalCharge).toBe(
+      Number(process.env.DIAMOND_MONTHLY_GBP_PRICE!),
+    );
+    expect(proation.nextPaymentQty).toBe(1);
+    expect(proation.nextPaymentAmount).toBe(
+      Number(process.env.DIAMOND_MONTHLY_GBP_PRICE!),
+    );
+  });
 
-  it('test 9 - should be able to cancel the plan', async () => {});
+  it('test 8 - should be able to upgrade the plan', async () => {
+    // ------------------------------
+    // Setup: Get existing subscription & mapping
+    // ------------------------------
+    const oldMapping =
+      await sellerSubscriptionMappingService.findByBevetuSubscriptionId(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
 
-  it('test 10 - should be able to restore the cancelling plan', async () => {});
+    const oldItemInMapping = oldMapping.stripeSubscriptionItems.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
 
-  it('test 11 - should be able to immediately cancel the plan', async () => {});
+    const oldSubscription = await sellerSubscriptionService.findOne(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+    const oldItemInSubscription = oldSubscription.items.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
 
-  it('test 12 - should be able to reactive the cancelled plan', async () => {});
-  it('test 13 - should be able to use coupon', async () => {});
+    // ------------------------------
+    // Action: Upgrade subscription
+    // ------------------------------
+    await sellerSubscriptionService.upgradeListingSubscription(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+      'DIAMOND_MONTHLY_GBP',
+    );
+
+    // ------------------------------
+    // Retrieve updated subscription & mapping
+    // ------------------------------
+    const subscription = await sellerSubscriptionService.findOne(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+
+    const mapping =
+      await sellerSubscriptionMappingService.findByBevetuSubscriptionId(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    // ------------------------------
+    // Sort events by creation time
+    // ------------------------------
+    const sortedEvents = subscription.eventRecords!.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+
+    // ------------------------------
+    // Assertions
+    // ------------------------------
+
+    // 1. Should have 6 events
+    expect(sortedEvents).toHaveLength(6);
+
+    // 2. Last three events should be UPDATE, REFUND, PAYMENT_SUCCESS
+    const lastThreeTypes = sortedEvents.slice(-3).map((e) => e.type);
+    expect(lastThreeTypes).toEqual(['UPDATE', 'REFUND', 'PAYMENT_SUCCESS']);
+
+    // 3. Check UPDATE event metadata
+    const updateEvent = sortedEvents.find((e) => e.type === 'UPDATE');
+    expect(updateEvent).toBeDefined();
+    expect(updateEvent!.metadata).toEqual({
+      from: productCode,
+      to: 'DIAMOND_MONTHLY_GBP',
+      proration: true,
+    });
+
+    // 4. Check REFUND event metadata
+    const refundEvent = sortedEvents.find((e) => e.type === 'REFUND');
+    expect(refundEvent).toBeDefined();
+    expect(refundEvent!.metadata!.refundReason).toBe('Proration Refund');
+
+    // 5. Check last PAYMENT_SUCCESS metadata
+    const lastPaymentSuccess = [...sortedEvents]
+      .reverse()
+      .find((e) => e.type === 'PAYMENT_SUCCESS');
+    expect(lastPaymentSuccess).toBeDefined();
+    expect(lastPaymentSuccess!.metadata!.productCode).toBe(
+      'DIAMOND_MONTHLY_GBP',
+    );
+
+    // 6. Check subscription mapping update
+    const newItemInMapping = mapping.stripeSubscriptionItems.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
+    expect(newItemInMapping?.productCode).not.toBe(
+      oldItemInMapping?.productCode,
+    );
+    expect(newItemInMapping?.stripItemId).toBe(oldItemInMapping?.stripItemId);
+
+    // 7. Check subscription update
+    const newItemInSubscription = subscription.items.find(
+      (item) => item.category === 'LISTING_SUBSCRIPTION',
+    );
+    expect(newItemInSubscription?.productCode).not.toBe(
+      oldItemInSubscription?.productCode,
+    );
+  });
+
+  it('test 9 - should be able to downgrade change the plan', async () => {});
+
+  // it('test 8 - should not be able to change the plan with currency different from the current plan curency', async () => {});
+
+  // it('test 9 - should be able to cancel the plan', async () => {});
+
+  // it('test 10 - should be able to restore the cancelling plan', async () => {});
+
+  // it('test 11 - should be able to immediately cancel the plan', async () => {});
+
+  // it('test 12 - should be able to reactive the cancelled plan', async () => {});
+  // it('test 13 - should be able to use coupon', async () => {});
 });

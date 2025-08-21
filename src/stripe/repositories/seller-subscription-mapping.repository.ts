@@ -45,16 +45,28 @@ export class SellerSubscriptionMappingRepository {
     ) as SellerSubscriptionMapping[];
   }
 
-  async findByBevetuSubscriptionId(
+  async findOneByBevetuSubscriptionId(
     bevetuSubscriptionId: string,
-  ): Promise<SellerSubscriptionMapping[]> {
-    const mappings = await this.prisma.sellerSubscriptionMapping.findMany({
+  ): Promise<SellerSubscriptionMapping> {
+    const mapping = await this.prisma.sellerSubscriptionMapping.findUnique({
       where: { bevetuSubscriptionId },
     });
 
-    return mappings.map(
-      mapPrismaSellerSubscriptionMappingToDomain,
-    ) as SellerSubscriptionMapping[];
+    return mapPrismaSellerSubscriptionMappingToDomain(
+      mapping,
+    ) as SellerSubscriptionMapping;
+  }
+
+  async findOneByStripeSubscriptionId(
+    stripeSubscriptionId: string,
+  ): Promise<SellerSubscriptionMapping> {
+    const mapping = await this.prisma.sellerSubscriptionMapping.findUnique({
+      where: { stripeSubscriptionId },
+    });
+
+    return mapPrismaSellerSubscriptionMappingToDomain(
+      mapping,
+    ) as SellerSubscriptionMapping;
   }
   async update(
     mapping: SellerSubscriptionMapping,

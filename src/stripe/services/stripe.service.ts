@@ -146,18 +146,16 @@ export class StripeService {
    */
   async changeSubscriptionWithProrateEffectImmediately(
     stripeSubscriptionId: string,
+    stripeSubscriptionItemId: string,
     newPriceId: string,
   ): Promise<Stripe.Response<Stripe.Subscription>> {
     try {
-      const subscription =
-        await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
-
       const updatedSubscription = await this.stripe.subscriptions.update(
         stripeSubscriptionId,
         {
           items: [
             {
-              id: subscription.items.data[0].id,
+              id: stripeSubscriptionItemId,
               price: newPriceId,
             },
           ],
@@ -182,18 +180,16 @@ export class StripeService {
    */
   async changeSubscriptionWithoutProrateEffectNextCycle(
     stripeSubscriptionId: string,
+    stripeSubscriptionItemId: string,
     newPriceId: string,
   ): Promise<Stripe.Response<Stripe.Subscription>> {
     try {
-      const subscription =
-        await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
-
       const updatedSubscription = await this.stripe.subscriptions.update(
         stripeSubscriptionId,
         {
           items: [
             {
-              id: subscription.items.data[0].id,
+              id: stripeSubscriptionItemId,
               price: newPriceId,
             },
           ],
@@ -218,8 +214,14 @@ export class StripeService {
   async previewProrationAmount(
     previewProrationAmountDto: PreviewProrationAmountDto,
   ): Promise<{
-    prorationDate: Date | null;
-    nextPaymentDate: Date | null;
+    prorationPeriod: {
+      start: Date | null;
+      end: Date | null;
+    } | null;
+    nextPaymentPeriod: {
+      start: Date | null;
+      end: Date | null;
+    } | null;
     totalRefund: number | null;
     totalCharge: number | null;
     nextPaymentQty: number | null;
@@ -239,8 +241,8 @@ export class StripeService {
     // Step 3: Retrieve the upcoming invoice preview
     const previewInvoice = await this.stripe.invoices.createPreview({
       customer: previewProrationAmountDto.stripeCustomerId,
+      subscription: previewProrationAmountDto.stripeSubscriptionId,
       subscription_details: {
-        // subscription: previewProrationAmountDto.stripeSubscriptionId, // the current subscription
         proration_date: Math.floor(Date.now() / 1000), // now
         items: [
           {
@@ -254,43 +256,51 @@ export class StripeService {
     // Step 4: Extract invoice lines
     const { data: lines } = previewInvoice.lines;
 
-    // Step 5: Calculate refunds and charges
     const refundLines = lines.filter(
-      (item) => item.parent?.invoice_item_details?.proration && item.amount < 0,
-    );
-    const chargeLines = lines.filter(
-      (item) => item.parent?.invoice_item_details?.proration && item.amount > 0,
-    );
-    const nextBillingLines = lines.filter(
-      (item) =>
-        item.parent?.invoice_item_details?.proration &&
-        item.description === 'subscription',
+      (line) =>
+        line.amount < 0 &&
+        line.parent?.subscription_item_details?.proration === true,
     );
 
-    const totalRefund =
-      refundLines.reduce((sum, item) => sum + item.amount, 0) / 100;
-    const totalCharge =
-      chargeLines.reduce((sum, item) => sum + item.amount, 0) / 100;
+    const chargeLines = lines.filter(
+      (line) =>
+        line.amount > 0 &&
+        line.parent?.subscription_item_details?.proration === true,
+    );
+
+    const nextBillingLines = lines.filter(
+      (line) => line.parent?.subscription_item_details?.proration === false,
+    );
+
+    const totalRefund = refundLines.reduce((sum, item) => sum + item.amount, 0);
+    const totalCharge = chargeLines.reduce((sum, item) => sum + item.amount, 0);
 
     const nextLine = nextBillingLines[0];
+    const refundLine = refundLines[0] ?? null;
+    const chargeLine = chargeLines[0] ?? null;
 
-    // return {
-    // prorationDate: previewInvoice.lines.data[0].parent?.subscription_item_details?.p
-    //   ? new Date(previewInvoice.subscription_proration_date * 1000)
-    //   : null,
-    // nextPaymentDate: previewInvoice.next_payment_attempt
-    //   ? new Date(previewInvoice.next_payment_attempt * 1000)
-    //   : null,
-    // totalRefund: totalRefund || null,
-    // totalCharge: totalCharge || null,
-    // nextPaymentQty: nextLine?.quantity ?? null,
-    // nextPaymentAmount: nextLine ? nextLine.amount / 100 : null,
-    // };
     return {
-      prorationDate: new Date(),
-      nextPaymentDate: new Date(),
-      totalRefund: totalRefund || null,
-      totalCharge: totalCharge || null,
+      prorationPeriod: refundLine
+        ? {
+            start: new Date(refundLine.period.start * 1000),
+            end: new Date(refundLine.period.end * 1000),
+          }
+        : chargeLine
+          ? {
+              start: new Date(chargeLine.period.start * 1000),
+              end: new Date(chargeLine.period.end * 1000),
+            }
+          : null,
+
+      nextPaymentPeriod: nextLine
+        ? {
+            start: new Date(nextLine.period.start * 1000),
+            end: new Date(nextLine.period.end * 1000),
+          }
+        : null,
+
+      totalRefund: refundLines.length ? totalRefund / 100 : null,
+      totalCharge: chargeLines.length ? totalCharge / 100 : null,
       nextPaymentQty: nextLine?.quantity ?? null,
       nextPaymentAmount: nextLine ? nextLine.amount / 100 : null,
     };

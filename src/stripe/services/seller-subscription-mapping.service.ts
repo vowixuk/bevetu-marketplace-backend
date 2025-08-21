@@ -51,22 +51,48 @@ export class SellerSubscriptionMappingService {
   }
 
   async findByBevetuSubscriptionId(
+    sellerId: string,
     bevetuSubscriptionId: string,
-  ): Promise<SellerSubscriptionMapping[]> {
-    return this.sellerSubscriptionMappingRepository.findByBevetuSubscriptionId(
-      bevetuSubscriptionId,
-    );
+  ): Promise<SellerSubscriptionMapping> {
+    const mapping =
+      await this.sellerSubscriptionMappingRepository.findOneByBevetuSubscriptionId(
+        bevetuSubscriptionId,
+      );
+    if (!mapping) {
+      throw new NotFoundException('Subscription mapping not found');
+    }
+    if (mapping.sellerId !== sellerId) {
+      throw new ForbiddenException('Mapping does not belong to this seller');
+    }
+    return mapping;
+  }
+
+  async findOneByStripeSubscriptionId(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+  ): Promise<SellerSubscriptionMapping> {
+    const mapping =
+      await this.sellerSubscriptionMappingRepository.findOneByStripeSubscriptionId(
+        bevetuSubscriptionId,
+      );
+    if (!mapping) {
+      throw new NotFoundException('Subscription mapping not found');
+    }
+    if (mapping.sellerId !== sellerId) {
+      throw new ForbiddenException('Mapping does not belong to this seller');
+    }
+    return mapping;
   }
 
   async update(
     sellerId: string,
-    mapping: SellerSubscriptionMapping,
+    mappingId: string,
+    updateItem: Partial<SellerSubscriptionMapping>,
   ): Promise<SellerSubscriptionMapping> {
-    const existingMapping = await this.findOne(mapping.id, sellerId);
-    // optionally merge changes here if needed
+    const existingMapping = await this.findOne(mappingId, sellerId);
     return this.sellerSubscriptionMappingRepository.update({
       ...existingMapping,
-      ...mapping,
+      ...updateItem,
     });
   }
 
