@@ -1,3 +1,7 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /**
  *  To run this test solely:
  *
@@ -518,7 +522,7 @@ describe('SubscriptionService', () => {
     // Manually triggering webhook update
     // ------------------------------
     const newStripeSubscriptionItemId = 'Dummy_newStripeSubscriptionItemId';
-    await sellerSubscriptionService.completeDowngradeListingSubscription(
+    await sellerSubscriptionService.completeUpdateListingSubscription(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       pendingUpdate.sellerId,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -593,7 +597,6 @@ describe('SubscriptionService', () => {
     );
     expect(newItemInSubscription?.productCode).toBe('BRONZE_MONTHLY_GBP');
 
-
     // 9. Check if the stripe subscription has metadata removed:
     const stripeSubscription2 =
       await stripeService.getSubscriptionDetailsByCustomerId(
@@ -614,14 +617,371 @@ describe('SubscriptionService', () => {
     expect(metadata2.bevetuSubscriptionId).toBe(bevetuSellerSubscriptionId!);
   });
 
-  // it('test 8 - should not be able to change the plan with currency different from the current plan curency', async () => {});
+  it('test 10 - should be able to cancel the plan', async () => {
+    // ------------------------------
+    // 1. Action: Cancel subscription
+    // ------------------------------
+    const cancelReason = 'I wanna cancel the plan';
+    await sellerSubscriptionService.cancellingSubscription(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+      cancelReason,
+    );
 
-  // it('test 9 - should be able to cancel the plan', async () => {});
+    // ------------------------------
+    // 2. Retrieve updated subscription & mapping
+    // ------------------------------
+    const { subscription, currentProduct } =
+      await sellerSubscriptionService.findCurrentSubscriptionAndMapping(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
 
-  // it('test 10 - should be able to restore the cancelling plan', async () => {});
+    expect(subscription.createdAt).toBeDefined();
+    expect(subscription.status).toBe('CANCELLING');
 
-  // it('test 11 - should be able to immediately cancel the plan', async () => {});
+    const pendingCancelEvent = subscription.eventRecords?.find(
+      (e) => e.type === 'PENDING_CANCEL',
+    );
 
-  // it('test 12 - should be able to reactive the cancelled plan', async () => {});
-  // it('test 13 - should be able to use coupon', async () => {});
+
+    expect(subscription.eventRecords).toHaveLength(9);
+    expect(pendingCancelEvent!.metadata!.productCode).toBe(currentProduct.code);
+    expect(pendingCancelEvent!.metadata!.cancelReason).toBe(cancelReason);
+    expect(pendingCancelEvent!.metadata!.cancelAt).toBeDefined();
+
+    // ------------------------------
+    // 3. Check Stripe subscription update
+    // ------------------------------
+    const stripeSubscription =
+      await stripeService.getSubscriptionDetailsByCustomerId(
+        buyerStripeCustomerId!,
+      );
+
+    const metadata = stripeSubscription.metadata;
+    const pendingCancel = JSON.parse(metadata.pending_cancel);
+
+    
+
+    expect(pendingCancel).toEqual({
+      sellerId: seller!.id,
+      bevetuSubscriptionId: bevetuSellerSubscriptionId,
+    });
+
+    // ------------------------------
+    // 4. Manually trigger webhook update (simulate cancellation completion)
+    // ------------------------------
+    await sellerSubscriptionService.completeCancelListingSubscription(
+      pendingCancel!.sellerId,
+      pendingCancel!.bevetuSubscriptionId,
+    );
+
+    // ------------------------------
+    // 5. Retrieve updated subscription after webhook
+    // ------------------------------
+    const { subscription: subscription2, currentProduct: currentProduct2 } =
+      await sellerSubscriptionService.findCurrentSubscriptionAndMapping(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    // Sort events by creation time
+    const sortedEvents = subscription2.eventRecords!.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+
+    // ------------------------------
+    // 6. Assertions after cancellation
+    // ------------------------------
+    expect(subscription2.status).toBe('CANCELLED');
+
+    // Should now have 10 events
+    expect(sortedEvents).toHaveLength(10);
+
+    // Last two events should be PENDING_CANCEL -> CANCELLED
+    const lastTwoTypes = sortedEvents.slice(-2).map((e) => e.type);
+    expect(lastTwoTypes).toEqual(['PENDING_CANCEL', 'CANCELLED']);
+
+    // Check CANCELLED event metadata
+    const cancelledEvents = subscription2.eventRecords?.find(
+      (e) => e.type === 'CANCELLED',
+    );
+    expect(cancelledEvents!.metadata!.productCode).toBe(currentProduct2.code);
+
+    // ------------------------------
+    // 7. Check Stripe metadata cleanup
+    // ------------------------------
+    const stripeSubscription2 =
+      await stripeService.getSubscriptionDetailsByCustomerId(
+        buyerStripeCustomerId!,
+      );
+
+    const metadata2 = stripeSubscription2.metadata;
+
+
+    // pending_cancel should be removed
+    expect(
+      metadata2.pending_cancel === null ||
+        metadata2.pending_cancel === undefined,
+    ).toBe(true);
+
+    // bevetuSubscriptionId + platform should still exist
+    expect(metadata2.bevetuSubscriptionId).toBe(bevetuSellerSubscriptionId!);
+    expect(metadata2.platform).toBe('MARKETPLACE');
+  });
+
+  it('test 11 - should be able to restore the cancelling plan', async () => {
+    // ------------------------------
+    // 1. Action: Cancel subscription
+    // ------------------------------
+    await sellerSubscriptionService.restoreSubscription(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+
+    // ------------------------------
+    // 2. Retrieve updated subscription & mapping
+    // ------------------------------
+    const { subscription, currentProduct } =
+      await sellerSubscriptionService.findCurrentSubscriptionAndMapping(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    expect(subscription.cancelAt).toBeUndefined();
+    expect(subscription.status).toBe('ACTIVE');
+
+    const pendingCancelEvent = subscription.eventRecords?.find(
+      (e) => e.type === 'RESTORE',
+    );
+
+    expect(subscription.eventRecords).toHaveLength(11);
+    expect(pendingCancelEvent!.metadata!.productCode).toBe(currentProduct.code);
+
+    // ------------------------------
+    // 3. Check Stripe subscription update
+    // ------------------------------
+    const stripeSubscription =
+      await stripeService.getSubscriptionDetailsByCustomerId(
+        buyerStripeCustomerId!,
+      );
+
+    // Stripe metadata is usually an object, not a JSON string, so no need to parse
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const metadata2 = stripeSubscription.metadata;
+
+    // pending_update should be removed (undefined) or null
+    expect(
+      metadata2.pending_update === null ||
+        metadata2.pending_update === undefined,
+    ).toBe(true);
+
+    // bevetuSubscriptionId should still exist
+    expect(metadata2.bevetuSubscriptionId).toBe(bevetuSellerSubscriptionId!);
+
+    
+  });
+
+  it('test 12 - should be able to immediately cancel the plan', async () => {
+    // ------------------------------
+    // 1. Action: Cancel subscription
+    // ------------------------------
+
+    await sellerSubscriptionService.cancelSubscriptionInStripeImmediately(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+    );
+
+    // ------------------------------
+    // 2. Retrieve updated subscription & mapping
+    // ------------------------------
+    const { subscription, currentProduct } =
+      await sellerSubscriptionService.findCurrentSubscriptionAndMapping(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    expect(subscription.createdAt).toBeDefined();
+    expect(subscription.status).toBe('CANCELLING');
+
+    const pendingCancelEvent = subscription.eventRecords?.filter(
+      (e) => e.type === 'PENDING_CANCEL',
+    );
+    // Sort events by creation time
+    const sortedpendingCancelEvents = pendingCancelEvent!.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+
+    expect(subscription.eventRecords).toHaveLength(12);
+    expect(sortedpendingCancelEvents[1]!.metadata!.cancelReason).toBe(
+      'Request to cancel immediately',
+    );
+
+    // ------------------------------
+    // 3. Check Stripe subscription update
+    // Stripe Subscription is cannceled. no need to test here
+    // ------------------------------
+
+    // ------------------------------
+    // 4. Manually trigger webhook update (simulate cancellation completion)
+    // ------------------------------
+    await sellerSubscriptionService.completeCancelListingSubscription(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+      true
+    );
+  });
+
+  it('test 13 - should be able to enroll the plan after cancelling subscription', async () => {
+    const { subscription } =
+      await sellerSubscriptionService.findCurrentSubscriptionAndMapping(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    expect(subscription.status).toBe('CANCELLED');
+
+
+    const paymentUrl =
+      await sellerSubscriptionService.getListingSubscriptionPaymentLink(
+        testUser.id,
+        seller!.id,
+        buyerStripeCustomerId!,
+        testUser.email,
+        'GOLD_MONTHLY_HKD',
+        null,
+      );
+
+      const browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      try {
+        await page.goto(paymentUrl!);
+        await page.waitForSelector('#cardNumber');
+        // await page.type('#email', user.email);
+        await page.type('#cardNumber', '4242424242424242');
+        await page.type('#cardExpiry', '12/34');
+        await page.type('#cardCvc', '123');
+        await page.type('#billingName', 'testing user in marketplace');
+        await page.type('#billingPostalCode', 'M50 2AJ');
+        await page.click('.SubmitButton');
+        await Promise.all([
+          page.waitForNavigation({
+            waitUntil: 'networkidle0',
+            timeout: 30000,
+          }),
+          page.click('.SubmitButton'),
+        ]);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        await browser.close();
+      }
+
+
+      const subscriptionDetails =
+        await stripeService.getSubscriptionDetailsByCustomerId(
+          buyerStripeCustomerId!,
+        );
+        stripeSubscriptionId = subscriptionDetails.stripeSubscriptionId;
+
+        bevetuSellerSubscriptionId =
+          await sellerSubscriptionService.completeSellerListingSubscriptionEnrollment(
+            Object.assign(
+              new CompleteSellerListingSubscriptionEnrollmentDto(),
+              {
+                stripeCustomerId: subscriptionDetails.stripeCustomerId,
+                stripeSubscriptionId: subscriptionDetails.stripeSubscriptionId,
+                stripeSubscriptionItemId:
+                  subscriptionDetails.stripeSubscriptionItemId,
+                userId: testUser.id,
+                buyerId: buyer?.id,
+                sellerId: seller?.id,
+                productCode,
+                amount: subscriptionDetails.amount,
+                currency: subscriptionDetails.currency,
+                quantity: subscriptionDetails.quantity,
+              },
+            ),
+          );
+
+
+      const subscriptions =
+        await sellerSubscriptionService.findAllBySellerId(seller!.id);
+
+      expect(subscriptions).toHaveLength(2)
+
+  }, 30000);
+
+
+  it('test 13 - should be able update event record after regular payment success', async () => {
+   
+    const nextPaymentAmount = 300
+    const nextPaymentDate =new Date('2023-09-01T12:00:00Z');
+    await sellerSubscriptionService.invoicePaymentSuccessded(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+      {
+        paidAmount:  nextPaymentAmount,
+        nextPaymentDate,
+        nextPaymentAmount:nextPaymentAmount
+      }
+    )
+
+    const { subscription,subscriptionMapping ,currentProduct} =
+      await sellerSubscriptionService.findCurrentSubscriptionAndMapping(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    const eventRecords = subscription.eventRecords
+
+    console.log(subscription, '<< subscription');
+    console.log(eventRecords, '<< eventRecords');
+    // expect(subscription.nextPaymentDate).toBe(nextPaymentDate.);
+    expect(subscription.status).toBe('ACTIVE');
+    expect(eventRecords).toHaveLength(4);
+
+    const successEvent = eventRecords?.filter((e) => e.type == 'PAYMENT_SUCCESS')[1];
+
+   
+   
+    expect(successEvent?.metadata!.productCode).toBe(currentProduct.code)
+    expect(successEvent?.metadata!.paidAmount).toBe(nextPaymentAmount);
+    // expect(successEvent?.metadata!.nextPaymentDate).toBe(nextPaymentDate);
+    expect(successEvent?.metadata!.nextPaymentAmount).toBe(nextPaymentAmount);
+
+    
+  });
+
+  it('test 13 - should be able update subscription and event record after regular payment faile', async () => {
+
+    const nextPaymentAmount = 300;
+    const nextPaymentDate = new Date('2023-09-01T12:00:00Z');
+    await sellerSubscriptionService.invoicePaymentFailed(
+      seller!.id,
+      bevetuSellerSubscriptionId!,
+      'insufficient fund'
+    );
+
+    const { subscription, currentProduct } =
+      await sellerSubscriptionService.findCurrentSubscriptionAndMapping(
+        seller!.id,
+        bevetuSellerSubscriptionId!,
+      );
+
+    const eventRecords = subscription.eventRecords;
+
+    console.log(subscription, '<< subscription');
+    console.log(eventRecords, '<< eventRecords');
+    // expect(subscription.nextPaymentDate).toBe(nextPaymentDate.);
+    expect(subscription.status).toBe('PAYMENT_FAILED');
+    expect(eventRecords).toHaveLength(5);
+
+    const successEvent = eventRecords?.find((e) => e.type == 'PAYMENT_FAILED');
+
+    expect(successEvent?.metadata!.productCode).toBe(currentProduct.code);
+    expect(successEvent?.metadata!.failReason).toBe('insufficient fund');
+
+
+  });
 });

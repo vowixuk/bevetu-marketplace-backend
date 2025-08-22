@@ -365,8 +365,8 @@ export class StripeService {
    *  pending to be cancelled in next billing cycle
    */
   async restoreCancellingSubsctipion(
-    stripeSubscriptionId: string,
     stripeCustomerId: string,
+    stripeSubscriptionId: string,
   ) {
     const subscription =
       await this.stripe.subscriptions.retrieve(stripeSubscriptionId);

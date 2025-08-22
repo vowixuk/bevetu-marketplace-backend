@@ -27,7 +27,7 @@ export type MetadataSchema = {
   };
   PAYMENT_FAILED: {
     productCode: string;
-    error: string;
+    failReason: string;
   };
   PAYMENT_SUCCESS: {
     productCode: string;
@@ -53,7 +53,6 @@ export type MetadataSchema = {
 
   CANCELLED: {
     productCode: string;
-    cancelReason: string;
   };
   RESTORE: {
     productCode: string;

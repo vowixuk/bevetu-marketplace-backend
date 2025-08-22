@@ -111,16 +111,23 @@ export class SellerSubscriptionService {
    */
   async getListingSubscriptionPaymentLink(
     userId: string,
-    bevetuSellerId: string,
+    sellerId: string,
     stripeCustomerId: string, // not seller's account id. seller , just like buyer, has its own stripe custimer id
     email: string,
     productCode: IProductCode,
     promotionCode?: null,
   ): Promise<string> {
-    // Step 1 - Check if the user already has an  subscription record
-    const subscriptions = await this.findAllBySellerId(bevetuSellerId);
-    if (subscriptions.length > 0) {
-      throw new ForbiddenException('Seller already has an active subscription');
+    // Step 1 - Check if the user already has valid subscription record
+    const subscriptions = await this.findAllBySellerId(sellerId);
+    const validSubscriptions = subscriptions.filter(
+      (sub) =>
+        sub.status === 'ACTIVE' ||
+        sub.status === 'CANCELLING' ||
+        sub.status === 'PAYMENT_FAILED',
+    );
+
+    if (validSubscriptions.length > 0) {
+      throw new ForbiddenException('Seller already has an valid subscription');
     }
 
     // Step 2 - Get Paymentlink
@@ -137,7 +144,7 @@ export class SellerSubscriptionService {
         metadata: {
           email,
           userId,
-          bevetuSellerId,
+          bevetuSellerId: sellerId,
           platform: process.env.PLATFORM || 'NA',
           productCode,
           quantity: 1,
@@ -168,7 +175,7 @@ export class SellerSubscriptionService {
     currentProduct: IProduct;
     newProduct: IProduct;
     mode: 'UPGRADE' | 'DOWNGRADE';
-    subsriptionMapping: SellerSubscriptionMapping;
+    subscriptionMapping: SellerSubscriptionMapping;
     stripeSubscriptionItem: StripeSubscriptionItems;
   }> {
     const subscription = await this.findOne(sellerId, bevetuSubscriptionId);
@@ -189,14 +196,14 @@ export class SellerSubscriptionService {
       );
     }
 
-    const subsriptionMapping =
+    const subscriptionMapping =
       await this.sellerSubscriptionMappingService.findByBevetuSubscriptionId(
         sellerId,
         bevetuSubscriptionId,
       );
 
     const stripeSubscriptionItem =
-      subsriptionMapping.stripeSubscriptionItems.find(
+      subscriptionMapping.stripeSubscriptionItems.find(
         (item) => item.category == 'LISTING_SUBSCRIPTION',
       );
 
@@ -212,7 +219,7 @@ export class SellerSubscriptionService {
       currentProduct,
       newProduct,
       mode,
-      subsriptionMapping,
+      subscriptionMapping,
       stripeSubscriptionItem,
     };
   }
@@ -222,7 +229,7 @@ export class SellerSubscriptionService {
     bevetuSubscriptionId: string,
     newProductCode: IProductCode,
   ) {
-    const { newProduct, subsriptionMapping, stripeSubscriptionItem } =
+    const { newProduct, subscriptionMapping, stripeSubscriptionItem } =
       await this.subscriptionUpdateGuard(
         sellerId,
         bevetuSubscriptionId,
@@ -231,12 +238,42 @@ export class SellerSubscriptionService {
 
     return await this.stripeService.previewProrationAmount(
       Object.assign(new PreviewProrationAmountDto(), {
-        stripeCustomerId: subsriptionMapping.stripeCustomerId,
-        stripeSubscriptionId: subsriptionMapping.stripeSubscriptionId,
+        stripeCustomerId: subscriptionMapping.stripeCustomerId,
+        stripeSubscriptionId: subscriptionMapping.stripeSubscriptionId,
         stripeSubscriptionItemId: stripeSubscriptionItem.stripItemId,
         newPriceId: newProduct.stripePriceId,
       }),
     );
+  }
+
+  async findCurrentSubscriptionAndMapping(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+  ): Promise<{
+    subscription: SellerSubscription;
+    subscriptionMapping: SellerSubscriptionMapping;
+    currentProduct: IProduct;
+  }> {
+    const subscription = await this.findOne(sellerId, bevetuSubscriptionId);
+    const subscriptionMapping =
+      await this.sellerSubscriptionMappingService.findByBevetuSubscriptionId(
+        sellerId,
+        bevetuSubscriptionId,
+      );
+    const currentProductCode = subscription.items.find(
+      (item) => item.productCode,
+    );
+    if (!currentProductCode?.productCode) {
+      throw new InternalServerErrorException("Current product's code missing");
+    }
+
+    const currentProduct = Products[currentProductCode.productCode];
+
+    return {
+      subscription,
+      subscriptionMapping,
+      currentProduct,
+    };
   }
 
   /**
@@ -314,7 +351,7 @@ export class SellerSubscriptionService {
       currentProduct,
       newProduct,
       mode,
-      subsriptionMapping,
+      subscriptionMapping,
       subscription,
       stripeSubscriptionItem,
     } = await this.subscriptionUpdateGuard(
@@ -333,7 +370,7 @@ export class SellerSubscriptionService {
     // Step 2 - Update stripe details and charge
     const upgradeSubscription =
       await this.stripeService.changeSubscriptionWithoutProrateEffectNextCycle(
-        subsriptionMapping.stripeSubscriptionId,
+        subscriptionMapping.stripeSubscriptionId,
         stripeSubscriptionItem.stripItemId,
         newProduct.stripePriceId,
       );
@@ -346,7 +383,7 @@ export class SellerSubscriptionService {
     // Step 5 - update the new subscription items id in Mapper
     const newStripeSubscriptionItemId = upgradeSubscription.items.data[0].id;
     await this.amendMappingStripeSubscriotionItemsIdForListingItemAfterSubscriptionUpdate(
-      subsriptionMapping,
+      subscriptionMapping,
       newStripeSubscriptionItemId,
       newProductCode,
     );
@@ -400,7 +437,7 @@ export class SellerSubscriptionService {
       subscription,
       currentProduct,
       newProduct,
-      subsriptionMapping,
+      subscriptionMapping,
       stripeSubscriptionItem,
     } = await this.subscriptionUpdateGuard(
       sellerId,
@@ -410,7 +447,7 @@ export class SellerSubscriptionService {
 
     const downgadeSubscription =
       await this.stripeService.changeSubscriptionWithoutProrateEffectNextCycle(
-        subsriptionMapping.stripeSubscriptionId,
+        subscriptionMapping.stripeSubscriptionId,
         stripeSubscriptionItem.stripItemId,
         newProduct.stripePriceId,
       );
@@ -435,13 +472,164 @@ export class SellerSubscriptionService {
       newProductCode,
     };
     await this.stripeService.addMetadataToSubscription(
-      subsriptionMapping.stripeSubscriptionId,
+      subscriptionMapping.stripeSubscriptionId,
       {
         pending_update: JSON.stringify(pendingUpdateMetadata),
       },
     );
 
     return downgadeSubscription;
+  }
+
+  /*
+   * The is called by user to cancel their active  subscription
+   * It is `cancelling` since the subnscription will not be cancelled immediately
+   * It will be completed cancelled in next billing cycle
+   */
+  async cancellingSubscription(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+    cancelReason: string,
+    immedateCancel?: boolean,
+  ): Promise<{ subscriptionCancelAt: Date }> {
+    const { subscription, subscriptionMapping, currentProduct } =
+      await this.findCurrentSubscriptionAndMapping(
+        sellerId,
+        bevetuSubscriptionId,
+      );
+
+    // set Cancelling in Stripe
+    const stripeSubscription = await this.stripeService.cancelSubscription(
+      subscriptionMapping.stripeSubscriptionId,
+      subscriptionMapping.stripeCustomerId,
+    );
+
+    const cancelAt = stripeSubscription.cancel_at
+      ? new Date(stripeSubscription.cancel_at * 1000)
+      : subscription.nextPaymentDate;
+
+    // set Cancelling in subscription record
+    await this.update(
+      sellerId,
+      bevetuSubscriptionId,
+      Object.assign(new UpdateSellerSubscriptionDto(), {
+        status: 'CANCELLING',
+        cancelAt,
+      }),
+    );
+
+    // Create event record
+    await this.subscriptionEventRecordService.create(
+      bevetuSubscriptionId,
+      Object.assign(new CreateSubscriptionEventRecordDto(), {
+        type: 'PENDING_CANCEL',
+        metadata: {
+          productCode: currentProduct.code,
+          cancelReason,
+          cancelAt,
+        },
+      }),
+    );
+
+    const pendingcancelMetadata = {
+      sellerId,
+      bevetuSubscriptionId,
+      ...(immedateCancel && { immedateCancel: true }),
+    };
+    await this.stripeService.addMetadataToSubscription(
+      subscriptionMapping.stripeSubscriptionId,
+      {
+        pending_cancel: JSON.stringify(pendingcancelMetadata),
+      },
+    );
+
+    return {
+      subscriptionCancelAt: cancelAt,
+    };
+  }
+
+  /**
+   *  This is triggered by user to restrore the `cancelling` subscription
+   */
+  async restoreSubscription(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+  ): Promise<{ nextPaymentDate: Date; nextPaymentAmount: number }> {
+    const { subscription, subscriptionMapping, currentProduct } =
+      await this.findCurrentSubscriptionAndMapping(
+        sellerId,
+        bevetuSubscriptionId,
+      );
+
+    await this.stripeService.restoreCancellingSubsctipion(
+      subscriptionMapping.stripeCustomerId,
+      subscriptionMapping.stripeSubscriptionId,
+    );
+
+    const { nextPaymentDate, nextPaymentAmount } =
+      await this.stripeService.getNextPaymentDetails(
+        subscriptionMapping.stripeCustomerId,
+        subscriptionMapping.stripeSubscriptionId,
+      );
+
+    await this.update(
+      sellerId,
+      bevetuSubscriptionId,
+      Object.assign(new UpdateSellerSubscriptionDto(), {
+        status: 'ACTIVE',
+        cancelAt: null,
+        nextPaymentAmount: nextPaymentDate,
+      }),
+    );
+
+    // Create event record
+    await this.subscriptionEventRecordService.create(
+      bevetuSubscriptionId,
+      Object.assign(new CreateSubscriptionEventRecordDto(), {
+        type: 'RESTORE',
+        metadata: {
+          productCode: currentProduct.code,
+        },
+      }),
+    );
+
+    await this.stripeService.removeMetadataFromSubscription(
+      subscriptionMapping.stripeSubscriptionId,
+      'pending_update',
+    );
+
+    return { nextPaymentDate, nextPaymentAmount };
+  }
+
+  /**
+   * @purpose 1) Set the subscription in stripe as `cancel` immediately.
+   * Wehbook event 'customer.subscription.deleted' will be triggered.
+   * 2) clear the testing subscription in Stripe
+   */
+  async cancelSubscriptionInStripeImmediately(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+  ): Promise<string> {
+    const { subscriptionMapping } =
+      await this.findCurrentSubscriptionAndMapping(
+        sellerId,
+        bevetuSubscriptionId,
+      );
+
+    await this.cancellingSubscription(
+      sellerId,
+      bevetuSubscriptionId,
+      'Request to cancel immediately',
+      true,
+    );
+
+    // When the subscription is cancelled. it will triggered the webhook
+    // Then the rest of the procedure will be done by "completeCancelListeningSubscription"
+    await this.stripeService.cancelSubscriptionImmediately(
+      subscriptionMapping.stripeSubscriptionId,
+    );
+
+    return 'Immediately Cancel Triggered';
   }
 
   /* *************************************************
@@ -558,18 +746,24 @@ export class SellerSubscriptionService {
     // Step 4 - Add the bevetu's subscription id record in Stripe.
     await this.stripeService.addMetadataToSubscription(stripeSubscriptionId, {
       bevetuSubscriptionId,
+      platform: process.env.PLATFORM ?? 'MARKETPLACE',
     });
 
     return bevetuSubscriptionId;
   }
 
-  async completeDowngradeListingSubscription(
+  /**
+   *  @event 'subscritpion update pending'
+   *  @condition session.metadata.pending_update exist
+   *  @description Trigered by Stripe webhook after user complete the downgrade of subscription
+   */
+  async completeUpdateListingSubscription(
     sellerId: string,
     bevetuSubscriptionId: string,
     newProductCode: IProductCode,
     newStripeSubscriptionItemId: string,
   ) {
-    const { subscription, currentProduct, subsriptionMapping } =
+    const { subscription, currentProduct, subscriptionMapping } =
       await this.subscriptionUpdateGuard(
         sellerId,
         bevetuSubscriptionId,
@@ -583,7 +777,7 @@ export class SellerSubscriptionService {
     );
     // Step 5 - update the new subscription items id in Mapper
     await this.amendMappingStripeSubscriotionItemsIdForListingItemAfterSubscriptionUpdate(
-      subsriptionMapping,
+      subscriptionMapping,
       newStripeSubscriptionItemId,
       newProductCode,
     );
@@ -602,71 +796,151 @@ export class SellerSubscriptionService {
     );
 
     await this.stripeService.removeMetadataFromSubscription(
-      subsriptionMapping.stripeSubscriptionId,
+      subscriptionMapping.stripeSubscriptionId,
       'pending_update',
     );
   }
 
-  // /**
-  //  *  @event 'invoice.payment_succeeded'
-  //  *  @condition paymentSucceededReason === 'subscription_cycle'
-  //  *  @description Trigered when subscription is charged successfully in the new billing cycle
-  //  */
-  // async invoicePaymentSuccessded(
-  //   stripewebhookReturnAfterSubscriptionCyclePaymentDto: StripewebhookReturnAfterSubscriptionCyclePaymentDto,
-  // ): Promise<string> {
-  //   const { userId, bevetuSubscriptionId, paidAt, paidAmount } =
-  //     stripewebhookReturnAfterSubscriptionCyclePaymentDto;
+  /**
+   *  @event 'customer.subscription.deleted'
+   *  @condition paymentSucceededReason === 'subscription_cycle'
+   *  @description Trigered when subscription is cancelled in stripe
+   *  @example use has cancel_at date is reached.
+   *
+   *  Updated 25 Jun 2025:
+   *  After deleting the subscription in stripe, user will be enrolled in free trial automatically
+   *  all the pet account will be inactivated
+   */
+  async completeCancelListingSubscription(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+    immedateCancel?: boolean,
+  ): Promise<string> {
+    const { currentProduct, subscriptionMapping } =
+      await this.findCurrentSubscriptionAndMapping(
+        sellerId,
+        bevetuSubscriptionId,
+      );
 
-  //   // Always set the status as active if payment is received
-  //   await this.subscriptionService.update(
-  //     userId,
-  //     bevetuSubscriptionId,
-  //     Object.assign(new UpdateSubscriptionDto(), {
-  //       status: 'ACTIVE',
-  //     }),
-  //   );
-  //   await this.eventRecordService.create(
-  //     Object.assign(new CreateEventRecordDto(), {
-  //       subscriptionId: bevetuSubscriptionId,
-  //       type: 'PAYMENT_SUCCESS',
-  //       metadata: {
-  //         paidAt,
-  //         paidAmount,
-  //       },
-  //     }),
-  //   );
+    /** Update current subscription status to "CANCELLED" */
+    await this.update(
+      sellerId,
+      bevetuSubscriptionId,
+      Object.assign(new UpdateSellerSubscriptionDto(), {
+        status: 'CANCELLED',
+        cancelAt: new Date(),
+      }),
+    );
+    /** Add one more event record "CANCELLED" */
+    // Create event record
+    await this.subscriptionEventRecordService.create(
+      bevetuSubscriptionId,
+      Object.assign(new CreateSubscriptionEventRecordDto(), {
+        type: 'CANCELLED',
+        metadata: {
+          productCode: currentProduct.code,
+        },
+      }),
+    );
 
-  //   return 'payment successed';
-  // }
+    // If it is immedately cancel. the subscription in stripped has been already removed.
+    // remove meta will be error
+    if (!immedateCancel) {
+      await this.stripeService.removeMetadataFromSubscription(
+        subscriptionMapping.stripeSubscriptionId,
+        'pending_cancel',
+      );
+    }
+    // here need to trigger sub/pub to deactivate all listing
 
-  // /**
-  //  *  @event 'invoice.payment_failed'
-  //  *  @condition paymentSucceededReason === 'subscription_cycle'
-  //  *  @description Trigered when subscription is charged successfully in the new billing cycle
-  //  */
-  // async invoicePaymentFailed(
-  //   stripewebhookReturnAfterSubscriptionCyclePaymentDto: StripewebhookReturnAfterSubscriptionCyclePaymentDto,
-  // ): Promise<string> {
-  //   const { bevetuSubscriptionId, userId } =
-  //     stripewebhookReturnAfterSubscriptionCyclePaymentDto;
-  //   await this.subscriptionService.update(
-  //     userId,
-  //     bevetuSubscriptionId,
-  //     Object.assign(new UpdateSubscriptionDto(), {
-  //       status: 'PAYMENT_FAILED',
-  //     }),
-  //   );
+    return 'Subscription Cancelled';
+  }
 
-  //   await this.eventRecordService.create(
-  //     Object.assign(new CreateEventRecordDto(), {
-  //       subscriptionId: bevetuSubscriptionId,
-  //       type: 'PAYMENT_FAIL',
-  //       metadata: {
-  //         error: 'Payment Failed',
-  //       },
-  //     }),
-  //   );
-  //   return 'payment failed';
-  // }
+  /**
+   *  @event 'invoice.payment_succeeded'
+   *  @condition paymentSucceededReason === 'subscription_cycle'
+   *  @description Trigered when subscription is charged successfully in the new billing cycle
+   */
+  async invoicePaymentSuccessded(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+    payment: {
+      paidAmount: number;
+      nextPaymentDate: Date;
+      nextPaymentAmount: number;
+    },
+  ): Promise<string> {
+    const { currentProduct } = await this.findCurrentSubscriptionAndMapping(
+      sellerId,
+      bevetuSubscriptionId,
+    );
+    // Always set the status as active if payment is received
+    await this.update(
+      sellerId,
+      bevetuSubscriptionId,
+      Object.assign(new UpdateSellerSubscriptionDto(), {
+        status: 'ACTIVE',
+        nextPaymentDate: payment.nextPaymentDate,
+        cancelAt: null,
+      }),
+    );
+
+    // Create event record
+    await this.subscriptionEventRecordService.create(
+      bevetuSubscriptionId,
+      Object.assign(new CreateSubscriptionEventRecordDto(), {
+        type: 'PAYMENT_SUCCESS',
+        metadata: {
+          productCode: currentProduct.code,
+          paidAt: new Date(),
+          paidAmount: payment.nextPaymentAmount,
+          nextPaymentDate: payment.nextPaymentDate,
+          nextPaymentAmount: payment.nextPaymentAmount,
+        },
+      }),
+    );
+
+    return 'payment successed';
+  }
+
+  /**
+   *  @event 'invoice.payment_failed'
+   *  @condition paymentSucceededReason === 'subscription_cycle'
+   *  @description Trigered when subscription is charged successfully in the new billing cycle
+   */
+  async invoicePaymentFailed(
+    sellerId: string,
+    bevetuSubscriptionId: string,
+    failReason: string,
+  ): Promise<string> {
+    const { currentProduct } = await this.findCurrentSubscriptionAndMapping(
+      sellerId,
+      bevetuSubscriptionId,
+    );
+
+    // Always set the status as active if payment is received
+    await this.update(
+      sellerId,
+      bevetuSubscriptionId,
+      Object.assign(new UpdateSellerSubscriptionDto(), {
+        status: 'PAYMENT_FAILED',
+        cancelAt: null,
+      }),
+    );
+
+    // Create event record
+    await this.subscriptionEventRecordService.create(
+      bevetuSubscriptionId,
+      Object.assign(new CreateSubscriptionEventRecordDto(), {
+        type: 'PAYMENT_FAILED',
+        metadata: {
+          productCode: currentProduct.code,
+          failReason:
+            failReason ?? 'Payment failed. Please verify your card details.',
+        },
+      }),
+    );
+
+    return 'payment failed';
+  }
 }
