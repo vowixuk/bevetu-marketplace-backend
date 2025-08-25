@@ -183,22 +183,24 @@ describe('ProductService', () => {
 
   describe('Sellers',() => {
     // it('test 2 - should not be able to add product without any active subscription.', async () => {});
-    // it('test 2 - should not be able to add product without any active subscription.', async () => {});
-    // it('test 4 - should not be able to list the product without choosing shipping profile.', async () => {});
-    // it('test 5 - should be able to create a shipping profile and add to  product.', async () => {});
-    // it('test 6 - should be able to  list that product.', async () => {});
-    // it('test 7 - should be able to change the product details.', async () => {});
-    // it('test 8 - should be able to set free shipping option.', async () => {});
-    // it('test 9 - should not be able to list item if the listing number exist the allow amount in subscription.', async () => {});
-    // it('test 10 - should be able to list item again if the subscription is upgraded', async () => {});
-    // it('test 11 - should deactivate all the listed items if downgrade plan', async () => {});
-    // it('test 12 - should be able to delete product', async () => {});
-    // it('test 13 - should not be able to delete shipping profile if it is used in any products', async () => {});
-    // it('test 14 - should not be able to delete shipping profile if it is not in use', async () => {});
-    // it('test 15 - should not be able to view all sellers product (for buyer)', async () => {});
-    // it('test 16 - should sellers not be able to view other selllers (for buyer)', async () => {});
+    // it('test 3 - should not be able to list the product without choosing shipping profile.', async () => {});
+    // it('test 4 - should be able to create a shipping profile and add to product.', async () => {});
+    // it('test 5 - should be able to list that product after attaching the shipping profile', async () => {});
+    // it('test 6 - should be able to change the product details.', async () => {});
+    // it('test 7 - should be able to set free shipping option.', async () => {});
+    // it('test 8 - should not be able to list item if the listing number exist the allow amount in subscription.', async () => {});
+    // it('test 9 - should be able to list item again if the subscription is upgraded', async () => {});
+    // it('test 10 - should deactivate all the listed items if downgrade plan', async () => {});
+    // it('test 11 - should be able to delete product', async () => {});
+    // it('test 12 - should not be able to delete shipping profile if it is used in any products', async () => {});
+    // it('test 13 - should not be able to delete shipping profile if it is not in use', async () => {});
+    // it('test 14 - should not be able to view aother sellers product', async () => {});
+  
   })
 
-  describe('Buyers',() => {})
+  describe('Buyers',() => {
+    // it('test 15 - should be be able to view all shop on shelf products', async () => {});
+    // it('test 16 - should be be able to view  a shop's on shelf products', async () => {});
+  })
   
 });
