@@ -6,7 +6,7 @@ import {
   IsArray,
   IsBoolean,
 } from 'class-validator';
-import { SellerShippingProfile } from '../entities/seller-shipping-profile.entity';
+
 export class CreateSellerShippingProfileDto {
   @IsString()
   shopId: string;
@@ -17,8 +17,8 @@ export class CreateSellerShippingProfileDto {
   @IsString()
   name: string;
 
-  @IsEnum(SellerShippingProfile['feeType'])
-  feeType: SellerShippingProfile['feeType'];
+  @IsEnum(['flat', 'per_item', 'by_weight', 'free'], { each: false })
+  feeType: 'flat' | 'per_item' | 'by_weight' | 'free';
 
   @IsNumber()
   feeAmount: number;
@@ -31,6 +31,10 @@ export class CreateSellerShippingProfileDto {
 
   @IsString()
   originZip: string;
+
+  @IsOptional()
+  @IsNumber()
+  freeShippingThresholdAmount?: number;
 
   @IsOptional()
   @IsBoolean()

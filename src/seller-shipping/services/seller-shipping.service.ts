@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { SellerShippingRepository } from '../repositories/seller-shipping.repository';
 import { SellerShipping } from '../entities/seller-shipping.entity';
+
 import { CreateSellerShippingDto } from '../dto/create-seller-shipping.dto';
 import { UpdateSellerShippingDto } from '../dto/update-seller-shipping.dto';
 
@@ -19,15 +20,13 @@ export class SellerShippingService {
    */
   async create(
     sellerId: string,
-    createDto: CreateSellerShippingDto,
+    createSellerShippingDto: CreateSellerShippingDto,
   ): Promise<SellerShipping> {
     const shipping = new SellerShipping({
       id: '',
       sellerId,
-      shopId: createDto.shopId,
-      ...(createDto.freeShippingOption && {
-        freeShippingOption: createDto.freeShippingOption,
-      }),
+      shopId: createSellerShippingDto.shopId,
+      freeShippingOption: createSellerShippingDto.freeShippingOption,
       createdAt: new Date(),
     });
 
@@ -66,15 +65,15 @@ export class SellerShippingService {
    * Update a seller shipping record
    */
   async update(
+    id: string,
     sellerId: string,
-    shippingId: string,
     updateDto: UpdateSellerShippingDto,
   ): Promise<SellerShipping> {
-    const existingShipping = await this.findOne(shippingId, sellerId);
+    const existingShipping = await this.findOne(id, sellerId);
 
     const updatedShipping = {
       ...existingShipping,
-      updateDto,
+      ...updateDto,
     } as SellerShipping;
 
     return this.sellerShippingRepository.update(updatedShipping);

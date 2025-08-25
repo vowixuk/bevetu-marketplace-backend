@@ -18,7 +18,7 @@ export class SellerShippingProfileService {
     createDto: CreateSellerShippingProfileDto,
   ): Promise<SellerShippingProfile> {
     const profile = new SellerShippingProfile({
-      id: '', // Prisma will generate ID
+      id: '',
       sellerId,
       shopId: createDto.shopId,
       sellerShippingId: createDto.sellerShippingId,
@@ -45,6 +45,10 @@ export class SellerShippingProfileService {
       }),
     });
 
+    if (profile.feeType === 'free') {
+      profile.feeAmount = 0;
+    }
+
     return this.sellerShippingProfileRepository.create(profile);
   }
 
@@ -67,8 +71,8 @@ export class SellerShippingProfileService {
   }
 
   async update(
-    sellerId: string,
     id: string,
+    sellerId: string,
     updateDto: UpdateSellerShippingProfileDto,
   ): Promise<SellerShippingProfile> {
     const existingProfile = await this.findOne(id, sellerId);
@@ -78,6 +82,10 @@ export class SellerShippingProfileService {
       ...updateDto,
     });
 
+    //Forcely set the feeAmount as 0 if the type if free
+    if (updatedProfile.feeType === 'free') {
+      updatedProfile.feeAmount = 0;
+    }
     return this.sellerShippingProfileRepository.update(updatedProfile);
   }
 

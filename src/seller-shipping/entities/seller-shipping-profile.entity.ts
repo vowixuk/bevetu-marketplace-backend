@@ -8,8 +8,8 @@ export class SellerShippingProfile {
 
   feeType: 'flat' | 'per_item' | 'by_weight' | 'free';
 
-  feeAmount: number; // e.g. 4.99
-  currency: string; // e.g. "USD"
+  feeAmount: number;
+  currency: string;
 
   originCountry: string;
   originZip: string;
@@ -23,7 +23,7 @@ export class SellerShippingProfile {
   estimatedDeliveryMaxDays?: number;
 
   createdAt?: Date;
-  updateAt?: Date;
+  updatedAt?: Date;
 
   constructor(init: SellerShippingProfile) {
     Object.assign(this, init);

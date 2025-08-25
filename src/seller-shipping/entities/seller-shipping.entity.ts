@@ -5,7 +5,7 @@ export class SellerShipping {
   shopId: string;
   sellerId: string;
   shippingProfile?: SellerShippingProfile[];
-  freeShippingOption?: FreeShippingOption;
+  freeShippingOption?: FreeShippingOption | null;
   createdAt: Date;
   updatedAt?: Date;
 

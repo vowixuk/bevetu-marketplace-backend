@@ -913,7 +913,7 @@ describe('SubscriptionService', () => {
   }, 30000);
 
 
-  it('test 13 - should be able update event record after regular payment success', async () => {
+  it('test 14 - should be able update event record after regular payment success', async () => {
    
     const nextPaymentAmount = 300
     const nextPaymentDate =new Date('2023-09-01T12:00:00Z');
@@ -935,8 +935,7 @@ describe('SubscriptionService', () => {
 
     const eventRecords = subscription.eventRecords
 
-    console.log(subscription, '<< subscription');
-    console.log(eventRecords, '<< eventRecords');
+  
     // expect(subscription.nextPaymentDate).toBe(nextPaymentDate.);
     expect(subscription.status).toBe('ACTIVE');
     expect(eventRecords).toHaveLength(4);
@@ -953,7 +952,7 @@ describe('SubscriptionService', () => {
     
   });
 
-  it('test 13 - should be able update subscription and event record after regular payment faile', async () => {
+  it('test 15 - should be able update subscription and event record after regular payment faile', async () => {
 
     const nextPaymentAmount = 300;
     const nextPaymentDate = new Date('2023-09-01T12:00:00Z');

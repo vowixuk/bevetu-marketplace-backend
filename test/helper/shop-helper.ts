@@ -1,8 +1,8 @@
 import { ShopService } from '../../src/shop/shop.service';
-import { CreateShopDto } from 'src/shop/dto/create-shop.dto';
+import { CreateShopDto } from '../../src/shop/dto/create-shop.dto';
 import { Shop } from '../../src/shop/entities/shop.entity';
 
-export async function createShop(
+export async function createTestShop(
   testSellerId: string,
   shopService: ShopService,
 ): Promise<Shop> {

@@ -15,17 +15,15 @@ export class SellerShippingProfileRepository {
   async create(profile: SellerShippingProfile): Promise<SellerShippingProfile> {
     const prismaProfile = await this.prisma.sellerShippingProfile.create({
       data: {
-        shopId: profile.shopId,
         sellerId: profile.sellerId,
+        shopId: profile.shopId,
         sellerShippingId: profile.sellerShippingId,
         name: profile.name,
         feeType: profile.feeType as PrismaSellerShippingFeeType,
         feeAmount: profile.feeAmount,
         currency: profile.currency,
-        ...(profile.originCountry
-          ? { originCountry: profile.originCountry }
-          : {}),
-        ...(profile.originZip ? { originZip: profile.originZip } : {}),
+        originCountry: profile.originCountry,
+        originZip: profile.originZip,
         ...(profile.buyerPickUp !== undefined
           ? { buyerPickUp: profile.buyerPickUp }
           : {}),
@@ -120,5 +118,7 @@ export function mapPrismaSellerShippingProfileToDomain(
       prismaProfile.estimatedDeliveryMinDays ?? undefined,
     estimatedDeliveryMaxDays:
       prismaProfile.estimatedDeliveryMaxDays ?? undefined,
+    createdAt: prismaProfile.createdAt,
+    updatedAt: prismaProfile.updatedAt ?? undefined,
   });
 }

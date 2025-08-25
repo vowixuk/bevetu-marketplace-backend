@@ -12,11 +12,11 @@ export class SellerShippingRepository {
       data: {
         shopId: shipping.shopId,
         sellerId: shipping.sellerId,
-        ...(shipping.freeShippingOption
-          ? { freeShippingOption: shipping.freeShippingOption }
-          : {}),
+        freeShippingOption: shipping.freeShippingOption
+          ? shipping.freeShippingOption
+          : null,
         createdAt: new Date(),
-      } as Prisma.SellerShippingProfileUncheckedCreateInput,
+      } as unknown as Prisma.SellerShippingProfileUncheckedCreateInput,
     });
 
     return mapPrismaSellerShippingToDomain(prismaShipping) as SellerShipping;
@@ -25,6 +25,7 @@ export class SellerShippingRepository {
   async findOne(id: string): Promise<SellerShipping | null> {
     const shipping = await this.prisma.sellerShipping.findUnique({
       where: { id },
+      include: { shippingProfiles: true },
     });
     return mapPrismaSellerShippingToDomain(shipping);
   }
@@ -43,8 +44,8 @@ export class SellerShippingRepository {
         shopId: shipping.shopId,
         sellerId: shipping.sellerId,
         freeShippingOption: shipping.freeShippingOption
-          ? { ...shipping.freeShippingOption }
-          : undefined,
+          ? shipping.freeShippingOption
+          : Prisma.JsonNull,
         updatedAt: new Date(),
       },
     });
@@ -69,10 +70,9 @@ export function mapPrismaSellerShippingToDomain(
     id: prismaShipping.id,
     shopId: prismaShipping.shopId,
     sellerId: prismaShipping.sellerId,
-    ...(prismaShipping.freeShippingOption && {
-      freeShippingOption:
-        prismaShipping.freeShippingOption as SellerShipping['freeShippingOption'],
-    }),
+    freeShippingOption: prismaShipping.freeShippingOption
+      ? (prismaShipping.freeShippingOption as SellerShipping['freeShippingOption'])
+      : null,
     createdAt: prismaShipping.createdAt,
     updatedAt: prismaShipping.updatedAt ?? undefined,
   });
