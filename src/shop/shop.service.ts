@@ -49,6 +49,36 @@ export class ShopService {
     return shop;
   }
 
+  /**
+   * Retrieves shops by their IDs.
+   * Returns only basic shop information and excludes sensitive fields
+   * (e.g., sellerId, updatedAt, deletedAt, website).
+   */
+  async findShopsBasicInfoByIds(shipId: string[]): Promise<
+    {
+      id: string;
+      name: string;
+      description: string;
+      country: string;
+      shopUrl: string;
+    }[]
+  > {
+    const shops = await this.shopRepository.findAllByIds(shipId);
+    return shops
+      .filter((shop) => !shop.deletedAt)
+      .map(
+        ({
+          sellerId,
+          website,
+          attributes,
+          createdAt,
+          updatedAt,
+          deletedAt,
+          ...shop
+        }) => shop,
+      );
+  }
+
   async findOneBySellerId(sellerId: string): Promise<Shop> {
     const shop = await this.shopRepository.findOneBySellerId(sellerId);
     if (!shop) {

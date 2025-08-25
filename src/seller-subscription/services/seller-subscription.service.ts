@@ -57,7 +57,6 @@ export class SellerSubscriptionService {
     if (subscriptions.length === 0) {
       return [];
     }
-
     return subscriptions;
   }
 
@@ -100,6 +99,30 @@ export class SellerSubscriptionService {
   ): Promise<SellerSubscription> {
     await this.findOne(sellerId, subscriptionId);
     return this.subscriptionRepository.remove(subscriptionId);
+  }
+
+  /**
+   * Guard function to ensure that a seller has at least one valid subscription.
+   *
+   * This function fetches all subscriptions associated with the given sellerId,
+   * then checks if there is at least one subscription with a status of 'ACTIVE' or 'CANCELLING'.
+   *
+   * If no valid subscription is found, it throws a ForbiddenException, preventing
+   * further actions by the seller.
+   *
+   * @param sellerId - The ID of the seller to check subscriptions for
+   * @throws ForbiddenException - if the seller has no valid subscription
+   */
+  async validSubscriptionGuard(sellerId: string) {
+    const subnscriptions = await this.findAllBySellerId(sellerId);
+    const validSubscription = subnscriptions.find(
+      (sub) => sub.status === 'ACTIVE' || sub.status === 'CANCELLING',
+    );
+    if (!validSubscription) {
+      throw new ForbiddenException('No valid Subscription');
+    }
+
+    return validSubscription;
   }
   /**
    * Generate a payment link when a listing plan is selected.

@@ -28,6 +28,7 @@ export type Categories = {
 export class Product {
   id: string;
   shopId: string;
+  sellerId: string;
   name: string;
   description: string;
   price: number;
@@ -39,7 +40,7 @@ export class Product {
   /* calculated by the sum of variant */
   stock: number;
   /* this will be used when after payment and order is placed */
-  isActive: boolean;
+  onShelf: boolean;
   reservedStock: number;
   isApproved: boolean;
 
@@ -54,6 +55,8 @@ export class Product {
 
   // Category
   categories: Categories;
+
+  shippingProfileId?: string;
 
   constructor(
     init: Omit<Product, OptionalProperties<Product>> &

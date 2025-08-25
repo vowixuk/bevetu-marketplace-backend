@@ -17,6 +17,7 @@ export class ProductRepository {
       await this.prisma.product.create({
         data: {
           shopId: product.shopId,
+          sellerId: product.sellerId,
           name: product.name,
           description: product.description,
           price: product.price,
@@ -25,7 +26,7 @@ export class ProductRepository {
           imageUrls: product.imageUrls,
           stock: product.stock,
           reservedStock: product.reservedStock,
-          isActive: product.isActive,
+          onShelf: product.onShelf,
           isApproved: product.isApproved,
           variants: product.variants,
           discount: product.discount,
@@ -36,10 +37,29 @@ export class ProductRepository {
     ) as Product;
   }
 
-  async findAll(): Promise<Product[]> {
-    return (await this.prisma.product.findMany()).map(
-      mapPrismaProductToDomain,
-    ) as Product[];
+  async findAllOnShelf(
+    skip: number,
+    take: number,
+  ): Promise<{
+    products: Product[] | null;
+    total: number;
+  }> {
+    const [products, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where: { onShelf: true, isApproved: true },
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.product.count({
+        where: { onShelf: true, isApproved: true },
+      }),
+    ]);
+
+    return {
+      products: products.map(mapPrismaProductToDomain) as Product[],
+      total,
+    };
   }
 
   async findOne(id: string): Promise<Product | null> {
@@ -48,10 +68,52 @@ export class ProductRepository {
     );
   }
 
-  async findByShopId(shopId: string): Promise<Product[]> {
-    return (await this.prisma.product.findMany({ where: { shopId } })).map(
-      mapPrismaProductToDomain,
-    ) as Product[];
+  async findBySellerIdAndShopId(
+    sellerId: string,
+    shopId: string,
+    skip: number,
+    take: number,
+  ): Promise<{
+    products: Product[] | null;
+    total: number;
+  }> {
+    const total = await this.prisma.product.count({
+      where: { shopId, onShelf: true },
+    });
+    const products = await this.prisma.product.findMany({
+      where: { shopId, sellerId },
+      skip,
+      take,
+      orderBy: { updatedAt: 'desc' },
+    });
+    return {
+      products: products.map(mapPrismaProductToDomain) as Product[],
+      total,
+    };
+  }
+
+  async findAllOnShelfByShopId(
+    shopId: string,
+    skip: number,
+    take: number,
+  ): Promise<{
+    products: Product[] | null;
+    total: number;
+  }> {
+    const total = await this.prisma.product.count({
+      where: { shopId, onShelf: true },
+    });
+    const products = await this.prisma.product.findMany({
+      where: { shopId, onShelf: true, isApproved: true },
+      skip,
+      take,
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return {
+      products: products.map(mapPrismaProductToDomain) as Product[],
+      total,
+    };
   }
 
   async update(product: Product): Promise<Product> {
@@ -67,7 +129,7 @@ export class ProductRepository {
           imageUrls: product.imageUrls,
           stock: product.stock,
           reservedStock: product.reservedStock,
-          isActive: product.isActive,
+          onShelf: product.onShelf,
           isApproved: product.isApproved,
           variants: product.variants,
           discount: product.discount,
@@ -95,6 +157,7 @@ export function mapPrismaProductToDomain(
 
   return new Product({
     id: prismaProduct.id,
+    sellerId: prismaProduct.sellerId,
     shopId: prismaProduct.shopId,
     name: prismaProduct.name,
     description: prismaProduct.description,
@@ -104,7 +167,7 @@ export function mapPrismaProductToDomain(
     imageUrls: prismaProduct.imageUrls ?? [],
     stock: prismaProduct.stock,
     reservedStock: prismaProduct.reservedStock,
-    isActive: prismaProduct.isActive,
+    onShelf: prismaProduct.onShelf ? true : false,
     isApproved: prismaProduct.isApproved,
     variants: prismaProduct.variants as Variants[], // JSON -> TypeScript type
     discount: prismaProduct.discount as unknown as Discount[], // JSON -> TypeScript type

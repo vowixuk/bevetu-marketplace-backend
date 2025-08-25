@@ -84,7 +84,7 @@ export class CreateProductDto {
   stock: number;
 
   @IsBoolean()
-  isActive: boolean;
+  onShelf: boolean;
 
   @ValidateNested()
   @Type(() => CategoriesDto)
@@ -97,4 +97,8 @@ export class CreateProductDto {
   @ValidateNested()
   @Type(() => DiscountDto)
   discount: DiscountDto[];
+
+  @IsString()
+  @IsOptional()
+  shippingProfileId?: string;
 }

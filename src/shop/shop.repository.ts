@@ -65,6 +65,15 @@ export class ShopRepository {
     ) as Shop;
   }
 
+  async findAllByIds(ids: string[]): Promise<Shop[]> {
+    const shops = await this.prisma.shop.findMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+    return shops.map(mapPrismaShopToDomain) as Shop[];
+  }
+
   async remove(id: string): Promise<Shop> {
     return mapPrismaShopToDomain(
       await this.prisma.shop.delete({

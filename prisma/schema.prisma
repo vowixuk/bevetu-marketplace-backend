@@ -248,6 +248,7 @@ enum SellerShippingFeeType {
  ************************************************************/
 model Product {
   id             String    @id @default(uuid())
+  sellerId       String 
   shopId         String
   name           String
   description    String
@@ -259,10 +260,10 @@ model Product {
 
   stock          Int
   reservedStock  Int       @default(0)
-  isActive       Boolean
+  onShelf       Boolean
   isApproved     Boolean   @default(false)
 
-  sellerShippingProfileid String?
+  shippingProfileId String?
 
   // JSON for complex types
   variants       Json
@@ -280,7 +281,7 @@ model Product {
   shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   // join table
-  sellerShippingProfile SellerShippingProfile?  @relation(fields: [sellerShippingProfileid], references: [id])
+  sellerShippingProfile SellerShippingProfile?  @relation(fields: [shippingProfileId], references: [id])
 
 
 }
