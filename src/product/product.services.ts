@@ -42,6 +42,13 @@ export class ProductService {
     return this.productRepository.create(product);
   }
 
+  /**
+   * Internal-use only — not intended for public access.
+   * This method does not verify whether a product is on-shelf or approved,
+   * nor does it validate product ownership for the caller.
+   * It is meant for admin-level operations or cases where product–shop–seller
+   * ownership is already guaranteed.
+   */
   async findOne(id: string, shopId: string): Promise<Product> {
     const product = await this.productRepository.findOne(id);
     if (!product) {
@@ -50,6 +57,27 @@ export class ProductService {
     if (product.shopId !== shopId) {
       throw new ForbiddenException('Product does not belong to this shop');
     }
+    return product;
+  }
+
+  /**
+   * Public-facing method — intended for displaying a product to buyers.
+   * Unlike `findOne`, this method strips out sensitive or internal fields
+   * (e.g. `reservedStock`, `isApproved`, `onShelf`, `sellerId`) so that
+   * only safe, buyer-relevant data is returned.
+   *
+   * Use this when rendering product details in a shop or marketplace
+   * where the consumer should only see information suitable for public display.
+   */
+  async findOneForDisplay(
+    id: string,
+    shopId: string,
+  ): Promise<
+    Omit<Product, 'reservedStock' | 'isApproved' | 'onShelf' | 'sellerId'>
+  > {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { reservedStock, isApproved, onShelf, sellerId, ...product } =
+      await this.findOne(id, shopId);
     return product;
   }
 
@@ -204,7 +232,7 @@ export class ProductService {
    * Only includes products that are on-shelf and excludes internal fields
    * (e.g., approval status or other seller-only details).
    */
-  async findAllOnShelf(
+  async findAllOnShelfFromMultipleShops(
     page: number = 1,
     limit: number = 20,
   ): Promise<{

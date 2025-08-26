@@ -35,3 +35,5 @@ export { DeleteProductUseCase } from '../../../src/product/use-cases/seller/dele
 export { ResetProductOnShelfUseCase } from '../../../src/product/use-cases/seller/reset-product-on-shelf.useCase';
 
 export { ProductModule } from '../../../src/product/product.module';
+
+export { SellerViewProductUseCase } from '../../../src/product/use-cases/seller/seller-view-product.useCase';

@@ -698,6 +698,7 @@ describe('ProductService', () => {
       );
 
       expect(productList2.totalRecords).toBe(10);
+    
     });
 
     it('test 14 - should not be able to view another sellers product', async () => {
@@ -714,7 +715,7 @@ describe('ProductService', () => {
 
       seller_2_Subscription = subscription_2.subscription;
       seller_2_currentProduct = subscription_2.currentProduct;
-    
+
       expect(seller_2_Subscription.id).toBeDefined();
 
       seller_2_shipping = await services.sellerShippingService.create(
@@ -750,8 +751,8 @@ describe('ProductService', () => {
       );
 
       // create product for seller 2
-       // 2 - Create 10 products and set on shelf
-       for (let i = 1; i <= 15; i++) {
+        // 2 - Create 10 products and set on shelf
+        for (let i = 1; i <= 15; i++) {
         const p = await services.createProductUseCase.execute(
           seller_2.id,
           seller_2_shop.id,
@@ -788,10 +789,8 @@ describe('ProductService', () => {
           page: 1,
         },
       );
- 
-    seller_2_products = all_seller_2_products.products;
 
-    console.log(seller_2_products,"<< seller_2_products")
+    seller_2_products = all_seller_2_products.products;
 
     expect(seller_2_products).toHaveLength(15)
 
@@ -801,23 +800,41 @@ describe('ProductService', () => {
       await services.viewProductListUseCase.execute(
         seller_1.id,
         seller_2_shop.id,
-       { limit:10,
+        { limit:10,
         page:10}
       )
 
     } catch(error) {
       expect(error).toBeInstanceOf(ForbiddenException);
-
     } 
-
 
     },100000)
 
   })
 
   describe('Buyers',() => {
-    // it('test 15 - should be be able to view all shop on shelf products', async () => {});
-    // it('test 16 - should be be able to view a shop's on shelf products', async () => {});
+    it('test 15 - should be be able to view all shop on shelf products', async () => {
+      const productList1 = await services.productService.findAllOnShelfByShopId(
+        seller_1_shop.id,
+      );
+
+      console.log(productList1.totalRecords, '<<< productList1 total');
+   
+
+
+      const productList2 = await services.productService.findAllOnShelfByShopId(
+        seller_2_shop.id,
+      );
+
+      const products =
+        await services.productService.findAllOnShelfFromMultipleShops(1, 30);
+
+
+      expect(products.totalRecords).toBe(
+        productList2.totalRecords + productList1.totalRecords,
+      );
+    });
+   
   })
   
 });

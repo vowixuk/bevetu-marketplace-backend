@@ -12,6 +12,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ShopModule } from '../shop/shop.module';
 import { SubscriptionModule } from '../seller-subscription/sellerSubscription.module';
 import { StripeModule } from '../stripe/stripe.module';
+import { SellerViewProductUseCase } from './use-cases/seller/seller-view-product.useCase';
 
 @Module({
   imports: [EventEmitterModule, ShopModule, SubscriptionModule, StripeModule],
@@ -24,6 +25,7 @@ import { StripeModule } from '../stripe/stripe.module';
     UpdateProductUseCase,
     ViewProductListUseCase,
     ResetProductOnShelfUseCase,
+    SellerViewProductUseCase,
   ],
   exports: [
     ProductService,
