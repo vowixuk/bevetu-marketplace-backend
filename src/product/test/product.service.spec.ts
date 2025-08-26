@@ -107,9 +107,10 @@ describe('ProductService', () => {
     seller_1 = seller_1_sellerAccountSetup.seller;
     seller_1_StripeAccountId =
       seller_1_sellerAccountSetup.sellerStripeAccountId;
-
-
-    seller_1_shop = await createTestShop1(seller_1.id, services.shopService)
+    
+    const testShop1 = await createTestShop1(seller_1.id, services.setupShopUseCase)
+    seller_1_shop = testShop1.shop
+    seller_1_shipping = testShop1.shipping;
 
     // ----- Setup testSellerUser_2 ----- //
     testSellerUser_2 = await createTestUser_2(services.userService);
@@ -133,7 +134,13 @@ describe('ProductService', () => {
     seller_2_StripeAccountId =
       seller_2_sellerAccountSetup.sellerStripeAccountId;
 
-      seller_2_shop = await createTestShop1(seller_2.id, services.shopService)
+
+      const testShop2 = await createTestShop1(
+        seller_2.id,
+        services.setupShopUseCase,
+      );
+      seller_2_shop = testShop2.shop;
+      seller_2_shipping = testShop2.shipping;
 
     // ----- Setup buyer ----- //
 
@@ -318,18 +325,10 @@ describe('ProductService', () => {
       }
     });
     it('test 6 - should be able to create a shipping profile and add to product.', async () => {
-      const shippingCreated = await services.sellerShippingService.create(
-        seller_1.id,
-        Object.assign(new CreateSellerShippingDto(), {
-          shopId: seller_1_shop.id,
-        }),
-      );
-
-      seller_1_shipping = shippingCreated;
 
       const createDto = Object.assign(new CreateSellerShippingProfileDto(), {
         shopId: seller_1_shop.id,
-        sellerShippingId: shippingCreated.id,
+        sellerShippingId: seller_1_shipping.id,
         name: 'Standard Shipping',
         feeType: 'flat',
         feeAmount: 5.0,
@@ -349,7 +348,7 @@ describe('ProductService', () => {
 
       const profiles =
         await services.sellerShippingProfileService.findBySellerShippingId(
-          shippingCreated.id,
+          seller_1_shipping.id,
         );
 
       expect(profiles).toHaveLength(1);
@@ -717,13 +716,6 @@ describe('ProductService', () => {
       seller_2_currentProduct = subscription_2.currentProduct;
 
       expect(seller_2_Subscription.id).toBeDefined();
-
-      seller_2_shipping = await services.sellerShippingService.create(
-        seller_2.id,
-        Object.assign(new CreateSellerShippingDto(), {
-          shopId: seller_2_shop.id,
-        }),
-      );
 
       await services.sellerShippingProfileService.create(
         seller_2.id,

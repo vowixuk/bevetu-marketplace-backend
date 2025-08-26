@@ -41,8 +41,6 @@ export class SellerShippingRepository {
       include: { shippingProfiles: true },
     });
 
-    console.log(shipping, '<< shipping in repo');
-
     return mapPrismaSellerShippingToDomain(shipping);
   }
 

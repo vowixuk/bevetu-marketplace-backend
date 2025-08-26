@@ -69,7 +69,7 @@ export class SellerShippingService {
     sellerId: string,
   ): Promise<SellerShipping> {
     const shipping = await this.sellerShippingRepository.findByShopId(shopId);
-    console.log(shipping, '<< shipping in service');
+
     if (!shipping) {
       throw new NotFoundException('Seller shipping not found for this shop');
     }

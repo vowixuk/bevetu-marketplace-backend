@@ -37,3 +37,4 @@ export { ResetProductOnShelfUseCase } from '../../../src/product/use-cases/selle
 export { ProductModule } from '../../../src/product/product.module';
 
 export { SellerViewProductUseCase } from '../../../src/product/use-cases/seller/seller-view-product.useCase';
+export { SetupShopUseCase } from '../../../src/shop/use-cases/setup-shop.useCase';

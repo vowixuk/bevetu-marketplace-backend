@@ -60,7 +60,8 @@ describe('ProductService', () => {
 
     // Create a dummy Shop
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    shop = await createTestShop1(_seller.seller.id, serviecs.shopService);
+     const createTestShop = await createTestShop1(_seller.seller.id,serviecs.setupShopUseCase);
+     shop = createTestShop.shop
   });
 
   afterAll(async () => {
