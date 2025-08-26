@@ -26,6 +26,7 @@ import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
 import { BuyerModule } from './buyer/buyer.module';
 import { SellerShippingModule } from './seller-shipping/seller-shipping.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { SellerShippingModule } from './seller-shipping/seller-shipping.module';
         limit: 1000000,
       },
     ]),
+
     AuthModule,
     UserModule,
     StripeModule,
@@ -56,6 +58,7 @@ import { SellerShippingModule } from './seller-shipping/seller-shipping.module';
     CartModule,
     BuyerModule,
     SellerShippingModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [

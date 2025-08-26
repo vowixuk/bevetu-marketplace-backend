@@ -24,6 +24,7 @@ import {
   StripeSubscriptionItems,
 } from 'src/stripe/entities/seller-subscription-mapping.entity';
 import Stripe from 'stripe';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class SellerSubscriptionService {
@@ -32,6 +33,7 @@ export class SellerSubscriptionService {
     private readonly sellerSubscriptionMappingService: SellerSubscriptionMappingService,
     private readonly subscriptionEventRecordService: SubscriptionEventRecordService,
     private readonly stripeService: StripeService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -818,10 +820,18 @@ export class SellerSubscriptionService {
       }),
     );
 
+    // Step 7 - Remove the "pending_update" metadata in stripe
     await this.stripeService.removeMetadataFromSubscription(
       subscriptionMapping.stripeSubscriptionId,
       'pending_update',
     );
+
+    // Step 8 - Trigger reset the on shelf product function
+    const isRegistered = this.eventEmitter.emit(
+      'product.usecase.resetProductOnShelfUseCase.event',
+      sellerId,
+    );
+    return isRegistered;
   }
 
   /**

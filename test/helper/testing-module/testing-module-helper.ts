@@ -32,7 +32,12 @@ import {
   SetProductOnShelfUseCase,
   UpdateProductUseCase,
   ViewProductListUseCase,
+  DeleteProductUseCase,
+  ResetProductOnShelfUseCase,
+  ProductModule,
 } from './index';
+
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 
 export type ServicesType = {
   productService: ProductService;
@@ -50,6 +55,8 @@ export type ServicesType = {
   setProductOnShelfUseCase: SetProductOnShelfUseCase;
   updateProductUseCase: UpdateProductUseCase;
   viewProductListUseCase: ViewProductListUseCase;
+  deleteProductUseCase: DeleteProductUseCase;
+  resetProductOnShelfUseCase: ResetProductOnShelfUseCase;
 };
 export async function testTestingMoudleHelper(): Promise<{
   module: TestingModule;
@@ -65,7 +72,10 @@ export async function testTestingMoudleHelper(): Promise<{
       DatabaseModule,
       UserModule,
       StripeModule,
+
+      EventEmitterModule.forRoot(),
       SubscriptionModule,
+      ProductModule,
     ],
     providers: [
       SellerService,
@@ -93,6 +103,9 @@ export async function testTestingMoudleHelper(): Promise<{
       SetProductOnShelfUseCase,
       UpdateProductUseCase,
       ViewProductListUseCase,
+      DeleteProductUseCase,
+      ResetProductOnShelfUseCase,
+      EventEmitter2,
     ],
   }).compile();
 
@@ -128,6 +141,12 @@ export async function testTestingMoudleHelper(): Promise<{
         module.get<UpdateProductUseCase>(UpdateProductUseCase),
       viewProductListUseCase: module.get<ViewProductListUseCase>(
         ViewProductListUseCase,
+      ),
+      deleteProductUseCase:
+        module.get<DeleteProductUseCase>(DeleteProductUseCase),
+
+      resetProductOnShelfUseCase: module.get<ResetProductOnShelfUseCase>(
+        ResetProductOnShelfUseCase,
       ),
     },
   };

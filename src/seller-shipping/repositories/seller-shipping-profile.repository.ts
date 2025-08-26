@@ -48,6 +48,7 @@ export class SellerShippingProfileRepository {
   async findOne(id: string): Promise<SellerShippingProfile | null> {
     const profile = await this.prisma.sellerShippingProfile.findUnique({
       where: { id },
+      include: { product: true },
     });
     return mapPrismaSellerShippingProfileToDomain(profile);
   }
@@ -92,6 +93,15 @@ export class SellerShippingProfileRepository {
       where: { id },
     });
     return mapPrismaSellerShippingProfileToDomain(prismaProfile)!;
+  }
+
+  async hasProductsAttached(id: string): Promise<boolean> {
+    const count = await this.prisma.product.count({
+      where: {
+        shippingProfileId: id,
+      },
+    });
+    return count > 0;
   }
 }
 

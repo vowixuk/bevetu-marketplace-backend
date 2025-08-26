@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { SellerShippingProfileRepository } from '../repositories/seller-shipping-profile.repository';
 import { SellerShippingProfile } from '../entities/seller-shipping-profile.entity';
@@ -90,6 +91,21 @@ export class SellerShippingProfileService {
   }
 
   async remove(id: string, sellerId: string): Promise<SellerShippingProfile> {
+    const profile = await this.findOne(id, sellerId);
+    return this.sellerShippingProfileRepository.remove(profile.id);
+  }
+
+  async removeWithProductAttachCheck(
+    id: string,
+    sellerId: string,
+  ): Promise<SellerShippingProfile> {
+    const hasAttached =
+      await this.sellerShippingProfileRepository.hasProductsAttached(id);
+    if (hasAttached) {
+      throw new ConflictException(
+        'Cannot delete this shipping profile because products are attached',
+      );
+    }
     const profile = await this.findOne(id, sellerId);
     return this.sellerShippingProfileRepository.remove(profile.id);
   }

@@ -27,6 +27,7 @@ export class ProductRepository {
           stock: product.stock,
           reservedStock: product.reservedStock,
           onShelf: product.onShelf,
+          shippingProfileId: product.shippingProfileId ?? undefined,
           isApproved: product.isApproved,
           variants: product.variants ?? [],
           discount: product.discount ?? [],
@@ -141,6 +142,19 @@ export class ProductRepository {
     ) as Product;
   }
 
+  async findExcessOnShelfByShopId(
+    shopId: string,
+    quota: number,
+  ): Promise<Product[]> {
+    const products = await this.prisma.product.findMany({
+      where: { shopId, onShelf: true },
+      orderBy: { createdAt: 'asc' },
+      skip: quota,
+    });
+
+    return products.map(mapPrismaProductToDomain) as Product[];
+  }
+
   async remove(id: string): Promise<Product> {
     return mapPrismaProductToDomain(
       await this.prisma.product.delete({ where: { id } }),
@@ -175,8 +189,6 @@ export function mapPrismaProductToDomain(
     categories: prismaProduct.categories as Categories, // JSON -> TypeScript type
     createdAt: prismaProduct.createdAt,
     updatedAt: prismaProduct.updatedAt,
-    shippingProfileId: (prismaProduct.shippingProfileId ?? undefined) as
-      | string
-      | undefined,
+    shippingProfileId: prismaProduct.shippingProfileId ?? undefined,
   });
 }

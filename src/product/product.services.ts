@@ -32,6 +32,7 @@ export class ProductService {
       onShelf: false,
       isApproved: true,
       categories: createDto.categories,
+      shippingProfileId: createDto.shippingProfileId ?? undefined,
       variants: createDto.variants ?? [],
       discount: createDto.discount ?? [],
       createdAt: new Date(),
@@ -296,6 +297,16 @@ export class ProductService {
    */
   async noCheckingUpdate(id: string, updatedProduct: Product) {
     return this.productRepository.update(updatedProduct);
+  }
+
+  async findExcessOnShelfByShopId(
+    shopId: string,
+    quota: number,
+  ): Promise<Product[]> {
+    return await this.productRepository.findExcessOnShelfByShopId(
+      shopId,
+      quota,
+    );
   }
 
   async remove(id: string, shopId: string): Promise<Product> {

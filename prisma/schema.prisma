@@ -122,6 +122,9 @@ model Shop {
   // Joining Table
   seller      Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   product Product[]
+  sellerShipping SellerShipping[]
+
+
 }
 
 
@@ -206,6 +209,9 @@ model SellerShipping {
   freeShippingOption Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Joining Table
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 }
 
 model SellerShippingProfile {

@@ -30,3 +30,8 @@ export { CreateProductUseCase } from '../../../src/product/use-cases/seller/crea
 export { SetProductOnShelfUseCase } from '../../../src/product/use-cases/seller/set-product-on-shelf.useCase';
 export { UpdateProductUseCase } from '../../../src/product/use-cases/seller/update-product.useCase';
 export { ViewProductListUseCase } from '../../../src/product/use-cases/seller/view-product-list.useCase';
+
+export { DeleteProductUseCase } from '../../../src/product/use-cases/seller/delete-product.useCase';
+export { ResetProductOnShelfUseCase } from '../../../src/product/use-cases/seller/reset-product-on-shelf.useCase';
+
+export { ProductModule } from '../../../src/product/product.module';
