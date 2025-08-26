@@ -28,6 +28,10 @@ import {
   UserModule,
   StripeModule,
   SubscriptionModule,
+  CreateProductUseCase,
+  SetProductOnShelfUseCase,
+  UpdateProductUseCase,
+  ViewProductListUseCase,
 } from './index';
 
 export type ServicesType = {
@@ -42,6 +46,10 @@ export type ServicesType = {
   sellerShippingService: SellerShippingService;
   sellerShippingProfileService: SellerShippingProfileService;
   shopService: ShopService;
+  createProductUseCase: CreateProductUseCase;
+  setProductOnShelfUseCase: SetProductOnShelfUseCase;
+  updateProductUseCase: UpdateProductUseCase;
+  viewProductListUseCase: ViewProductListUseCase;
 };
 export async function testTestingMoudleHelper(): Promise<{
   module: TestingModule;
@@ -81,47 +89,46 @@ export async function testTestingMoudleHelper(): Promise<{
       SellerShippingProfileService,
       SellerShippingRepository,
       SellerShippingProfileRepository,
+      CreateProductUseCase,
+      SetProductOnShelfUseCase,
+      UpdateProductUseCase,
+      ViewProductListUseCase,
     ],
   }).compile();
-
-  const productService = module.get<ProductService>(ProductService);
-  const sellerService = module.get<SellerService>(SellerService);
-  const sellerUseCase = module.get<SellerUseCase>(SellerUseCase);
-  const buyerUseCase = module.get<BuyerUseCase>(BuyerUseCase);
-  const stripeService = module.get<StripeService>(StripeService);
-  const userService = module.get<UserService>(UserService);
-  const sellerStripeAccountMappingService =
-    module.get<SellerStripeAccountMappingService>(
-      SellerStripeAccountMappingService,
-    );
-  const sellerSubscriptionService = module.get<SellerSubscriptionService>(
-    SellerSubscriptionService,
-  );
-
-  const sellerShippingService = module.get<SellerShippingService>(
-    SellerShippingService,
-  );
-
-  const sellerShippingProfileService = module.get<SellerShippingProfileService>(
-    SellerShippingProfileService,
-  );
-
-  const shopService = module.get<ShopService>(ShopService);
 
   return {
     module,
     services: {
-      productService,
-      userService,
-      sellerService,
-      sellerUseCase,
-      sellerStripeAccountMappingService,
-      buyerUseCase,
-      stripeService,
-      sellerSubscriptionService,
-      sellerShippingService,
-      sellerShippingProfileService,
-      shopService,
+      productService: module.get<ProductService>(ProductService),
+      userService: module.get<UserService>(UserService),
+      sellerService: module.get<SellerService>(SellerService),
+      sellerUseCase: module.get<SellerUseCase>(SellerUseCase),
+      sellerStripeAccountMappingService:
+        module.get<SellerStripeAccountMappingService>(
+          SellerStripeAccountMappingService,
+        ),
+      buyerUseCase: module.get<BuyerUseCase>(BuyerUseCase),
+      stripeService: module.get<StripeService>(StripeService),
+      sellerSubscriptionService: module.get<SellerSubscriptionService>(
+        SellerSubscriptionService,
+      ),
+      sellerShippingService: module.get<SellerShippingService>(
+        SellerShippingService,
+      ),
+      sellerShippingProfileService: module.get<SellerShippingProfileService>(
+        SellerShippingProfileService,
+      ),
+      shopService: module.get<ShopService>(ShopService),
+      createProductUseCase:
+        module.get<CreateProductUseCase>(CreateProductUseCase),
+      setProductOnShelfUseCase: module.get<SetProductOnShelfUseCase>(
+        SetProductOnShelfUseCase,
+      ),
+      updateProductUseCase:
+        module.get<UpdateProductUseCase>(UpdateProductUseCase),
+      viewProductListUseCase: module.get<ViewProductListUseCase>(
+        ViewProductListUseCase,
+      ),
     },
   };
 }

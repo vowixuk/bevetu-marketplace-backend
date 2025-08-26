@@ -282,9 +282,8 @@ model Product {
 
   // join table
   sellerShippingProfile SellerShippingProfile?  @relation(fields: [shippingProfileId], references: [id])
-
-
 }
+
 
 model ProductReview {
   id                   String                 @id @default(uuid())

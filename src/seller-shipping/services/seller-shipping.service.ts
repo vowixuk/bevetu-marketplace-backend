@@ -51,12 +51,32 @@ export class SellerShippingService {
 
   /**
    * Find a shipping record by seller ID
+   * Pending to delete since. should attach to shop id,
+   * one seller can has many shiiping reocrd if they have more
+   * then one shop in future
    */
-  async findBySellerId(sellerId: string): Promise<SellerShipping> {
-    const shipping =
-      await this.sellerShippingRepository.findBySellerId(sellerId);
+  // async findBySellerId(sellerId: string): Promise<SellerShipping> {
+  //   const shipping =
+  //     await this.sellerShippingRepository.findBySellerId(sellerId);
+  //   if (!shipping) {
+  //     throw new NotFoundException('Seller shipping not found for this seller');
+  //   }
+  //   return shipping;
+  // }
+
+  async findByShopId(
+    shopId: string,
+    sellerId: string,
+  ): Promise<SellerShipping> {
+    const shipping = await this.sellerShippingRepository.findByShopId(shopId);
+    console.log(shipping, '<< shipping in service');
     if (!shipping) {
-      throw new NotFoundException('Seller shipping not found for this seller');
+      throw new NotFoundException('Seller shipping not found for this shop');
+    }
+    if (shipping.sellerId !== sellerId) {
+      throw new ForbiddenException(
+        'Shipping record does not belong to this seller',
+      );
     }
     return shipping;
   }

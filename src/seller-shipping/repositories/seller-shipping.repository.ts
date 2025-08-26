@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { SellerShipping } from '../entities/seller-shipping.entity';
-import { SellerShipping as PrismaSellerShipping, Prisma } from '@prisma/client';
+import {
+  SellerShipping as PrismaSellerShipping,
+  Prisma,
+  SellerShippingProfile as PrismaSellerShippingProfile,
+} from '@prisma/client';
 
 @Injectable()
 export class SellerShippingRepository {
@@ -17,6 +21,7 @@ export class SellerShippingRepository {
           : null,
         createdAt: new Date(),
       } as unknown as Prisma.SellerShippingProfileUncheckedCreateInput,
+      include: { shippingProfiles: true },
     });
 
     return mapPrismaSellerShippingToDomain(prismaShipping) as SellerShipping;
@@ -30,10 +35,14 @@ export class SellerShippingRepository {
     return mapPrismaSellerShippingToDomain(shipping);
   }
 
-  async findBySellerId(sellerId: string): Promise<SellerShipping | null> {
+  async findByShopId(shopId: string): Promise<SellerShipping | null> {
     const shipping = await this.prisma.sellerShipping.findFirst({
-      where: { sellerId },
+      where: { shopId },
+      include: { shippingProfiles: true },
     });
+
+    console.log(shipping, '<< shipping in repo');
+
     return mapPrismaSellerShippingToDomain(shipping);
   }
 
@@ -48,6 +57,7 @@ export class SellerShippingRepository {
           : Prisma.JsonNull,
         updatedAt: new Date(),
       },
+      include: { shippingProfiles: true },
     });
 
     return mapPrismaSellerShippingToDomain(prismaShipping) as SellerShipping;
@@ -56,13 +66,18 @@ export class SellerShippingRepository {
   async remove(id: string): Promise<SellerShipping> {
     const prismaShipping = await this.prisma.sellerShipping.delete({
       where: { id },
+      include: { shippingProfiles: true },
     });
     return mapPrismaSellerShippingToDomain(prismaShipping) as SellerShipping;
   }
 }
 
 export function mapPrismaSellerShippingToDomain(
-  prismaShipping?: PrismaSellerShipping | null,
+  prismaShipping?:
+    | (PrismaSellerShipping & {
+        shippingProfiles: PrismaSellerShippingProfile[];
+      })
+    | null,
 ): SellerShipping | null {
   if (!prismaShipping) return null;
 
@@ -75,5 +90,7 @@ export function mapPrismaSellerShippingToDomain(
       : null,
     createdAt: prismaShipping.createdAt,
     updatedAt: prismaShipping.updatedAt ?? undefined,
+    shippingProfiles:
+      prismaShipping.shippingProfiles as unknown as SellerShipping['shippingProfiles'],
   });
 }

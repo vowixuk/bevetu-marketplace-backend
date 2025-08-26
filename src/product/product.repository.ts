@@ -28,8 +28,8 @@ export class ProductRepository {
           reservedStock: product.reservedStock,
           onShelf: product.onShelf,
           isApproved: product.isApproved,
-          variants: product.variants,
-          discount: product.discount,
+          variants: product.variants ?? [],
+          discount: product.discount ?? [],
           categories: product.categories,
           createdAt: product.createdAt ?? new Date(),
         },
@@ -78,7 +78,7 @@ export class ProductRepository {
     total: number;
   }> {
     const total = await this.prisma.product.count({
-      where: { shopId, onShelf: true },
+      where: { shopId, sellerId },
     });
     const products = await this.prisma.product.findMany({
       where: { shopId, sellerId },
@@ -134,6 +134,7 @@ export class ProductRepository {
           variants: product.variants,
           discount: product.discount,
           categories: product.categories,
+          shippingProfileId: product.shippingProfileId,
           updatedAt: new Date(),
         },
       }),
@@ -174,5 +175,8 @@ export function mapPrismaProductToDomain(
     categories: prismaProduct.categories as Categories, // JSON -> TypeScript type
     createdAt: prismaProduct.createdAt,
     updatedAt: prismaProduct.updatedAt,
+    shippingProfileId: (prismaProduct.shippingProfileId ?? undefined) as
+      | string
+      | undefined,
   });
 }

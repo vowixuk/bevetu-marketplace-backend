@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Product } from '../../entities/product.entity';
 import { ProductService } from '../../product.services';
-import { SellerSubscriptionService } from 'test/helper/testing-module';
-import { UpdateProductDto } from 'src/product/dto/update-product.dto';
+import { SellerSubscriptionService } from '../../../seller-subscription/services/seller-subscription.service';
+import { UpdateProductDto } from '../../../product/dto/update-product.dto';
 import { ShopService } from '../../../shop/shop.service';
 @Injectable()
 export class UpdateProductUseCase {

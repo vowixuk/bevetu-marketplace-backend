@@ -26,6 +26,13 @@ export class VariantDto {
   @IsNumber()
   stock: number;
 }
+export class DiscountDateDto {
+  @IsNotEmpty()
+  start: Date;
+
+  @IsNotEmpty()
+  end: Date;
+}
 
 export class DiscountDto {
   @IsNumber()
@@ -37,14 +44,6 @@ export class DiscountDto {
   @ValidateNested()
   @Type(() => DiscountDateDto)
   date: DiscountDateDto;
-}
-
-export class DiscountDateDto {
-  @IsNotEmpty()
-  start: Date;
-
-  @IsNotEmpty()
-  end: Date;
 }
 
 export class CategoriesDto {
@@ -92,11 +91,13 @@ export class CreateProductDto {
 
   @ValidateNested({ each: true })
   @Type(() => VariantDto)
-  variants: VariantDto[];
+  @IsOptional()
+  variants?: VariantDto[];
 
   @ValidateNested()
   @Type(() => DiscountDto)
-  discount: DiscountDto[];
+  @IsOptional()
+  discount?: DiscountDto[];
 
   @IsString()
   @IsOptional()

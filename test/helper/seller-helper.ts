@@ -4,7 +4,6 @@ import { Seller } from '../../src/seller/entities/seller.entity';
 import { SellerUseCase } from '../../src/seller/services/seller.useCase';
 import { CreateSellerConnectAccountDto } from '../../src/seller/dto/create-seller-connected-account.dto';
 import { SellerStripeAccountMappingService } from '../../src/stripe/services/seller-account-mapping.service';
-
 export async function testSellerSetup(
   testUserId: string,
   sellerUseCase: SellerUseCase,

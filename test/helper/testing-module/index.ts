@@ -25,3 +25,8 @@ export { DatabaseModule } from '../../../src/database/database.module';
 export { UserModule } from '../../../src/user/user.module';
 export { StripeModule } from '../../../src/stripe/stripe.module';
 export { SubscriptionModule } from '../../../src/seller-subscription/sellerSubscription.module';
+
+export { CreateProductUseCase } from '../../../src/product/use-cases/seller/create-product.useCase';
+export { SetProductOnShelfUseCase } from '../../../src/product/use-cases/seller/set-product-on-shelf.useCase';
+export { UpdateProductUseCase } from '../../../src/product/use-cases/seller/update-product.useCase';
+export { ViewProductListUseCase } from '../../../src/product/use-cases/seller/view-product-list.useCase';

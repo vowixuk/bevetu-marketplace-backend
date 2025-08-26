@@ -15,7 +15,7 @@ import { testSellerSetup } from '../../../test/helper/seller-helper';
 import { ServicesType, testTestingMoudleHelper } from '../../../test/helper/testing-module/testing-module-helper';
 import { SellerShipping } from '../entities/seller-shipping.entity';
 import { Shop } from '../../shop/entities/shop.entity';
-import { createTestShop } from '../../../test/helper/shop-helper';
+import { createTestShop1 } from '../../../test/helper/shop-helper';
 import { Seller } from '../../seller/entities/seller.entity';
 import { CreateSellerShippingDto } from '../dto/create-seller-shipping.dto';
 import { UpdateSellerShippingDto } from '../dto/update-seller-shipping.dto';
@@ -59,7 +59,8 @@ describe('ProductService', () => {
     sellerStripeAccountId = _seller.sellerStripeAccountId;
 
     // Create a dummy Shop
-    shop = await createTestShop(_seller.seller.id, serviecs.shopService);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    shop = await createTestShop1(_seller.seller.id, serviecs.shopService);
   });
 
   afterAll(async () => {

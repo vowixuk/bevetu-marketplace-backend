@@ -48,10 +48,10 @@ export class Product {
   updatedAt: Date;
 
   // Variants (size, color, model, etc.)
-  variants: Variants[];
+  variants?: Variants[];
 
   // Discount Setting
-  discount: Discount[];
+  discount?: Discount[];
 
   // Category
   categories: Categories;

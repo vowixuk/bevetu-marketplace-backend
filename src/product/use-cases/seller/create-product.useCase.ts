@@ -25,7 +25,7 @@ export class CreateProductUseCase {
     await this.shopService.findOne(shopId, sellerId);
 
     // Step 3 - alway make sure the newly create product is not on shelf at default
-    createDto.onShelf = false;
+    // createDto.onShelf = false;
     return this.productService.create(sellerId, shopId, createDto);
   }
 }
