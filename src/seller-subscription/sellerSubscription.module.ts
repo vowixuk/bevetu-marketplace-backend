@@ -5,10 +5,11 @@ import { SubscriptionEventRecordRepository } from './repositories/event-record.r
 import { SellerSubscriptionRepository } from './repositories/seller-subscription.repository';
 import { StripeModule } from '../stripe/stripe.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { SellerSubscriptionController } from './sellerSubscritpion.controller';
 
 @Module({
   imports: [StripeModule, EventEmitterModule],
-  controllers: [],
+  controllers: [SellerSubscriptionController],
   providers: [
     SellerSubscriptionService,
     SubscriptionEventRecordService,

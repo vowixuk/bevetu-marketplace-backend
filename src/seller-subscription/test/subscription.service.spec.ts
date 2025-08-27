@@ -23,7 +23,7 @@ import { ShopRepository } from '../../shop/shop.repository';
 import { SellerStripeAccountMappingRepository } from '../../stripe/repositories/seller-account-mapping.repository';
 
 import { SellerService } from '../../seller/services/seller.service';
-import { SellerUseCase } from '../../seller/services/seller.useCase';
+import { SellerUseCase } from '../../seller/use-cases/seller.useCase';
 import { StripeService } from '../../stripe/services/stripe.service';
 import { SellerStripeAccountMappingService } from '../../stripe/services/seller-account-mapping.service';
 import { ShopService } from '../../shop/shop.service';
@@ -40,7 +40,7 @@ import {
 } from '../../../test/helper/user-helper';
 import { BuyerRepository } from '../../buyer/buyer.repository';
 import { BuyerService } from '../../buyer/services/buyer.service';
-import { BuyerUseCase } from '../../buyer/services/buyer.usecase';
+import { BuyerUseCase } from '../../buyer/use-cases/buyer.usecase';
 import { BuyerStripeCustomerAccountMappingService } from '../../stripe/services/buyer-account-mapping.service';
 import { Buyer } from '../../buyer/entities/buyer.entity';
 import { SellerSubscriptionService } from '../services/seller-subscription.service';
@@ -49,6 +49,7 @@ import { CompleteSellerListingSubscriptionEnrollmentDto } from '../dto/complete-
 import { IProductCode } from '../entities/vo/product.vo';
 import { SellerSubscriptionMappingRepository } from '../../stripe/repositories/seller-subscription-mapping.repository';
 import { ForbiddenException } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 describe('SubscriptionService', () => {
   // Service instances
@@ -92,6 +93,7 @@ describe('SubscriptionService', () => {
         UserModule,
         StripeModule,
         SubscriptionModule,
+        EventEmitterModule.forRoot(),
       ],
       providers: [
         SellerService,
@@ -107,7 +109,7 @@ describe('SubscriptionService', () => {
         BuyerRepository,
         SellerSubscriptionService,
         SellerSubscriptionMappingService,
-        SubscriptionModule,
+
         SellerSubscriptionMappingRepository,
       ],
     }).compile();
@@ -298,7 +300,6 @@ describe('SubscriptionService', () => {
         buyerStripeCustomerId!,
         testUser.email,
         'DIAMOND_MONTHLY_HKD',
-        null,
       );
       fail('Should throw error');
     } catch (error) {
@@ -321,8 +322,9 @@ describe('SubscriptionService', () => {
   it('test 7 - should be able to view the propration amount when update plan to higher price plan', async () => {
     const proation = await sellerSubscriptionService.previewProrationAmount(
       seller!.id,
-      bevetuSellerSubscriptionId!,
       'DIAMOND_MONTHLY_GBP',
+      // bevetuSellerSubscriptionId!,
+      null,
     );
 
     expect(proation.prorationPeriod?.start).toBeInstanceOf(Date);
@@ -368,8 +370,9 @@ describe('SubscriptionService', () => {
     // ------------------------------
     await sellerSubscriptionService.upgradeListingSubscription(
       seller!.id,
-      bevetuSellerSubscriptionId!,
       'DIAMOND_MONTHLY_GBP',
+      // bevetuSellerSubscriptionId!,
+      null
     );
 
     // ------------------------------
@@ -475,8 +478,9 @@ describe('SubscriptionService', () => {
     // ------------------------------
     await sellerSubscriptionService.downgradeListingSubscription(
       seller!.id,
-      bevetuSellerSubscriptionId!,
       'BRONZE_MONTHLY_GBP',
+      // bevetuSellerSubscriptionId!,
+      null
     );
 
     // ------------------------------
@@ -487,7 +491,7 @@ describe('SubscriptionService', () => {
       bevetuSellerSubscriptionId!,
     );
 
-    let _evetrecord = subscription.eventRecords?.find(
+    const _evetrecord = subscription.eventRecords?.find(
       (e) => e.type == 'PENDING_UPDATE',
     );
     expect(_evetrecord!.metadata!.from).toBe('DIAMOND_MONTHLY_GBP');

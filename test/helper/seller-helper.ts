@@ -1,7 +1,7 @@
 import { SellerService } from '../../src/seller/services/seller.service';
 import { CreateSellerDto } from '../../src/seller/dto/create-seller.dto';
 import { Seller } from '../../src/seller/entities/seller.entity';
-import { SellerUseCase } from '../../src/seller/services/seller.useCase';
+import { SellerUseCase } from '../../src/seller/use-cases/seller.useCase';
 import { CreateSellerConnectAccountDto } from '../../src/seller/dto/create-seller-connected-account.dto';
 import { SellerStripeAccountMappingService } from '../../src/stripe/services/seller-account-mapping.service';
 export async function testSellerSetup(

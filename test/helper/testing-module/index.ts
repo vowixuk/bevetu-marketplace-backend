@@ -1,8 +1,8 @@
 export { BuyerService } from '../../../src/buyer/services/buyer.service';
-export { BuyerUseCase } from '../../../src/buyer/services/buyer.usecase';
+export { BuyerUseCase } from '../../../src/buyer/use-cases/buyer.usecase';
 export { ProductService } from '../../../src/product/product.services';
 export { SellerService } from '../../../src/seller/services/seller.service';
-export { SellerUseCase } from '../../../src/seller/services/seller.useCase';
+export { SellerUseCase } from '../../../src/seller/use-cases/seller.useCase';
 export { SellerSubscriptionService } from '../../../src/seller-subscription/services/seller-subscription.service';
 export { SellerShippingService } from '../../../src/seller-shipping/services/seller-shipping.service';
 export { SellerShippingProfileService } from '../../../src/seller-shipping/services/seller-shipping-profile.service';

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
@@ -64,10 +65,15 @@ export class SellerSubscriptionService {
 
   async findOne(
     sellerId: string,
-    subscriptionId: string,
+    subscriptionId: string | null,
   ): Promise<SellerSubscription> {
+    let bevetuSubscriptionId = subscriptionId;
+    if (!bevetuSubscriptionId) {
+      const validSubscription = await this.validSubscriptionGuard(sellerId);
+      bevetuSubscriptionId = validSubscription.id;
+    }
     const subscription =
-      await this.subscriptionRepository.findOne(subscriptionId);
+      await this.subscriptionRepository.findOne(bevetuSubscriptionId);
 
     if (!subscription) {
       throw new NotFoundException('Subscription not found');
@@ -115,7 +121,7 @@ export class SellerSubscriptionService {
    * @param sellerId - The ID of the seller to check subscriptions for
    * @throws ForbiddenException - if the seller has no valid subscription
    */
-  async validSubscriptionGuard(sellerId: string) {
+  async validSubscriptionGuard(sellerId: string): Promise<SellerSubscription> {
     const subnscriptions = await this.findAllBySellerId(sellerId);
     const validSubscription = subnscriptions.find(
       (sub) => sub.status === 'ACTIVE' || sub.status === 'CANCELLING',
@@ -140,7 +146,7 @@ export class SellerSubscriptionService {
     stripeCustomerId: string, // not seller's account id. seller , just like buyer, has its own stripe custimer id
     email: string,
     productCode: IProductCode,
-    promotionCode?: null,
+    promotionCode?: string,
   ): Promise<string> {
     // Step 1 - Check if the user already has valid subscription record
     const subscriptions = await this.findAllBySellerId(sellerId);
@@ -249,11 +255,35 @@ export class SellerSubscriptionService {
     };
   }
 
+  /**
+   * Calculates the proration amount for a subscription upgrade.
+   * If `subscriptionId` is not provided, it will be resolved internally.
+   * Returns details about the proration period, next billing cycle,
+   * and any applicable charges or refunds.
+   */
   async previewProrationAmount(
     sellerId: string,
-    bevetuSubscriptionId: string,
     newProductCode: IProductCode,
-  ) {
+    subscriptionId: string | null,
+  ): Promise<{
+    prorationPeriod: {
+      start: Date | null;
+      end: Date | null;
+    } | null;
+    nextPaymentPeriod: {
+      start: Date | null;
+      end: Date | null;
+    } | null;
+    totalRefund: number | null;
+    totalCharge: number | null;
+    nextPaymentQty: number | null;
+    nextPaymentAmount: number | null;
+  }> {
+    let bevetuSubscriptionId = subscriptionId;
+    if (!bevetuSubscriptionId) {
+      const validSubscription = await this.validSubscriptionGuard(sellerId);
+      bevetuSubscriptionId = validSubscription.id;
+    }
     const { newProduct, subscriptionMapping, stripeSubscriptionItem } =
       await this.subscriptionUpdateGuard(
         sellerId,
@@ -367,11 +397,30 @@ export class SellerSubscriptionService {
     });
   }
 
+  /**
+   * Upgrade the subscription. It takes effect and charges immediately.
+   * If `subscriptionId` is not provided, it will be resolved internally.
+   * Returns details about the proration period, next billing cycle,
+   * and any applicable charges or refunds.
+   */
   async upgradeListingSubscription(
     sellerId: string,
-    bevetuSubscriptionId: string,
     newProductCode: IProductCode,
-  ) {
+    subscriptionId: string | null,
+  ): Promise<{
+    message: string;
+    productCode: IProductCode;
+    paidAt: Date;
+    totalRefund: number | null;
+    totalCharge: number | null;
+    nextPaymentDate: Date | null | undefined;
+    nextPaymentAmount: number | null;
+  }> {
+    let bevetuSubscriptionId = subscriptionId;
+    if (!bevetuSubscriptionId) {
+      const validSubscription = await this.validSubscriptionGuard(sellerId);
+      bevetuSubscriptionId = validSubscription.id;
+    }
     const {
       currentProduct,
       newProduct,
@@ -385,11 +434,14 @@ export class SellerSubscriptionService {
       newProductCode,
     );
 
+    if (mode !== 'UPGRADE') {
+      throw new BadRequestException('This is not upgrading case.');
+    }
     // Step 1 - get how much is charged for proration
     const proationReview = await this.previewProrationAmount(
       sellerId,
-      bevetuSubscriptionId,
       newProductCode,
+      bevetuSubscriptionId,
     );
 
     // Step 2 - Update stripe details and charge
@@ -450,18 +502,43 @@ export class SellerSubscriptionService {
         },
       }),
     );
-    return upgradeSubscription;
+    // return upgradeSubscription;
+    return {
+      message: 'Subscription upgraded',
+      productCode: newProductCode,
+      paidAt: new Date(),
+      totalRefund: proationReview.totalRefund,
+      totalCharge: proationReview.totalCharge,
+      nextPaymentDate: proationReview.nextPaymentPeriod?.start,
+      nextPaymentAmount: proationReview.nextPaymentAmount,
+    };
   }
 
+  /**
+   * Downgrade the subscription. It it takes effect in next billing cycle without extra charge.
+   * If `subscriptionId` is not provided, it will be resolved internally.
+   * Returns details about the proration period, next billing cycle,
+   * and any applicable charges or refunds.
+   */
   async downgradeListingSubscription(
     sellerId: string,
-    bevetuSubscriptionId: string,
     newProductCode: IProductCode,
-  ) {
+    subscriptionId: string | null,
+  ): Promise<{
+    message: string;
+    nextPaymentDate: Date;
+    nextPaymentAmount: number;
+  }> {
+    let bevetuSubscriptionId = subscriptionId;
+    if (!bevetuSubscriptionId) {
+      const validSubscription = await this.validSubscriptionGuard(sellerId);
+      bevetuSubscriptionId = validSubscription.id;
+    }
     const {
       subscription,
       currentProduct,
       newProduct,
+      mode,
       subscriptionMapping,
       stripeSubscriptionItem,
     } = await this.subscriptionUpdateGuard(
@@ -470,12 +547,15 @@ export class SellerSubscriptionService {
       newProductCode,
     );
 
-    const downgadeSubscription =
-      await this.stripeService.changeSubscriptionWithoutProrateEffectNextCycle(
-        subscriptionMapping.stripeSubscriptionId,
-        stripeSubscriptionItem.stripItemId,
-        newProduct.stripePriceId,
-      );
+    if (mode !== 'DOWNGRADE') {
+      throw new BadRequestException('This is not a downgrad case.');
+    }
+
+    await this.stripeService.changeSubscriptionWithoutProrateEffectNextCycle(
+      subscriptionMapping.stripeSubscriptionId,
+      stripeSubscriptionItem.stripItemId,
+      newProduct.stripePriceId,
+    );
 
     await this.subscriptionEventRecordService.create(
       bevetuSubscriptionId,
@@ -503,7 +583,15 @@ export class SellerSubscriptionService {
       },
     );
 
-    return downgadeSubscription;
+    const nextPaymentDetails = await this.stripeService.getNextPaymentDetails(
+      subscriptionMapping.stripeCustomerId,
+      subscriptionMapping.stripeSubscriptionId,
+    );
+    return {
+      message: 'Downgrade accepted',
+      nextPaymentDate: nextPaymentDetails.nextPaymentDate,
+      nextPaymentAmount: nextPaymentDetails.nextPaymentAmount,
+    };
   }
 
   /*
@@ -513,10 +601,15 @@ export class SellerSubscriptionService {
    */
   async cancellingSubscription(
     sellerId: string,
-    bevetuSubscriptionId: string,
+    subscriptionId: string | null,
     cancelReason: string,
     immedateCancel?: boolean,
   ): Promise<{ subscriptionCancelAt: Date }> {
+    let bevetuSubscriptionId = subscriptionId;
+    if (!bevetuSubscriptionId) {
+      const validSubscription = await this.validSubscriptionGuard(sellerId);
+      bevetuSubscriptionId = validSubscription.id;
+    }
     const { subscription, subscriptionMapping, currentProduct } =
       await this.findCurrentSubscriptionAndMapping(
         sellerId,
@@ -575,11 +668,23 @@ export class SellerSubscriptionService {
 
   /**
    *  This is triggered by user to restrore the `cancelling` subscription
+   *  If `subscriptionId` is not provided, it will be resolved internally.
+   *  Returns details about the proration period, next billing cycle,
+   *  and any applicable charges or refunds.
    */
   async restoreSubscription(
     sellerId: string,
-    bevetuSubscriptionId: string,
-  ): Promise<{ nextPaymentDate: Date; nextPaymentAmount: number }> {
+    subscriptionId: string | null,
+  ): Promise<{
+    message: string;
+    nextPaymentDate: Date;
+    nextPaymentAmount: number;
+  }> {
+    let bevetuSubscriptionId = subscriptionId;
+    if (!bevetuSubscriptionId) {
+      const validSubscription = await this.validSubscriptionGuard(sellerId);
+      bevetuSubscriptionId = validSubscription.id;
+    }
     const { subscription, subscriptionMapping, currentProduct } =
       await this.findCurrentSubscriptionAndMapping(
         sellerId,
@@ -623,7 +728,11 @@ export class SellerSubscriptionService {
       'pending_update',
     );
 
-    return { nextPaymentDate, nextPaymentAmount };
+    return {
+      message: 'Subscription Restored',
+      nextPaymentDate,
+      nextPaymentAmount,
+    };
   }
 
   /**

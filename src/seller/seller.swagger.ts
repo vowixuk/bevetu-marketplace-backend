@@ -30,7 +30,7 @@ export function ApiCreateSellerAccount() {
 export function ApiCreateAccountSession() {
   return applyDecorators(
     ApiOperation({
-      summary: 'Create Seller Account Session',
+      summary: 'Create Seller Account Session for extracting UI from Stripe',
       description:
         'Generates a Stripe seller onboarding session for frontend integration.',
       tags: ['Seller'],

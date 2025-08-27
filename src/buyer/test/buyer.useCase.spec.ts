@@ -18,7 +18,7 @@ import { ShopRepository } from '../../shop/shop.repository';
 import { SellerStripeAccountMappingRepository } from '../../stripe/repositories/seller-account-mapping.repository';
 
 import { SellerService } from '../../seller/services/seller.service';
-import { SellerUseCase } from '../../seller/services/seller.useCase';
+import { SellerUseCase } from '../../seller/use-cases/seller.useCase';
 import { StripeService } from '../../stripe/services/stripe.service';
 import { SellerStripeAccountMappingService } from '../../stripe/services/seller-account-mapping.service';
 import { ShopService } from '../../shop/shop.service';
@@ -33,7 +33,7 @@ import {
 } from '../../../test/helper/user-helper';
 import { Buyer } from '../entities/buyer.entity';
 import { BuyerStripeCustomerAccountMappingService } from '../../stripe/services/buyer-account-mapping.service';
-import { BuyerUseCase } from '../services/buyer.usecase';
+import { BuyerUseCase } from '../use-cases/buyer.usecase';
 import { BuyerModule } from '../buyer.module';
 import { BuyerService } from '../services/buyer.service';
 import { BuyerRepository } from '../buyer.repository';

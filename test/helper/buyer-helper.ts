@@ -1,4 +1,4 @@
-import { BuyerUseCase } from '../../src/buyer/services/buyer.usecase';
+import { BuyerUseCase } from '../../src/buyer/use-cases/buyer.usecase';
 
 export async function testBuyerSetup(
   testUserId: string,

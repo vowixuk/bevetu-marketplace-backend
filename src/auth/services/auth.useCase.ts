@@ -18,7 +18,7 @@ import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { BuyerStripeCustomerAccountMapping } from 'src/stripe/entities/buyer-customer-account-mapping.entity';
 import { SellerStripeAccountMapping } from 'src/stripe/entities/seller-account-mapping.entity';
 import { Buyer } from 'src/buyer/entities/buyer.entity';
-import { BuyerUseCase } from 'src/buyer/services/buyer.usecase';
+import { BuyerUseCase } from 'src/buyer/use-cases/buyer.usecase';
 
 @Injectable()
 export class AuthUseCase {

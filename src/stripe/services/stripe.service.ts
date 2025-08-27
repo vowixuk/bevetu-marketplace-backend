@@ -569,23 +569,25 @@ export class StripeService {
   }
   /**
    * Checks if a seller is fully onboarded
+   * Update 27 Aug 2025 - No longer need to check.
+   * Pending to remove
    */
-  async checkIsSellerFullyOnBoarded(sellerAccountId: string): Promise<boolean> {
-    const account = await this.stripe.accounts.retrieve(sellerAccountId);
+  // async checkIsSellerFullyOnBoarded(sellerAccountId: string): Promise<boolean> {
+  //   const account = await this.stripe.accounts.retrieve(sellerAccountId);
 
-    if (!account.requirements) {
-      throw new InternalServerErrorException(
-        'Unable to fetch data from Stripe',
-      );
-    }
+  //   if (!account.requirements) {
+  //     throw new InternalServerErrorException(
+  //       'Unable to fetch data from Stripe',
+  //     );
+  //   }
 
-    const isFullyOnboarded =
-      account.requirements.currently_due?.length === 0 &&
-      account.requirements.past_due?.length === 0 &&
-      account.requirements.disabled_reason === null;
+  //   const isFullyOnboarded =
+  //     account.requirements.currently_due?.length === 0 &&
+  //     account.requirements.past_due?.length === 0 &&
+  //     account.requirements.disabled_reason === null;
 
-    return isFullyOnboarded;
-  }
+  //   return isFullyOnboarded;
+  // }
   /** (End) ----- Stripe Onboarding ----- (End)*/
   /**/
   /**/

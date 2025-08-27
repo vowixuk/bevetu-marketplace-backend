@@ -160,7 +160,7 @@ model SellerSubscriptionEventRecord {
   id String   @id @default(cuid())
   subscriptionId String
   type SellerEventRecordType
-  metadata Json
+  metadata Json?
   createdAt DateTime @default(now())
 
   // Joining Table

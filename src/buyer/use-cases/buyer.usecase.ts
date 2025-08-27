@@ -7,7 +7,7 @@ import { Buyer } from '../entities/buyer.entity';
 import { UpdateBuyerDto } from '../dto/update-buyer.dto';
 import { StripeService } from '../../stripe/services/stripe.service';
 import { BuyerStripeCustomerAccountMapping } from '../../stripe/entities/buyer-customer-account-mapping.entity';
-import { BuyerService } from './buyer.service';
+import { BuyerService } from '../services/buyer.service';
 import { CreateBuyerStripeCustomerAccountMappingDto } from '../../stripe/dto/create-buyer-account-mapping.dto';
 import { BuyerStripeCustomerAccountMappingService } from '../../stripe/services/buyer-account-mapping.service';
 

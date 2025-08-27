@@ -3,20 +3,19 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateSellerDto } from '../dto/create-seller.dto';
 import { CreateSellerConnectAccountDto } from '../dto/create-seller-connected-account.dto';
 import { StripeService } from '../../stripe/services/stripe.service';
-import { SellerService } from './seller.service';
-import { ShopService } from '../../shop/shop.service';
+import { SellerService } from '../services/seller.service';
+// import { ShopService } from '../../shop/shop.service';
 import { SellerStripeAccountMapping } from '@prisma/client';
 import { SellerStripeAccountMappingService } from '../../stripe/services/seller-account-mapping.service';
 import { CreateAccountSessionDto } from '../dto/create-account-session.dto';
 import { CreateSellerStripeAccountMappingDto } from '../../stripe/dto/create-seller-account-mapping.dto';
-import { UpdateSellerDto } from '../dto/update-seller.dto';
+// import { UpdateSellerDto } from '../dto/update-seller.dto';
 
 @Injectable()
 export class SellerUseCase {
   constructor(
     private readonly sellerService: SellerService,
     private readonly stripeService: StripeService,
-    private readonly shopService: ShopService,
     private readonly sellerStripeAccountMappingService: SellerStripeAccountMappingService,
   ) {}
 
@@ -84,46 +83,47 @@ export class SellerUseCase {
   }
 
   /**
+   * Update: 27 Aug 2025 - No longer need to check.
+   * Pending to cancel this services
    * Check if the user is fully onboarded
    * This is to confirm the onbaord flow is fully go throught in frontend
-   * after that
    */
-  async checkIsSellerFullyOnBoarded(
-    userId: string,
-    sellId: string,
-    sellerAccountId: string,
-  ): Promise<boolean> {
-    const isFullyOnBoarded =
-      await this.stripeService.checkIsSellerFullyOnBoarded(sellerAccountId);
+  // async checkIsSellerFullyOnBoarded(
+  //   userId: string,
+  //   sellId: string,
+  //   sellerAccountId: string,
+  // ): Promise<boolean> {
+  //   const isFullyOnBoarded =
+  //     await this.stripeService.checkIsSellerFullyOnBoarded(sellerAccountId);
 
-    if (isFullyOnBoarded) {
-      const seller = await this.sellerService.update(
-        userId,
-        sellId,
-        Object.assign(new UpdateSellerDto(), {
-          status: 'ACTIVE',
-        }),
-      );
-      return true;
-    }
-    return false;
-  }
+  //   if (isFullyOnBoarded) {
+  //     const seller = await this.sellerService.update(
+  //       userId,
+  //       sellId,
+  //       Object.assign(new UpdateSellerDto(), {
+  //         status: 'ACTIVE',
+  //       }),
+  //     );
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   /**
    * Check if the user is fully onboarded (MOCK)
    */
-  async checkIsSellerFullyOnBoardedMock(
-    userId: string,
-    sellId: string,
-    sellerAccountId: string,
-  ): Promise<boolean> {
-    const seller = await this.sellerService.update(
-      userId,
-      sellId,
-      Object.assign(new UpdateSellerDto(), {
-        status: 'ACTIVE',
-      }),
-    );
-    return true;
-  }
+  // async checkIsSellerFullyOnBoardedMock(
+  //   userId: string,
+  //   sellId: string,
+  //   sellerAccountId: string,
+  // ): Promise<boolean> {
+  //   const seller = await this.sellerService.update(
+  //     userId,
+  //     sellId,
+  //     Object.assign(new UpdateSellerDto(), {
+  //       status: 'ACTIVE',
+  //     }),
+  //   );
+  //   return true;
+  // }
 }

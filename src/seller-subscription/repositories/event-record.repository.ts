@@ -22,7 +22,7 @@ export class SubscriptionEventRecordRepository {
         data: {
           subscriptionId: record.subscriptionId,
           type: record.type as PrismaSellerEventRecordType,
-          metadata: record.metadata ?? {},
+          metadata: record.metadata ?? undefined,
           createdAt: record.createdAt ?? new Date(),
         },
       }),

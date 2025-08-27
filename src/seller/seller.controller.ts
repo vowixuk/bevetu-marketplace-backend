@@ -12,12 +12,11 @@ import {
 import express from 'express';
 
 import { ApiTags } from '@nestjs/swagger';
-import { SellerUseCase } from './services/seller.useCase';
+import { SellerUseCase } from './use-cases/seller.useCase';
 
 import { CreateSellerConnectAccountDto } from './dto/create-seller-connected-account.dto';
 import type { IRequest } from '../auth/middlewares/auth.middleware';
 import {
-  ApiCheckIsSellerFullyOnBoarded,
   ApiCreateAccountSession,
   ApiCreateSellerAccount,
   ApiViewSellerStripeAccountId,
@@ -52,13 +51,12 @@ export class SellerController {
 
     res.cookie('BVT_MKT', '', { maxAge: 0, path: '/' });
 
-    console.log(connectedAccountId, '<< connectedAccountId');
     res.status(201).send({
       stripeAccountId: connectedAccountId,
     });
   }
 
-  @Post('account/session')
+  @Post('account/ui-session')
   @ApiCreateAccountSession()
   async createSellerAccountSession(
     @Req() req: IRequest,
@@ -91,18 +89,18 @@ export class SellerController {
     };
   }
 
-  @Get('fully-onboarded')
-  @ApiCheckIsSellerFullyOnBoarded()
-  async checkIsSellerFullyOnBoarded(@Req() req: IRequest): Promise<boolean> {
-    if (!req.middleware.seller?.stripeAccountId) {
-      throw new BadRequestException('No seller id founded');
-    }
-    return await this.sellerUseCase.checkIsSellerFullyOnBoarded(
-      req.middleware.userId,
-      req.middleware.seller.id,
-      req.middleware.seller?.stripeAccountId,
-    );
-  }
+  // @Get('fully-onboarded')
+  // @ApiCheckIsSellerFullyOnBoarded()
+  // async checkIsSellerFullyOnBoarded(@Req() req: IRequest): Promise<boolean> {
+  //   if (!req.middleware.seller?.stripeAccountId) {
+  //     throw new BadRequestException('No seller id founded');
+  //   }
+  //   return await this.sellerUseCase.checkIsSellerFullyOnBoarded(
+  //     req.middleware.userId,
+  //     req.middleware.seller.id,
+  //     req.middleware.seller?.stripeAccountId,
+  //   );
+  // }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {

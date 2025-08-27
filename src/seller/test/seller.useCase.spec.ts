@@ -19,7 +19,7 @@ import {
   createTestUser_2,
   removeTestingUser,
 } from '../../../test/helper/user-helper';
-import { SellerUseCase } from '../services/seller.useCase';
+import { SellerUseCase } from '../use-cases/seller.useCase';
 import { StripeModule } from '../../stripe/stripe.module';
 import { SubscriptionModule } from '../../seller-subscription/sellerSubscription.module';
 import { SellerStripeAccountMappingService } from '../../stripe/services/seller-account-mapping.service';
