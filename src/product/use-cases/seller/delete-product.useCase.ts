@@ -12,8 +12,8 @@ export class DeleteProductUseCase {
   ) {}
 
   async execute(
-    shopId: string,
     sellerId: string,
+    shopId: string,
     productId: string,
   ): Promise<Product> {
     // Step 1 - Check if vaid subscription

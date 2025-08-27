@@ -60,8 +60,8 @@ describe('ProductService', () => {
   let seller_1_shipping: SellerShipping;
   let seller_2_shipping: SellerShipping;
 
-  let seller_1_products : Product[]
-  let seller_2_products : Product[]
+  let seller_1_products: Omit<Product, 'sellerId'>[];
+  let seller_2_products: Omit<Product, 'sellerId'>[];
 
   let seller_1_StripeAccountId: string;
   let seller_2_StripeAccountId: string;
@@ -305,8 +305,8 @@ describe('ProductService', () => {
       // 2 - try set the onshelf to be false. it should work
       const _p1 = await services.setProductOnShelfUseCase.execute(
         seller_1.id,
-        products[0].id,
         seller_1_shop.id,
+        products[0].id,
         false,
       );
 
@@ -315,8 +315,8 @@ describe('ProductService', () => {
       try {
         const _p2 = await services.setProductOnShelfUseCase.execute(
           seller_1.id,
-          products[0].id,
           seller_1_shop.id,
+          products[0].id,
           true,
         );
         fail('should throw BadRequestException');
@@ -387,9 +387,9 @@ describe('ProductService', () => {
       });
 
       await services.updateProductUseCase.execute(
-        products[0].id,
         seller_1.id,
         seller_1_shop.id,
+        products[0].id,
         updateDto,
       );
 
@@ -413,8 +413,8 @@ describe('ProductService', () => {
       // 5 - Set on Shelf, should work
       const _p2 = await services.setProductOnShelfUseCase.execute(
         seller_1.id,
-        products[0].id,
         seller_1_shop.id,
+        products[0].id,
         true,
       );
 
@@ -446,9 +446,9 @@ describe('ProductService', () => {
     });
     it('test 9 - should be able to delete product', async () => {
       await services.deleteProductUseCase.execute(
-        seller_1_products[0].id,
         seller_1.id,
         seller_1_shop.id,
+        seller_1_products[0].id,
       );
       const productList = await services.viewProductListUseCase.execute(
         seller_1.id,
@@ -529,8 +529,8 @@ describe('ProductService', () => {
 
         await services.setProductOnShelfUseCase.execute(
           seller_1.id,
-          p.id,
           seller_1_shop.id,
+          p.id,
           true,
         );
       }
@@ -557,8 +557,8 @@ describe('ProductService', () => {
         extraProductId = p.id;
         await services.setProductOnShelfUseCase.execute(
           seller_1.id,
-          p.id,
           seller_1_shop.id,
+          p.id,
           true,
         );
         fail('shold throw forbiiden error');
@@ -567,9 +567,9 @@ describe('ProductService', () => {
         expect(error).toBeInstanceOf(BadRequestException);
       } finally {
         await services.deleteProductUseCase.execute(
-          extraProductId,
           seller_1.id,
           seller_1_shop.id,
+          extraProductId,
         );
         const productList = await services.viewProductListUseCase.execute(
           seller_1.id,
@@ -633,8 +633,8 @@ describe('ProductService', () => {
 
         await services.setProductOnShelfUseCase.execute(
           seller_1.id,
-          p.id,
           seller_1_shop.id,
+          p.id,
           true,
         );
       }
@@ -683,7 +683,7 @@ describe('ProductService', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (!eventTriggered) {
-        await services.resetProductOnShelfUseCase.execute(seller_1.id);
+        await services.resetProductOnShelfUseCase.execute(seller_1.id,seller_1_shop.id);
       }
 
       // ------------------------------
@@ -768,8 +768,8 @@ describe('ProductService', () => {
 
         await services.setProductOnShelfUseCase.execute(
           seller_2.id,
-          p.id,
           seller_2_shop.id,
+          p.id,
           true,
         );
       }
