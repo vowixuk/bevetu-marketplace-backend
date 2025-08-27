@@ -12,9 +12,9 @@ export class DeleteProductUseCase {
   ) {}
 
   async execute(
-    productId: string,
-    sellerId: string,
     shopId: string,
+    sellerId: string,
+    productId: string,
   ): Promise<Product> {
     // Step 1 - Check if vaid subscription
     await this.subscriptionService.validSubscriptionGuard(sellerId);

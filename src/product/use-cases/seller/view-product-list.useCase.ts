@@ -17,7 +17,7 @@ export class ViewProductListUseCase {
     shopId: string,
     viewProductDto: ViewProductsDto,
   ): Promise<{
-    products: Product[];
+    products: Omit<Product, 'sellerId'>[];
     currentPage: number; // current page of this return
     limit: number; // no of record in this return
     totalRecords: number; // Total number record in the database
@@ -33,11 +33,21 @@ export class ViewProductListUseCase {
     // Step 2 - Validate the shop ownership
     await this.shopService.findOne(shopId, sellerId);
 
-    return await this.productService.findBySellerIdAndShopId(
+    const productlist = await this.productService.findBySellerIdAndShopId(
       sellerId,
       shopId,
       viewProductDto.page,
       viewProductDto.limit,
     );
+
+    return {
+      ...productlist,
+      ...{
+        products: productlist.products.map(
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          ({ sellerId, ...productData }) => productData,
+        ),
+      },
+    };
   }
 }

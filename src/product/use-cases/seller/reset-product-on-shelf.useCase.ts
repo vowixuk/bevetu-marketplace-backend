@@ -24,16 +24,13 @@ export class ResetProductOnShelfUseCase {
   ) {}
 
   @OnEvent('product.usecase.resetProductOnShelfUseCase.event', { async: true })
-  async execute(sellerId: string) {
-    console.log(
-      'product.usecase.resetProductOnShelfUseCase.event trigger !!!!',
-    );
+  async execute(sellerId: string, shopId: string) {
     // Step 1 - Validate subscription
     const validSubscription =
       await this.subscriptionService.validSubscriptionGuard(sellerId);
 
-    // Step 2 - Find the shop
-    const shop = await this.shopService.findOneBySellerId(sellerId);
+    // Step 2 - Validate the shop ownership
+    await this.shopService.findOne(shopId, sellerId);
 
     // Step 3 - Find the subscription item that controls listing quota
     const listingSubscriptionItem = validSubscription.items.find(
@@ -52,7 +49,7 @@ export class ResetProductOnShelfUseCase {
 
     // Step 5 - Get all onshelf products for this seller & shop
     const currentlyOnShelfProducts =
-      await this.productService.findAllOnShelfByShopId(shop.id);
+      await this.productService.findAllOnShelfByShopId(shopId);
 
     // Step 6 - Check how many need to be off shelf
     const numberToOffShelf = Math.max(
@@ -67,7 +64,7 @@ export class ResetProductOnShelfUseCase {
 
     // Step 8 - if  excess, dig out all the excess product
     const products = await this.productService.findExcessOnShelfByShopId(
-      shop.id,
+      shopId,
       maximumOnShelfQuota,
     );
 
@@ -75,7 +72,7 @@ export class ResetProductOnShelfUseCase {
     await Promise.all(
       products.map((p) => {
         p.onShelf = false;
-        return this.productService.noCheckingUpdate(shop.id, p);
+        return this.productService.noCheckingUpdate(shopId, p);
       }),
     );
   }

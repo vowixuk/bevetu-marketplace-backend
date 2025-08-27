@@ -13,9 +13,9 @@ export class UpdateProductUseCase {
   ) {}
 
   async execute(
-    productId: string,
     sellerId: string,
     shopId: string,
+    productId: string,
     updateDto: UpdateProductDto,
   ): Promise<Product> {
     // Step 1 - Check if vaid subscription

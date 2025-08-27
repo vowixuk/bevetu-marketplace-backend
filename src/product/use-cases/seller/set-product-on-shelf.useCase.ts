@@ -19,8 +19,8 @@ export class SetProductOnShelfUseCase {
 
   async execute(
     sellerId: string, // Passed from the middleware
-    productId: string,
     shopId: string,
+    productId: string,
     isOnShelf: boolean,
   ): Promise<Product> {
     // Step 1 - Validate subscription
