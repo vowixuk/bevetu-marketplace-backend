@@ -1,10 +1,27 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { StripeService } from './services/stripe.service';
 import type { IRequest } from 'src/auth/middlewares/auth.middleware';
 import { TestEnvironmentGuard } from 'src/share/guards/testing-environmet.guard';
-import Stripe from 'stripe';
-import { DeleteStripeCustomerReturnSchema, ViewStripeSubscriptionReturnSchema } from './stripe.type';
-import { ApiAdvanceTestClock, ApiDeleteStripeCustomer, ApiViewStripeSubscription } from './stripe.swagger';
+import {
+  DeleteStripeCustomerReturnSchema,
+  DeleteStripeSubscriptionReturnSchema,
+  ViewStripeSubscriptionReturnSchema,
+} from './stripe.type';
+import {
+  ApiAdvanceTestClock,
+  ApiDeleteStripeCustomer,
+  ApiDeleteSubscriptionInStripe,
+  ApiViewStripeSubscription,
+} from './stripe.swagger';
 import { AdvanceTestClockDto } from './dto/advance-test-clock.dto';
 @Controller('stripe')
 export class StripeController {
@@ -31,19 +48,17 @@ export class StripeController {
    *
    * @remark The subscription record in bevetu database will not be deleted
    */
-  // @Delete(':subscriptionId/stripe')
-  // // @ApiDeleteSubscriptionInStripe()
-  // @UseGuards(TestEnvironmentGuard)
-  // async deleteSubscriptionInStripe(
-  //   @Req() req: IRequest,
-  //   @Param('subscriptionId') bevetuSubscriptionId: string,
-  // ): Promise<UpdateReturnSchema> {
-  //   await this.subscriptionUseCase.cancelSubscriptionInStripe(
-  //     req.middleware.seller?.id,
-  //     bevetuSubscriptionId,
-  //   );
-  //   return { message: 'deleted' };
-  // }
+  @Delete(':subscriptionId/stripe')
+  @ApiDeleteSubscriptionInStripe()
+  @UseGuards(TestEnvironmentGuard)
+  async deleteSubscriptionInStripe(
+    @Req() req: IRequest,
+  ): Promise<DeleteStripeSubscriptionReturnSchema> {
+    await this.stripeService.cancelSubscriptionImmediately(
+      req.middleware.buyer.stripeCustomerId,
+    );
+    return { message: 'deleted' };
+  }
 
   /**
    * @caution Testing Only. Do not use in production

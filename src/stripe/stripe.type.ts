@@ -7,3 +7,11 @@ export type ViewStripeSubscriptionReturnSchema = {
   quantity: number;
   metadata: any;
 };
+
+export type DeleteStripeSubscriptionReturnSchema = {
+  message: 'deleted';
+};
+
+export type DeleteStripeCustomerReturnSchema = {
+  message: 'deleted';
+};

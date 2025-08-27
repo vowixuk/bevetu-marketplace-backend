@@ -55,6 +55,31 @@ export function ApiDeleteStripeCustomer() {
   );
 }
 
+export function ApiDeleteSubscriptionInStripe() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Immediately delete a Stripe subscription',
+      description:
+        'Permanently deletes a Stripe subscription associated with the seller. ' +
+        'All future billing for this subscription will be stopped immediately, ' +
+        'and the subscription cannot be restored.',
+      tags: ['Stripe'],
+      deprecated: false,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Stripe subscription successfully deleted.',
+      schema: {
+        example: {
+          message: 'deleted',
+        },
+      },
+    }),
+  );
+}
+
+
+
 export function ApiAdvanceTestClock() {
   return applyDecorators(
     ApiOperation({

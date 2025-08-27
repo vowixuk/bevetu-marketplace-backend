@@ -870,20 +870,20 @@ export class StripeService {
     });
   }
 
-    /**
+  /**
    * @caution Testing Only. Do not use in production
    * @purpose Advance the test clock to trigger the webhook event
    */
-    @UseGuards(TestEnvironmentGuard)
-    async advanceTestClock(
-      testClockId: string,
-      advanceDay: number,
-    ): Promise<void> {
-      await this.stripe.testHelpers.testClocks.advance(testClockId, {
-        frozen_time: Math.floor(Date.now() / 1000) + 3600 * 24 * advanceDay, // Advance by 30 days
-      });
-    }
+  @UseGuards(TestEnvironmentGuard)
+  async advanceTestClock(
+    testClockId: string,
+    advanceDay: number,
+  ): Promise<void> {
+    await this.stripe.testHelpers.testClocks.advance(testClockId, {
+      frozen_time: Math.floor(Date.now() / 1000) + 3600 * 24 * advanceDay, // Advance by 30 days
+    });
   }
+
   /** (End) ----- Testing use ----- (End)*/
   /**/
   /**/
