@@ -46,6 +46,7 @@ export class SellerShippingProfileService {
       }),
     });
 
+    //Forcely set the feeAmount as 0 if the type if free
     if (profile.feeType === 'free') {
       profile.feeAmount = 0;
     }
@@ -53,13 +54,20 @@ export class SellerShippingProfileService {
     return this.sellerShippingProfileRepository.create(profile);
   }
 
-  async findOne(id: string, sellerId: string): Promise<SellerShippingProfile> {
+  async findOne(
+    id: string,
+    sellerId: string,
+    shippingId: string,
+  ): Promise<SellerShippingProfile> {
     const profile = await this.sellerShippingProfileRepository.findOne(id);
     if (!profile) {
       throw new NotFoundException('Shipping profile not found');
     }
     if (profile.sellerId !== sellerId) {
       throw new ForbiddenException('Profile does not belong to this seller');
+    }
+    if (profile.sellerShippingId !== shippingId) {
+      throw new ForbiddenException('Profile does not belong to this shipping');
     }
     return profile;
   }
@@ -74,9 +82,10 @@ export class SellerShippingProfileService {
   async update(
     id: string,
     sellerId: string,
+    shippingId: string,
     updateDto: UpdateSellerShippingProfileDto,
   ): Promise<SellerShippingProfile> {
-    const existingProfile = await this.findOne(id, sellerId);
+    const existingProfile = await this.findOne(id, sellerId, shippingId);
 
     const updatedProfile = new SellerShippingProfile({
       ...existingProfile,
@@ -90,14 +99,19 @@ export class SellerShippingProfileService {
     return this.sellerShippingProfileRepository.update(updatedProfile);
   }
 
-  async remove(id: string, sellerId: string): Promise<SellerShippingProfile> {
-    const profile = await this.findOne(id, sellerId);
+  async remove(
+    id: string,
+    sellerId: string,
+    shippingId: string,
+  ): Promise<SellerShippingProfile> {
+    const profile = await this.findOne(id, sellerId, shippingId);
     return this.sellerShippingProfileRepository.remove(profile.id);
   }
 
   async removeWithProductAttachCheck(
     id: string,
     sellerId: string,
+    shippingId: string,
   ): Promise<SellerShippingProfile> {
     const hasAttached =
       await this.sellerShippingProfileRepository.hasProductsAttached(id);
@@ -106,7 +120,7 @@ export class SellerShippingProfileService {
         'Cannot delete this shipping profile because products are attached',
       );
     }
-    const profile = await this.findOne(id, sellerId);
+    const profile = await this.findOne(id, sellerId, shippingId);
     return this.sellerShippingProfileRepository.remove(profile.id);
   }
 }

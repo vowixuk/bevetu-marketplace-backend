@@ -78,8 +78,6 @@ export function ApiDeleteSubscriptionInStripe() {
   );
 }
 
-
-
 export function ApiAdvanceTestClock() {
   return applyDecorators(
     ApiOperation({

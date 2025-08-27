@@ -231,6 +231,7 @@ describe('ProductService', () => {
     await serviecs.sellerShippingProfileService.update(
       createdProfile.id,
       seller.id,
+      shipping.id,
       updateDto,
     );
 
@@ -267,14 +268,22 @@ describe('ProductService', () => {
   });
   it('test 6 - should remove the profile ', async () => {
 
-    await serviecs.sellerShippingProfileService.remove(profileId_1,seller.id);
+    await serviecs.sellerShippingProfileService.remove(
+      profileId_1,
+      seller.id,
+      shipping.id,
+    );
     const profiles =
       await serviecs.sellerShippingProfileService.findBySellerShippingId(
         shipping.id,
       );
     expect(profiles).toHaveLength(1);
 
-    await serviecs.sellerShippingProfileService.remove(profileId_2, seller.id);
+    await serviecs.sellerShippingProfileService.remove(
+      profileId_2,
+      seller.id,
+      shipping.id,
+    );
     const profiles_2 =
       await serviecs.sellerShippingProfileService.findBySellerShippingId(
         shipping.id,

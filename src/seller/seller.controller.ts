@@ -8,13 +8,10 @@ import {
   Res,
   BadRequestException,
 } from '@nestjs/common';
-
 import express from 'express';
-
 import { ApiTags } from '@nestjs/swagger';
 import { SellerUseCase } from './use-cases/seller.useCase';
 
-import { CreateSellerConnectAccountDto } from './dto/create-seller-connected-account.dto';
 import type { IRequest } from '../auth/middlewares/auth.middleware';
 import {
   ApiCreateAccountSession,
@@ -25,6 +22,8 @@ import {
   CreateAccountSessionSchema,
   ViewSellerStripeAccount,
 } from './seller.type';
+
+import { CreateSellerConnectAccountDto } from './dto/create-seller-connected-account.dto';
 import { CreateAccountSessionDto } from './dto/create-account-session.dto';
 
 @ApiTags('Seller')

@@ -64,7 +64,6 @@ export function ApiViewShopByUserId() {
   );
 }
 
-
 export function ApiViewShop() {
   return applyDecorators(
     ApiOperation({

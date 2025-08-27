@@ -1,35 +1,118 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SellerShippingService } from './services/seller-shipping.service';
-// import { SellerShippingService } from './seller-shipping.service';
-// import { CreateSellerShippingDto } from './dto/create-seller-shipping.dto';
-// import { UpdateSellerShippingDto } from './dto/update-seller-shipping.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Req,
+} from '@nestjs/common';
+import { SellerShippingProfileService } from './services/seller-shipping-profile.service';
+import type { IRequest } from 'src/auth/middlewares/auth.middleware';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  UpdateSellerShippingProfileDto,
+  CreateSellerShippingProfileDto,
+  FindAllProfilesByShippingIdDto,
+  FindOneProfileDto,
+} from './dto';
+import {
+  CreateShippingProfileRetrunSchema,
+  FindAllShippingProfilesByShippingIdRetrunSchema,
+  FindOneShippingProfileRetrunSchema,
+  RemoveShippingProfileRetrunSchema,
+  UpdateShippingProfileRetrunSchema,
+} from './seller-shipping.type';
+import {
+  ApiCreateShippingProfile,
+  ApiFindAllShippingProfilesByShippingId,
+  ApiRemoveShippingProfile,
+  ApiUpdateShippingProfile,
+} from './seller-shipping.swagger';
 
-@Controller('seller-shipping')
+@ApiTags('Seller Shipping')
+@Controller({ path: 'seller-shippings', version: '1' })
 export class SellerShippingController {
-  constructor(private readonly sellerShippingService: SellerShippingService) {}
+  constructor(
+    private readonly shippingProfileService: SellerShippingProfileService,
+  ) {}
 
-  // @Post()
-  // create(@Body() createSellerShippingDto: CreateSellerShippingDto) {
-  //   return this.sellerShippingService.create(createSellerShippingDto);
-  // }
+  @Post(':shippingId/shipping-profiles')
+  @ApiCreateShippingProfile()
+  async createShippingProfile(
+    @Req() req: IRequest,
+    @Body() dto: CreateSellerShippingProfileDto,
+  ): Promise<CreateShippingProfileRetrunSchema> {
+    await this.shippingProfileService.create(req.middleware.seller!.id, dto);
+    return {
+      message: 'created',
+    };
+  }
 
-  // @Get()
-  // findAll() {
-  //   return this.sellerShippingService.findAll();
-  // }
+  @Get(':shippingId/shipping-profiles')
+  @ApiFindAllShippingProfilesByShippingId()
+  async findAllShippingProfilesByShippingId(
+    @Req() req: IRequest,
+    @Param() dto: FindAllProfilesByShippingIdDto,
+  ): Promise<FindAllShippingProfilesByShippingIdRetrunSchema> {
+    const profiles = await this.shippingProfileService.findBySellerShippingId(
+      dto.shippingId,
+    );
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return profiles.map(({ sellerId, ...profileData }) => profileData);
+  }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.sellerShippingService.findOne(+id);
-  // }
+  @Get(':shippingId/shipping-profiles/:shippingProfileId')
+  async findOneShippingProfile(
+    @Req() req: IRequest,
+    @Param() dto: FindOneProfileDto,
+  ): Promise<FindOneShippingProfileRetrunSchema> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { sellerId, ...profileData } =
+      await this.shippingProfileService.findOne(
+        dto.shippingProfileId,
+        req.middleware.seller!.id,
+        dto.shippingId,
+      );
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateSellerShippingDto: UpdateSellerShippingDto) {
-  //   return this.sellerShippingService.update(+id, updateSellerShippingDto);
-  // }
+    return profileData;
+  }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.sellerShippingService.remove(+id);
-  // }
+  @Patch(':shippingId/shipping-profiles/:shippingProfileId')
+  @ApiUpdateShippingProfile()
+  async updateShippingProfile(
+    @Req() req: IRequest,
+    @Param('shippingId') shippingId: string,
+    @Param('shippingProfileId') shippingProfileId: string,
+    @Body() dto: UpdateSellerShippingProfileDto,
+  ): Promise<UpdateShippingProfileRetrunSchema> {
+    await this.shippingProfileService.update(
+      shippingProfileId,
+      req.middleware.seller!.id,
+      shippingId,
+      dto,
+    );
+    return {
+      message: 'updated',
+    };
+  }
+
+  @Delete(':shippingId/shipping-profiles/:shippingProfileId')
+  @ApiRemoveShippingProfile()
+  async removeShippingProfile(
+    @Req() req: IRequest,
+    @Param('shippingId') shippingId: string,
+    @Param('shippingProfileId') shippingProfileId: string,
+  ): Promise<RemoveShippingProfileRetrunSchema> {
+    await this.shippingProfileService.remove(
+      shippingProfileId,
+      req.middleware.seller!.id,
+      shippingId,
+    );
+
+    return {
+      message: 'deleted',
+    };
+  }
 }

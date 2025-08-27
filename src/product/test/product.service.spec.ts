@@ -436,6 +436,7 @@ describe('ProductService', () => {
         await services.sellerShippingProfileService.removeWithProductAttachCheck(
           shippingProfileIdInUse!,
           seller_1.id,
+          seller_1_shipping.id
         );
 
         fail('should throw ConflictException');
@@ -467,6 +468,7 @@ describe('ProductService', () => {
       await services.sellerShippingProfileService.removeWithProductAttachCheck(
         shippingProfileIdInUse!,
         seller_1.id,
+        seller_1_shipping.id
       );
       const shipping = await services.sellerShippingService.findByShopId(
         seller_1_shop.id,
@@ -598,8 +600,8 @@ describe('ProductService', () => {
       // Step 1 - Upgrade Subscription
       await services.sellerSubscriptionService.upgradeListingSubscription(
         seller_1.id,
-        seller_1_Subscription.id,
         'SILVER_MONTHLY_GBP',
+        seller_1_Subscription.id,
       );
 
       // Step 2 - update current subscription data
@@ -663,8 +665,8 @@ describe('ProductService', () => {
       // ------------------------------
       await services.sellerSubscriptionService.downgradeListingSubscription(
         seller_1.id,
-        seller_1_Subscription.id,
         'BRONZE_MONTHLY_GBP',
+        seller_1_Subscription.id,
       );
 
       // ------------------------------
