@@ -1,6 +1,11 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { StripeService } from './services/stripe.service';
-
+import type { IRequest } from 'src/auth/middlewares/auth.middleware';
+import { TestEnvironmentGuard } from 'src/share/guards/testing-environmet.guard';
+import Stripe from 'stripe';
+import { DeleteStripeCustomerReturnSchema, ViewStripeSubscriptionReturnSchema } from './stripe.type';
+import { ApiAdvanceTestClock, ApiDeleteStripeCustomer, ApiViewStripeSubscription } from './stripe.swagger';
+import { AdvanceTestClockDto } from './dto/advance-test-clock.dto';
 @Controller('stripe')
 export class StripeController {
   constructor(private readonly stripeService: StripeService) {}
@@ -26,71 +31,67 @@ export class StripeController {
    *
    * @remark The subscription record in bevetu database will not be deleted
    */
-  @Delete(':subscriptionId/stripe')
-  // @ApiDeleteSubscriptionInStripe()
+  // @Delete(':subscriptionId/stripe')
+  // // @ApiDeleteSubscriptionInStripe()
+  // @UseGuards(TestEnvironmentGuard)
+  // async deleteSubscriptionInStripe(
+  //   @Req() req: IRequest,
+  //   @Param('subscriptionId') bevetuSubscriptionId: string,
+  // ): Promise<UpdateReturnSchema> {
+  //   await this.subscriptionUseCase.cancelSubscriptionInStripe(
+  //     req.middleware.seller?.id,
+  //     bevetuSubscriptionId,
+  //   );
+  //   return { message: 'deleted' };
+  // }
+
+  /**
+   * @caution Testing Only. Do not use in production
+   * @purpose To fetch the Stripe subscription details directly from Stripe.
+   * So as to check if the action subscription function effective on Stripe
+   * @examples Trigger the change seat no function, and then call this function
+   * to check if Stripe update the seat number
+   */
+  @Get()
+  @ApiViewStripeSubscription()
   @UseGuards(TestEnvironmentGuard)
-  async deleteSubscriptionInStripe(
+  async viewStripeSubscription(
     @Req() req: IRequest,
-    @Param('subscriptionId') bevetuSubscriptionId: string,
-  ): Promise<UpdateReturnSchema> {
-    await this.subscriptionUseCase.cancelSubscriptionInStripe(
-      req.middleware.seller?.id,
-      bevetuSubscriptionId,
+  ): Promise<ViewStripeSubscriptionReturnSchema> {
+    return this.stripeService.getSubscriptionDetailsByCustomerId(
+      req.middleware.buyer.stripeCustomerId,
     );
-    return { message: 'deleted' };
   }
 
-    /**
-     * @caution Testing Only. Do not use in production
-     * @purpose To fetch the Stripe subscription details directly from Stripe.
-     * So as to check if the action subscription function effective on Stripe
-     * @examples Trigger the change seat no function, and then call this function
-     * to check if Stripe update the seat number
-     */
-    @Get(':subscriptionId/stripe')
-    @ApiViewStripeSubscription()
-    @UseGuards(TestEnvironmentGuard)
-    async viewStripeSubscription(
-      @Req() req: IRequest,
-      @Param('subscriptionId') bevetuSubscriptionId: string,
-    ): Promise<Stripe.Response<Stripe.Subscription>> {
-      return this.subscriptionUseCase.findStripeSubscription(
-        req.middleware.userId,
-        bevetuSubscriptionId,
-      );
-    }
+  /**
+   * @caution Testing Only. Do not use in production
+   * @purpose Delete the customer in Stripe after testing
+   */
+  @Delete()
+  @UseGuards(TestEnvironmentGuard)
+  @HttpCode(204)
+  @ApiDeleteStripeCustomer()
+  async deleteStripeCustomer(
+    @Req() req: IRequest,
+  ): Promise<DeleteStripeCustomerReturnSchema> {
+    await this.stripeService.removeStripeCustomer(
+      req.middleware.buyer.stripeCustomerId,
+    );
+    return {
+      message: 'deleted',
+    };
+  }
 
-    /**
-     * @caution Testing Only. Do not use in production
-     * @purpose Delete the customer in Stripe after testing
-     */
-    @Delete(':subscriptionId/stripe/customers')
-    @UseGuards(TestEnvironmentGuard)
-    @HttpCode(204)
-    @ApiDeleteStripeCustomer()
-    async deleteStripeCustomer(
-      @Req() req: IRequest,
-      @Param('subscriptionId') bevetuSubscriptionId: string,
-    ): Promise<void> {
-      await this.subscriptionUseCase.deleteStripeCustomer(
-        req.middleware.userId,
-        bevetuSubscriptionId,
-      );
-    }
-
-    /**
-     * @caution Testing Only. Do not use in production
-     * @purpose Advance the test clock to trigger the webhook event
-     * @remark `subscriptionId` required for future validation use.
-     */
-    @Post(':subscriptionId/stripe/test-clock/:testClockId')
-    @UseGuards(TestEnvironmentGuard)
-    @HttpCode(204)
-    @ApiAdvanceTestClock()
-    async advanceTestClock(
-      @Param('testClockId') testClockId: string,
-      @Body('advanceDay') advanceDay: number,
-    ): Promise<void> {
-      await this.subscriptionUseCase.advanceTestClock(testClockId, advanceDay);
-    }
+  /**
+   * @caution Testing Only. Do not use in production
+   * @purpose Advance the test clock to trigger the webhook event
+   * @remark `subscriptionId` required for future validation use.
+   */
+  @Post('test-clock')
+  @UseGuards(TestEnvironmentGuard)
+  @HttpCode(204)
+  @ApiAdvanceTestClock()
+  async advanceTestClock(@Body() dto: AdvanceTestClockDto): Promise<void> {
+    await this.stripeService.advanceTestClock(dto.testClockId, dto.advanceDay);
+  }
 }
