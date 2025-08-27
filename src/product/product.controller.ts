@@ -8,6 +8,7 @@ import {
   Delete,
   Req,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { IRequest } from 'src/auth/middlewares/auth.middleware';
@@ -39,6 +40,7 @@ import {
   UpdateProductReturnSchema,
   ViewProductListReturnSchema,
 } from './product.type';
+
 import {
   ApiCreateProduct,
   ApiDeleteProduct,
@@ -48,7 +50,9 @@ import {
   ApiUpdateProduct,
   ApiViewProductList,
 } from './product.swagger';
+import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
 
+@UseGuards(SellerOriginGuard)
 @ApiTags('Product')
 @Controller({ path: 'product', version: '1' })
 export class ProductController {
@@ -69,6 +73,7 @@ export class ProductController {
     @Param(':shopId') shopIdParamDto: ShopIdParamDto,
     @Body() createProductDto: CreateProductDto,
   ): Promise<CreateProductReturnSchema> {
+    req.middleware.origin = 'BUYER_URL';
     await this.createProductUseCase.execute(
       req.middleware.seller!.id,
       shopIdParamDto.shopId,

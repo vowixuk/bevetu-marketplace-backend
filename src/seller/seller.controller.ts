@@ -7,6 +7,7 @@ import {
   Get,
   Res,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import express from 'express';
 import { ApiTags } from '@nestjs/swagger';
@@ -25,7 +26,9 @@ import {
 
 import { CreateSellerConnectAccountDto } from './dto/create-seller-connected-account.dto';
 import { CreateAccountSessionDto } from './dto/create-account-session.dto';
+import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
 
+@UseGuards(SellerOriginGuard)
 @ApiTags('Seller')
 @Controller({ path: 'sellers', version: '1' })
 export class SellerController {

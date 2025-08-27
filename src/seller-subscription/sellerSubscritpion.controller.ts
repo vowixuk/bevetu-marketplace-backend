@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Body, Get, Query } from '@nestjs/common';
+import { Controller, Post, Req, Body, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { IRequest } from '../auth/middlewares/auth.middleware';
 import { SellerSubscriptionService } from './services/seller-subscription.service';
@@ -30,7 +30,10 @@ import {
   DowngradeListingSubscriptionDto,
   CancelListingSubscriptionDto,
 } from './dto';
+import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
 
+
+@UseGuards(SellerOriginGuard)
 @ApiTags('Seller Subscription')
 @Controller({ path: 'seller-subscriptions', version: '1' })
 export class SellerSubscriptionController {

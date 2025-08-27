@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ShopService } from './shop.service';
 import { CreateShopDto } from './dto/create-shop.dto';
@@ -24,7 +25,9 @@ import {
 } from './shop.swagger';
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
 
+@UseGuards(SellerOriginGuard)
 @ApiTags('Shop')
 @Controller({ path: 'shops', version: '1' })
 export class ShopController {

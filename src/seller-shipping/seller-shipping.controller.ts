@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { SellerShippingProfileService } from './services/seller-shipping-profile.service';
 import type { IRequest } from 'src/auth/middlewares/auth.middleware';
@@ -30,7 +31,9 @@ import {
   ApiRemoveShippingProfile,
   ApiUpdateShippingProfile,
 } from './seller-shipping.swagger';
+import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
 
+@UseGuards(SellerOriginGuard)
 @ApiTags('Seller Shipping')
 @Controller({ path: 'seller-shippings', version: '1' })
 export class SellerShippingController {
