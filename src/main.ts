@@ -4,6 +4,8 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import * as express from 'express';
+import * as bodyParser from 'body-parser';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -67,6 +69,21 @@ async function bootstrap() {
     );
   }
 
+  /**
+   * Stripe webhook signature verification requires the raw request body,
+   * not the parsed JSON.
+   *
+   * This middleware attaches the raw body buffer to `req.rawBody` so that
+   * it can be used later in the Stripe webhook handler.
+   */
+  app.use(
+    bodyParser.json({
+      verify: (req: any, res, buf) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        req.rawBody = buf;
+      },
+    }),
+  );
   await app.listen(process.env.PORT ?? 3004);
 }
 bootstrap();

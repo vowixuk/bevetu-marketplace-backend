@@ -1,6 +1,7 @@
 import {
   Injectable,
   NestMiddleware,
+  RequestMethod,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
@@ -45,17 +46,8 @@ export const authMiddlewareExclusionList = [
   // { path: 'v1/auth/google', method: RequestMethod.POST },
   // { path: 'v1/auth/google-mock', method: RequestMethod.POST },
   // { path: 'v1/auth/logout', method: RequestMethod.POST },
-  // { path: 'v1/stripe-webhook', method: RequestMethod.POST },
-  // { path: 'v1/stripe-webhook', method: RequestMethod.GET },
-  // { path: '/metrics', method: RequestMethod.GET },
-  // {
-  //   path: 'v1/documents/pets/:petId/ai-diagnosis-records/:recordId/public-access',
-  //   method: RequestMethod.POST,
-  // },
-  // {
-  //   path: '/v1/document-viewers/document/:documentId/view-count',
-  //   method: RequestMethod.GET,
-  // },
+  { path: 'v1/stripe-webhook', method: RequestMethod.POST },
+  { path: 'v1/stripe-webhook', method: RequestMethod.GET },
 ];
 
 /**

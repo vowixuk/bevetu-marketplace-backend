@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // import { Controller, Get, Post, RawBodyRequest, Req } from '@nestjs/common';
 // import { StripeService } from './services/stripe.service';
 // import { SubscriptionUseCase } from '../subscription/services/subscription.useCase';
@@ -8,144 +10,199 @@
 // import { StripewebhookReturnAfterDeleteSubscriptionDto } from './dto/stripe-webhook-return-after-delete-subscription.dto';
 // import { ApiHealthCheck, ApiWebhookListener } from './stripe.swagger';
 
-// @ApiTags('Stripe Webhook (For Stripe use only)')
-// @Controller({ path: 'stripe-webhook', version: '1' })
-export class StripeWebhookV1 {
+import { SellerSubscriptionService } from './../seller-subscription/services/seller-subscription.service';
+import { StripeService } from './services/stripe.service';
+import { StripeCacheService } from './cache/stripe.cache-service';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Post,
+  Req,
+} from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiHealthCheck, ApiWebhookListener } from './stripe.swagger';
+import type { RawBodyRequest } from '@nestjs/common';
+import { CompleteSellerListingSubscriptionEnrollmentDto } from 'src/seller-subscription/dto';
+
+@ApiTags('Stripe Webhook (For Stripe use only)')
+@Controller({ path: 'stripe-webhook', version: '1' })
+export class StripeWebhook {
   constructor(
-    // private readonly stripeService: StripeService,
-    // private readonly subscriptionUseCase: SubscriptionUseCase,
-    // private readonly stripeCacheService: StripeCacheService,
+    private readonly stripeService: StripeService,
+    private readonly subscriptionService: SellerSubscriptionService,
+    private readonly stripeCacheService: StripeCacheService,
   ) {}
 
-  // @Get()
-  // @ApiHealthCheck()
-  // healthCheck() {
-  //   return 'Webhook is listening';
-  // }
+  @Get()
+  @ApiHealthCheck()
+  healthCheck() {
+    return 'Webhook is listening';
+  }
 
-  // @Post()
-  // @ApiWebhookListener()
-  // async webhookListener(@Req() req: RawBodyRequest<Request>) {
-  //   const sig = req.headers['stripe-signature'];
-  //   const event = await this.stripeService.constructWebhookEvent(
-  //     req.rawBody,
-  //     sig,
-  //     process.env.STRIPE_WEBHOOK_SECRET,
-  //   );
+  @Post()
+  @ApiWebhookListener()
+  async webhookListener(@Req() req: RawBodyRequest<Request>) {
 
-  //   const isDuplicate = await this.stripeCacheService.getEventId(event.id);
+    if (!req.rawBody) {
+      throw new BadRequestException(
+        'Missing rawBody in request. Stripe webhook verification failed.',
+      );
+    }
 
-  //   if (isDuplicate) {
-  //     console.log('it is deplicated');
-  //     return {
-  //       statusCode: 200,
-  //       message: 'Duplicate event ignored',
-  //     };
-  //   }
-  //   await this.stripeCacheService.setEventId(event.id);
-  //   const session: any = event.data.object;
+    if (
+      !req.headers['stripe-signature'] ||
+      Array.isArray(req.headers['stripe-signature'])
+    ) {
+      throw new BadRequestException(
+        'Missing Stripe signature. Stripe webhook verification failed.',
+      );
+    }
 
-  //   switch (event.type) {
-  //     case 'checkout.session.completed':
-  //       if (session.metadata.action === 'SUBSCRIPTION') {
-  //         console.log(
-  //           '✅ Webhooks: Event `checkout.session.completed` for subscription action received',
-  //         );
-  //         await this.subscriptionUseCase.enrollSubscription(
-  //           Object.assign(
-  //             new StripewebhookReturnAfterSubscriptionPaymentDto(),
-  //             {
-  //               stripeCustomerId: session.customer,
-  //               stripeSubscriptionId: session.subscription,
-  //               email: session.metadata.email,
-  //               userId: session.metadata.userId,
-  //               productCode: session.metadata.productCode,
-  //               seatNo: Number(session.metadata.seatNo),
-  //             },
-  //           ),
-  //         );
-  //         return { message: 'Subscription Created' };
-  //       }
-  //       break;
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      throw new BadRequestException(
+        'Missing Stripe Webhook Scret. Stripe webhook verification failed.',
+      );
+    }
 
-  //     case 'invoice.payment_succeeded':
-  //       const invoice = event.data.object;
-  //       const paymentSucceededReason = invoice.billing_reason;
-  //       const paidAt = new Date(invoice.status_transitions.paid_at * 1000);
-  //       const paidAmount = invoice.amount_paid;
+    const sig = req.headers['stripe-signature'] as string;
+    const event = this.stripeService.constructWebhookEvent(
+      req.rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET,
+    );
 
-  //       if (paymentSucceededReason === 'subscription_cycle') {
-  //         console.log(
-  //           '✅ Webhooks: Event `invoice.payment_succeeded` for subscription_cycle received',
-  //         );
-  //         const { userId, bevetuSubscriptionId } =
-  //           session.subscription_details.metadata;
-  //         await this.subscriptionUseCase.invoicePaymentSuccessded(
-  //           Object.assign(
-  //             new StripewebhookReturnAfterSubscriptionCyclePaymentDto(),
-  //             {
-  //               bevetuSubscriptionId,
-  //               userId,
-  //               paidAt,
-  //               paidAmount: paidAmount / 100,
-  //             },
-  //           ),
-  //         );
-  //         return {
-  //           statusCode: 200,
-  //           message: 'Recurring payment processed successfully',
-  //         };
-  //       }
-  //       break;
+    const isDuplicate = await this.stripeCacheService.getEventId(event.id);
 
-  //     case 'invoice.payment_failed':
-  //       const failedInvoice = event.data.object;
-  //       const paymentFailedReason = failedInvoice.billing_reason;
-  //       if (paymentFailedReason === 'subscription_cycle') {
-  //         console.log(
-  //           '✅ Webhooks: Event `invoice.payment_failed`  for subscription_cycle received',
-  //         );
-  //         const { userId, bevetuSubscriptionId } =
-  //           session.subscription_details.metadata;
-  //         await this.subscriptionUseCase.invoicePaymentFailed(
-  //           Object.assign(
-  //             new StripewebhookReturnAfterSubscriptionCyclePaymentDto(),
-  //             {
-  //               bevetuSubscriptionId,
-  //               userId,
-  //             },
-  //           ),
-  //         );
-  //         return {
-  //           statusCode: 200,
-  //           message: 'Failed recurring payment handled',
-  //         };
-  //       }
-  //       break;
+    if (isDuplicate) {
+      console.log('it is deplicated');
+      return {
+        statusCode: 200,
+        message: 'Duplicate event ignored',
+      };
+    }
+    await this.stripeCacheService.setEventId(event.id);
+    const session: any = event.data.object;
 
-  //     case 'customer.subscription.deleted':
-  //       console.log(
-  //         '✅ Webhooks: Event `customer.subscription.deleted` received',
-  //       );
-  //       const { userId, bevetuSubscriptionId } = session.metadata;
+    switch (event.type) {
+      case 'checkout.session.completed':
+        if (session.metadata.platform !== process.env.PLATFORM) {
+          return {
+            statusCode: 200,
+            message: `Event skipped: session is for platform ${session.metadata.platform}, not the target platform.`,
+          };
+        }
 
-  //       await this.subscriptionUseCase.softDeleteSubscription(
-  //         Object.assign(new StripewebhookReturnAfterDeleteSubscriptionDto(), {
-  //           bevetuSubscriptionId,
-  //           userId,
-  //         }),
-  //       );
-  //       return {
-  //         statusCode: 200,
-  //         message: 'Delete subscription handled',
-  //       };
+        if (
+          session.metadata.action === 'SELLER_LISTENING_SUBSCRIPTION_ENROLLMENT'
+        ) {
+          console.log(
+            '✅ Webhooks: Event `checkout.session.completed` for seller listing subscription action received',
+          );
 
-  //     default:
-  //       console.log('no match case');
-  //       return { statusCode: 200, message: 'No matching case for this event' };
-  //   }
-  //   return { statusCode: 200, message: 'Webhook is listening' };
-  // }
+          console.log(session, '<< session');
+          console.log(session, '<< metadata');
+          await this.subscriptionService.completeSellerListingSubscriptionEnrollment(
+            Object.assign(
+              new CompleteSellerListingSubscriptionEnrollmentDto(),
+              {
+                stripeCustomerId: session.customer ?? 'NA',
+                stripeSubscriptionId: session.subscription ?? 'NA',
+                stripeSubscriptionItemId: null,
+                userId: session.metadata.userId,
+                sellerId: session.metadata.bevetuSellerId,
+                productCode: session.metadata.productCode,
+                amount: Number(session.amount_total) / 100,
+                currency: session.currency,
+                quantity: session.metadata.quantity,
+                email: session.metadata.email,
+              },
+            ),
+          );
+          return { message: 'Listing Subscription Created' };
+        }
+        // for non - 'SELLER_LISTENING_SUBSCRIPTION_ENROLLMENT' action, break it
+        break;
+
+      case 'invoice.payment_succeeded':
+        // const invoice = event.data.object;
+        // const paymentSucceededReason = invoice.billing_reason;
+        // const paidAt = new Date(invoice.status_transitions.paid_at * 1000);
+        // const paidAmount = invoice.amount_paid;
+
+        // if (paymentSucceededReason === 'subscription_cycle') {
+        //   console.log(
+        //     '✅ Webhooks: Event `invoice.payment_succeeded` for subscription_cycle received',
+        //   );
+        //   const { userId, bevetuSubscriptionId } =
+        //     session.subscription_details.metadata;
+        //   await this.subscriptionUseCase.invoicePaymentSuccessded(
+        //     Object.assign(
+        //       new StripewebhookReturnAfterSubscriptionCyclePaymentDto(),
+        //       {
+        //         bevetuSubscriptionId,
+        //         userId,
+        //         paidAt,
+        //         paidAmount: paidAmount / 100,
+        //       },
+        //     ),
+        //   );
+        //   return {
+        //     statusCode: 200,
+        //     message: 'Recurring payment processed successfully',
+        //   };
+        // }
+        break;
+
+      case 'invoice.payment_failed':
+        // const failedInvoice = event.data.object;
+        // const paymentFailedReason = failedInvoice.billing_reason;
+        // if (paymentFailedReason === 'subscription_cycle') {
+        //   console.log(
+        //     '✅ Webhooks: Event `invoice.payment_failed`  for subscription_cycle received',
+        //   );
+        //   const { userId, bevetuSubscriptionId } =
+        //     session.subscription_details.metadata;
+        //   await this.subscriptionUseCase.invoicePaymentFailed(
+        //     Object.assign(
+        //       new StripewebhookReturnAfterSubscriptionCyclePaymentDto(),
+        //       {
+        //         bevetuSubscriptionId,
+        //         userId,
+        //       },
+        //     ),
+        //   );
+        //   return {
+        //     statusCode: 200,
+        //     message: 'Failed recurring payment handled',
+        //   };
+        // }
+        break;
+
+      case 'customer.subscription.deleted':
+        // console.log(
+        //   '✅ Webhooks: Event `customer.subscription.deleted` received',
+        // );
+        // const { userId, bevetuSubscriptionId } = session.metadata;
+
+        // await this.subscriptionUseCase.softDeleteSubscription(
+        //   Object.assign(new StripewebhookReturnAfterDeleteSubscriptionDto(), {
+        //     bevetuSubscriptionId,
+        //     userId,
+        //   }),
+        // );
+        // return {
+        //   statusCode: 200,
+        //   message: 'Delete subscription handled',
+
+        // };
+        break;
+      default:
+        console.log('no match case');
+        return { statusCode: 200, message: 'No matching case for this event' };
+    }
+    return { statusCode: 200, message: 'Webhook is listening' };
+  }
 }
 // Code sample:
 

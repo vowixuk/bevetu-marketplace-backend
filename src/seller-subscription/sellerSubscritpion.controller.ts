@@ -1,4 +1,12 @@
-import { Controller, Post, Req, Body, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Req,
+  Body,
+  Get,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { IRequest } from '../auth/middlewares/auth.middleware';
 import { SellerSubscriptionService } from './services/seller-subscription.service';
@@ -31,7 +39,6 @@ import {
   CancelListingSubscriptionDto,
 } from './dto';
 import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
-
 
 @UseGuards(SellerOriginGuard)
 @ApiTags('Seller Subscription')
@@ -129,12 +136,14 @@ export class SellerSubscriptionController {
   async viewUserActiveSubscription(
     @Req() req: IRequest,
   ): Promise<ViewUserActiveSubscriptionReturnSchema> {
+    const subscription = await this.sellerSubscriptionService.returnSubscitpion(
+      req.middleware.seller!.id,
+    );
+    if (subscription == 'NO_SUBSCRIPTION') {
+      return 'NO_SUBSCRIPTION';
+    }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, sellerId, ...subscriptionData } =
-      await this.sellerSubscriptionService.findOne(
-        req.middleware.seller!.id,
-        null,
-      );
+    const { id, sellerId, ...subscriptionData } = subscription;
     return subscriptionData;
   }
 }

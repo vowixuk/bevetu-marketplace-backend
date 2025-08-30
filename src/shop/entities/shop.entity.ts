@@ -14,6 +14,7 @@ export class Shop {
   createdAt: Date;
   updatedAt?: Date;
   deletedAt?: Date;
+  sellerShippingId?: string;
 
   constructor(
     init: Omit<Shop, OptionalProperties<Shop>> &

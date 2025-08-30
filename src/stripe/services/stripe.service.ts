@@ -106,7 +106,9 @@ export class StripeService {
         discounts: promotionCode
           ? [{ promotion_code: promotionCode }]
           : undefined, // apply if present
+
         metadata,
+
         customer: stripeCustomerId,
       });
 
@@ -134,6 +136,16 @@ export class StripeService {
     } catch (error) {
       this.stripeException(error);
     }
+  }
+
+  async getCheckoutSessionDetails(sessionId: string) {
+    return await this.stripe.checkout.sessions.retrieve(sessionId);
+  }
+
+  async getSubscriptionDetails(subscritpionId: string) {
+    const subscription =
+      await this.stripe.subscriptions.retrieve(subscritpionId);
+    return subscription.items.data;
   }
 
   /**

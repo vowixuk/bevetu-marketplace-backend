@@ -88,6 +88,16 @@ export class SellerSubscriptionService {
     return subscription;
   }
 
+  async returnSubscitpion(
+    sellerId: string,
+  ): Promise<SellerSubscription | 'NO_SUBSCRIPTION'> {
+    const subscriptions = await this.findAllBySellerId(sellerId);
+    if (subscriptions.length <= 0) {
+      return 'NO_SUBSCRIPTION';
+    }
+    return subscriptions[0];
+  }
+
   async update(
     sellerId: string,
     subscriptionId: string,
@@ -176,7 +186,7 @@ export class SellerSubscriptionService {
           email,
           userId,
           bevetuSellerId: sellerId,
-          platform: process.env.PLATFORM || 'NA',
+          platform: process.env.PLATFORM,
           productCode,
           quantity: 1,
           action: 'SELLER_LISTENING_SUBSCRIPTION_ENROLLMENT',
@@ -781,7 +791,7 @@ export class SellerSubscriptionService {
     const {
       stripeCustomerId,
       stripeSubscriptionId,
-      stripeSubscriptionItemId,
+      stripeSubscriptionItemId: _itemId,
       userId,
       sellerId,
       productCode,
@@ -791,6 +801,15 @@ export class SellerSubscriptionService {
     } = completeSellerListingSubscriptionEnrollmentDto;
 
     const product = Products[productCode];
+
+    let stripeSubscriptionItemId: string = '';
+    if (!_itemId) {
+      const _sub =
+        await this.stripeService.getSubscriptionDetails(stripeSubscriptionId);
+      stripeSubscriptionItemId = _sub[0].id;
+    } else {
+      stripeSubscriptionItemId = _itemId;
+    }
 
     const { nextPaymentAmount, nextPaymentDate } =
       await this.stripeService.getNextPaymentDetails(

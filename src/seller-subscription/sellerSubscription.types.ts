@@ -49,10 +49,9 @@ export type RestoreListingSubscriptionReturnSchema = {
   nextPaymentAmount: number;
 };
 
-export type ViewUserActiveSubscriptionReturnSchema = Omit<
-  SellerSubscription,
-  'id' | 'sellerId'
->;
+export type ViewUserActiveSubscriptionReturnSchema =
+  | Omit<SellerSubscription, 'id' | 'sellerId'>
+  | string;
 
 // export type ChangeSeatNoReturnSchema = NextPaymentDetails;
 // export type CancelSubscriptionReturnSchema = { subscriptionCancelAt: Date };

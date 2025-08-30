@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SellerSubscriptionService } from './services/seller-subscription.service';
 import { SubscriptionEventRecordService } from './services/event-record.service';
 import { SubscriptionEventRecordRepository } from './repositories/event-record.repository';
@@ -8,7 +8,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SellerSubscriptionController } from './sellerSubscritpion.controller';
 
 @Module({
-  imports: [StripeModule, EventEmitterModule],
+  imports: [forwardRef(() => StripeModule), EventEmitterModule],
   controllers: [SellerSubscriptionController],
   providers: [
     SellerSubscriptionService,

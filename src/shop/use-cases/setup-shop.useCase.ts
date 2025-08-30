@@ -5,6 +5,7 @@ import { CreateShopDto } from '../dto/create-shop.dto';
 import { CreateSellerShippingDto } from '../../seller-shipping/dto/create-seller-shipping.dto';
 import { Shop } from '../entities/shop.entity';
 import { SellerShipping } from '../../seller-shipping/entities/seller-shipping.entity';
+import { UpdateShopDto } from '../dto/update-shop.dto';
 @Injectable()
 export class SetupShopUseCase {
   constructor(
@@ -25,8 +26,14 @@ export class SetupShopUseCase {
       Object.assign(new CreateSellerShippingDto(), { shopId: shop.id }),
     );
 
+    const updatedShop = await this.shopService.update(
+      shop.id,
+      sellerId,
+      Object.assign(new UpdateShopDto(), { sellerShippingId: shipping.id }),
+    );
+
     return {
-      shop,
+      shop: updatedShop,
       shipping,
     };
   }

@@ -11,7 +11,7 @@ export class CompleteSellerListingSubscriptionEnrollmentDto {
 
   @IsString()
   @IsNotEmpty()
-  stripeSubscriptionItemId: string;
+  stripeSubscriptionItemId: string | null;
 
   @IsString()
   @IsNotEmpty()

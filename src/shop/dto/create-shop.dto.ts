@@ -56,4 +56,8 @@ export class CreateShopDto {
   @IsOptional()
   @IsObject({ message: 'Attributes must be an object' })
   attributes?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  sellerShippingId?: string;
 }

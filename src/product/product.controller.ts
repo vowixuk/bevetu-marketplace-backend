@@ -51,6 +51,7 @@ import {
   ApiViewProductList,
 } from './product.swagger';
 import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
+import { ProductIdShopIdParamDto } from './dto/product-id-shop-id-param.dto';
 
 @UseGuards(SellerOriginGuard)
 @ApiTags('Product')
@@ -70,10 +71,10 @@ export class ProductController {
   @ApiCreateProduct()
   async createProduct(
     @Req() req: IRequest,
-    @Param(':shopId') shopIdParamDto: ShopIdParamDto,
+    @Param() shopIdParamDto: ShopIdParamDto,
     @Body() createProductDto: CreateProductDto,
   ): Promise<CreateProductReturnSchema> {
-    req.middleware.origin = 'BUYER_URL';
+    // req.middleware.origin = 'BUYER_URL';
     await this.createProductUseCase.execute(
       req.middleware.seller!.id,
       shopIdParamDto.shopId,
@@ -90,13 +91,12 @@ export class ProductController {
   async setProductOnShelf(
     @Req() req: IRequest,
     @Body() body: SetProductOnShelfDto,
-    @Param(':shopId') shopIdParam: ShopIdParamDto,
-    @Param(':productId') productIdParam: ProductIdParamDto,
+    @Param() pram: ProductIdShopIdParamDto,
   ): Promise<SetProductOnShelfReturnSchema> {
     await this.setProductOnShelfUseCase.execute(
       req.middleware.seller!.id,
-      shopIdParam.shopId,
-      productIdParam.productId,
+      pram.shopId,
+      pram.productId,
       body.isOnShelf,
     );
     return {
@@ -109,13 +109,12 @@ export class ProductController {
   async updateProduct(
     @Req() req: IRequest,
     @Body() dto: UpdateProductDto,
-    @Param(':productId') productIdParam: ProductIdParamDto,
-    @Param(':shopId') shopIdParam: ShopIdParamDto,
+    @Param() pram: ProductIdShopIdParamDto,
   ): Promise<UpdateProductReturnSchema> {
     await this.updateProductUseCase.execute(
       req.middleware.seller!.id,
-      shopIdParam.shopId,
-      productIdParam.productId,
+      pram.shopId,
+      pram.productId,
       dto,
     );
     return {
@@ -127,7 +126,7 @@ export class ProductController {
   @ApiViewProductList()
   async viewProductList(
     @Req() req: IRequest,
-    @Param('shopId') shopIdParam: ShopIdParamDto,
+    @Param() shopIdParam: ShopIdParamDto,
     @Query() dto: ViewProductsDto,
   ): Promise<ViewProductListReturnSchema> {
     return await this.viewProductListUseCase.execute(
@@ -141,7 +140,7 @@ export class ProductController {
   @ApiResetProductOnShelf()
   async resetProductOnShelf(
     @Req() req: IRequest,
-    @Param(':shopId') shopIdParam: ShopIdParamDto,
+    @Param() shopIdParam: ShopIdParamDto,
   ): Promise<ResetProductOnShelfReturnSchema> {
     await this.resetProductOnShelfUseCase.execute(
       req.middleware.seller!.id,
@@ -156,31 +155,29 @@ export class ProductController {
   @ApiSellerViewProduct()
   async sellerViewProduct(
     @Req() req: IRequest,
-    @Param(':productId') productIdParam: ProductIdParamDto,
-    @Param(':shopId') shopIdParam: ShopIdParamDto,
+    @Param() pram: ProductIdShopIdParamDto,
   ): Promise<SellerViewProductReturnSchema> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { sellerId, ...safeProduct } =
       await this.sellerViewProductUseCase.execute(
         req.middleware.seller!.id,
-        shopIdParam.shopId,
-        productIdParam.productId,
+        pram.shopId,
+        pram.productId,
       );
 
     return safeProduct;
   }
 
-  @Delete('seller/shop/:shopId/view-product/')
+  @Delete('seller/shop/:shopId/delete-product/:productId')
   @ApiDeleteProduct()
   async DeleteProductUseCase(
     @Req() req: IRequest,
-    @Param(':productId') productIdParam: ProductIdParamDto,
-    @Param(':shopId') shopIdParam: ShopIdParamDto,
+    @Param() pram: ProductIdShopIdParamDto,
   ) {
     await this.deleteProductUseCase.execute(
       req.middleware.seller!.id,
-      shopIdParam.shopId,
-      productIdParam.productId,
+      pram.shopId,
+      pram.productId,
     );
     return {
       message: 'deleted',

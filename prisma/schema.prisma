@@ -118,6 +118,7 @@ model Shop {
   createdAt   DateTime @default(now())
   updatedAt   DateTime? @updatedAt
   deletedAt   DateTime?
+  sellerShippingId String?
 
   // Joining Table
   seller      Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)

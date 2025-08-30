@@ -6,9 +6,14 @@ import { BuyerStripeCustomerAccountMappingRepository } from './repositories/buye
 import { SellerStripeAccountMappingRepository } from './repositories/seller-account-mapping.repository';
 import { SellerSubscriptionMappingService } from './services/seller-subscription-mapping.service';
 import { SellerSubscriptionMappingRepository } from './repositories/seller-subscription-mapping.repository';
+import { SubscriptionModule } from '../seller-subscription/sellerSubscription.module';
+import { StripeWebhook } from './stripe.webhook';
+import { StripeCacheService } from './cache/stripe.cache-service';
 @Module({
-  controllers: [],
+  imports: [SubscriptionModule],
+  controllers: [StripeWebhook],
   providers: [
+    StripeCacheService,
     StripeService,
     SellerStripeAccountMappingRepository,
     BuyerStripeCustomerAccountMappingRepository,

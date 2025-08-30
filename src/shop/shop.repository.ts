@@ -19,6 +19,9 @@ export class ShopRepository {
           attributes: shop.attributes,
           ...(shop.website ? { website: shop.website } : {}),
           createdAt: shop.createdAt ?? new Date(),
+          ...(shop.sellerShippingId
+            ? { sellerShippingId: shop.sellerShippingId }
+            : {}),
         },
       }),
     ) as Shop;
@@ -56,10 +59,11 @@ export class ShopRepository {
           description: shop.description,
           country: shop.country,
           shopUrl: shop.shopUrl,
-          attributes: shop.attributes,
           website: shop.website ?? null,
+          attributes: shop.attributes,
           updatedAt: new Date(),
           deletedAt: shop.deletedAt ?? null,
+          sellerShippingId: shop.sellerShippingId ?? null,
         },
       }),
     ) as Shop;
@@ -105,5 +109,6 @@ export function mapPrismaShopToDomain(
     createdAt: prismaShop.createdAt,
     updatedAt: prismaShop.updatedAt ?? undefined,
     deletedAt: prismaShop.deletedAt ?? undefined,
+    sellerShippingId: prismaShop.sellerShippingId ?? undefined,
   });
 }

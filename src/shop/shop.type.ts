@@ -4,6 +4,6 @@ export type CreateShopReturnSchema = {
   shopId: string;
 };
 
-export type ViewOneShopReturnSchema = Shop;
+export type ViewOneShopReturnSchema = Omit<Shop, 'sellerId'>;
 
 export type UpdateShopReturnSchema = { message: string };

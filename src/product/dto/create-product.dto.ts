@@ -84,10 +84,30 @@ export class CategoriesDto {
 
   @ApiProperty({
     description: 'Product type',
-    example: 'toy',
-    enum: ['food', 'toy', 'accessory', 'health', 'grooming', 'habitat'],
+    example: 'travel-carriers',
+    enum: [
+      'food-treats',
+      'toys-chews',
+      'grooming-care',
+      'health-supplements',
+      'beds-furniture',
+      'collars-leashes-accessories',
+      'training-behavior',
+      'apparel',
+      'travel-carriers',
+    ],
   })
-  @IsIn(['food', 'toy', 'accessory', 'health', 'grooming', 'habitat'])
+  @IsIn([
+    'food-treats',
+    'toys-chews',
+    'grooming-care',
+    'health-supplements',
+    'beds-furniture',
+    'collars-leashes-accessories',
+    'training-behavior',
+    'apparel',
+    'travel-carriers',
+  ])
   product: ProductType;
 }
 

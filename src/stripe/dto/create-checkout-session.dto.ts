@@ -6,11 +6,11 @@ export class CreateCheckoutSessionDto {
   cancel_url: string; // Redirect on cancel
   promotionCode?: string; // Optional promotion code
   metadata: {
-    email: string;
-    userId: string;
-    productCode: string;
-    quantity?: string;
-    action: string;
+    // email: string;
+    // userId: string;
+    // productCode: string;
+    // quantity?: string;
+    // action: string;
     [key: string]: any; // Allows other optional metadata fields
   };
 }

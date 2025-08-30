@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsOptional, IsInt, Min, Max } from 'class-validator';
 
 export class ViewProductsDto {
@@ -9,6 +10,7 @@ export class ViewProductsDto {
     type: Number,
   })
   @IsOptional()
+  @Type(() => Number) // 👈 transform "1" -> 1
   @IsInt()
   @Min(1)
   page?: number;
@@ -20,8 +22,9 @@ export class ViewProductsDto {
     type: Number,
   })
   @IsOptional()
+  @Type(() => Number) // 👈 transform "10" -> 10
   @IsInt()
   @Min(1)
-  @Max(100) // Maximum limit for pagination, you can adjust as needed
+  @Max(100)
   limit?: number;
 }

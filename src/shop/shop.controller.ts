@@ -26,12 +26,16 @@ import {
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
+import { SetupShopUseCase } from './use-cases/setup-shop.useCase';
 
 @UseGuards(SellerOriginGuard)
 @ApiTags('Shop')
 @Controller({ path: 'shops', version: '1' })
 export class ShopController {
-  constructor(private readonly shopService: ShopService) {}
+  constructor(
+    private readonly shopService: ShopService,
+    private readonly setupShopUseCase: SetupShopUseCase,
+  ) {}
 
   @Post()
   @ApiCreateShop()
@@ -40,7 +44,12 @@ export class ShopController {
     @Req() req: IRequest,
     @Body() createShopDto: CreateShopDto,
   ): Promise<CreateShopReturnSchema> {
-    const shop = await this.shopService.create(
+    // const shop = await this.shopService.create(
+    //   req.middleware.seller?.id as string,
+    //   createShopDto,
+    // );
+
+    const { shop } = await this.setupShopUseCase.execute(
       req.middleware.seller?.id as string,
       createShopDto,
     );

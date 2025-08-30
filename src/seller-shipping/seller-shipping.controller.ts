@@ -108,7 +108,7 @@ export class SellerShippingController {
     @Param('shippingId') shippingId: string,
     @Param('shippingProfileId') shippingProfileId: string,
   ): Promise<RemoveShippingProfileRetrunSchema> {
-    await this.shippingProfileService.remove(
+    await this.shippingProfileService.removeWithProductAttachCheck(
       shippingProfileId,
       req.middleware.seller!.id,
       shippingId,
