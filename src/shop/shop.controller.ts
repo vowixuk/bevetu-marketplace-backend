@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ShopService } from './shop.service';
 import { CreateShopDto } from './dto/create-shop.dto';
-import type { IRequest } from 'src/auth/middlewares/auth.middleware';
+import type { IRequest } from '../auth/middlewares/auth.middleware';
 import {
   CreateShopReturnSchema,
   ViewOneShopReturnSchema,
@@ -25,7 +25,7 @@ import {
 } from './shop.swagger';
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
+import { SellerOriginGuard } from '../share/guards/seller-site-origin.guard';
 import { SetupShopUseCase } from './use-cases/setup-shop.useCase';
 
 @UseGuards(SellerOriginGuard)

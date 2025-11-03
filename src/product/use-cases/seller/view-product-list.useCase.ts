@@ -40,36 +40,6 @@ export class ViewProductListUseCase {
       viewProductDto.limit,
     );
 
-    // return {
-    //   ...productlist,
-    //   ...{
-    //     products: productlist.products
-    //       .sort(
-    //         (a, b) =>
-    //           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    //       )
-    //       .map(async (currentProduct) => {
-    //         let pro: Product = currentProduct;
-
-    //         // check if shipping id here. if not, set onShelf to falase
-    //         if (!currentProduct.shippingProfileId) {
-    //           const newProduct: Product = {
-    //             ...currentProduct,
-    //             ...{ onShelf: false },
-    //           };
-
-    //           pro = await this.productService.noCheckingUpdate(
-    //             currentProduct.id,
-    //             newProduct,
-    //           );
-    //         }
-
-    //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    //         const { sellerId, ...productData } = pro;
-    //         return productData;
-    //       }),
-    //   },
-    // };
     const products = await Promise.all(
       productlist.products
         .sort(

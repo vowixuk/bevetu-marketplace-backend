@@ -10,15 +10,15 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { IRequest } from '../middlewares/auth.middleware';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../../user/user.service';
 import { IJwtPayload } from './auth.service';
-import { SellerStripeAccountMappingService } from 'src/stripe/services/seller-account-mapping.service';
-import { User } from 'src/user/entities/user.entity';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { BuyerStripeCustomerAccountMapping } from 'src/stripe/entities/buyer-customer-account-mapping.entity';
-import { SellerStripeAccountMapping } from 'src/stripe/entities/seller-account-mapping.entity';
-import { Buyer } from 'src/buyer/entities/buyer.entity';
-import { BuyerUseCase } from 'src/buyer/use-cases/buyer.usecase';
+import { SellerStripeAccountMappingService } from '../../stripe/services/seller-account-mapping.service';
+import { User } from '../../user/entities/user.entity';
+import { CreateUserDto } from '../../user/dto/create-user.dto';
+import { BuyerStripeCustomerAccountMapping } from '../../stripe/entities/buyer-customer-account-mapping.entity';
+import { SellerStripeAccountMapping } from '../../stripe/entities/seller-account-mapping.entity';
+import { Buyer } from '../../buyer/entities/buyer.entity';
+import { BuyerUseCase } from '../../buyer/use-cases/buyer.usecase';
 
 @Injectable()
 export class AuthUseCase {

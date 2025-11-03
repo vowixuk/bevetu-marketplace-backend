@@ -1,4 +1,4 @@
-import { OptionalProperties } from 'src/share/types';
+import { OptionalProperties } from '../../share/types';
 import { EventRecordType, OrderEventRecord } from './event-record.entity';
 import { OrderItem } from './order-item.entity';
 

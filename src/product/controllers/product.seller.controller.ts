@@ -11,16 +11,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { IRequest } from 'src/auth/middlewares/auth.middleware';
+import type { IRequest } from '../../auth/middlewares/auth.middleware';
 
 import {
   CreateProductDto,
-  ProductIdParamDto,
   SetProductOnShelfDto,
   ShopIdParamDto,
   UpdateProductDto,
   ViewProductsDto,
-} from './dto';
+} from '../dto';
 
 import {
   CreateProductUseCase,
@@ -30,7 +29,7 @@ import {
   ResetProductOnShelfUseCase,
   SellerViewProductUseCase,
   DeleteProductUseCase,
-} from './use-cases/seller';
+} from '../use-cases/seller';
 
 import {
   CreateProductReturnSchema,
@@ -39,7 +38,7 @@ import {
   SetProductOnShelfReturnSchema,
   UpdateProductReturnSchema,
   ViewProductListReturnSchema,
-} from './product.type';
+} from '../product.type';
 
 import {
   ApiCreateProduct,
@@ -49,14 +48,14 @@ import {
   ApiSetProductOnShelf,
   ApiUpdateProduct,
   ApiViewProductList,
-} from './product.swagger';
-import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
-import { ProductIdShopIdParamDto } from './dto/product-id-shop-id-param.dto';
+} from '../product.swagger';
+import { SellerOriginGuard } from '../../share/guards/seller-site-origin.guard';
+import { ProductIdShopIdParamDto } from '../dto/product-id-shop-id-param.dto';
 
 @UseGuards(SellerOriginGuard)
-@ApiTags('Product')
-@Controller({ path: 'product', version: '1' })
-export class ProductController {
+@ApiTags('Product - seller')
+@Controller({ path: 'product/seller', version: '1' })
+export class ProductSellerController {
   constructor(
     private readonly createProductUseCase: CreateProductUseCase,
     private readonly setProductOnShelfUseCase: SetProductOnShelfUseCase,
@@ -67,7 +66,7 @@ export class ProductController {
     private readonly deleteProductUseCase: DeleteProductUseCase,
   ) {}
 
-  @Post('seller/shop/:shopId/create-product')
+  @Post('shop/:shopId/create-product')
   @ApiCreateProduct()
   async createProduct(
     @Req() req: IRequest,
@@ -86,7 +85,7 @@ export class ProductController {
     };
   }
 
-  @Patch('seller/shop/:shopId/set-product-on-shelf/:productId')
+  @Patch('shop/:shopId/set-product-on-shelf/:productId')
   @ApiSetProductOnShelf()
   async setProductOnShelf(
     @Req() req: IRequest,
@@ -104,7 +103,7 @@ export class ProductController {
     };
   }
 
-  @Patch('seller/shop/:shopId/update-product/:productId')
+  @Patch('shop/:shopId/update-product/:productId')
   @ApiUpdateProduct()
   async updateProduct(
     @Req() req: IRequest,
@@ -122,7 +121,7 @@ export class ProductController {
     };
   }
 
-  @Get('seller/shop/:shopId/view-product-list')
+  @Get('shop/:shopId/view-product-list')
   @ApiViewProductList()
   async viewProductList(
     @Req() req: IRequest,
@@ -136,7 +135,7 @@ export class ProductController {
     );
   }
 
-  @Post('seller/shop/:shopId/reset-product-on-shelf')
+  @Post('shop/:shopId/reset-product-on-shelf')
   @ApiResetProductOnShelf()
   async resetProductOnShelf(
     @Req() req: IRequest,
@@ -151,7 +150,7 @@ export class ProductController {
     };
   }
 
-  @Get('seller/shop/:shopId/view-product/')
+  @Get('shop/:shopId/view-product/')
   @ApiSellerViewProduct()
   async sellerViewProduct(
     @Req() req: IRequest,
@@ -168,7 +167,7 @@ export class ProductController {
     return safeProduct;
   }
 
-  @Delete('seller/shop/:shopId/delete-product/:productId')
+  @Delete('shop/:shopId/delete-product/:productId')
   @ApiDeleteProduct()
   async DeleteProductUseCase(
     @Req() req: IRequest,

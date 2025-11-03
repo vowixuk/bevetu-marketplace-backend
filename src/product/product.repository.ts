@@ -6,7 +6,11 @@ import {
   Product,
   Variants,
 } from './entities/product.entity';
-import { Product as PrismaProduct } from '@prisma/client';
+import {
+  Prisma,
+  Product as PrismaProduct,
+  SellerStatus as PrismaSellerStatus,
+} from '@prisma/client';
 
 @Injectable()
 export class ProductRepository {
@@ -159,6 +163,140 @@ export class ProductRepository {
     return mapPrismaProductToDomain(
       await this.prisma.product.delete({ where: { id } }),
     ) as Product;
+  }
+
+  /**
+   * Filters products based on multiple cross-model criteria.
+   *
+   * This method combines product-level filters with related entity validations
+   * (e.g., shop, seller, and user) to ensure that only valid, visible, and
+   * authorized products are retrieved.
+   *
+   * The filtering process consists of three main stages:
+   *
+   * 1️⃣ **Configuration-based validation** — Applies security and visibility rules.
+   *     Determines whether to include or exclude products based on:
+   *     - Product status (on shelf / approved)
+   *     - Seller status (active / suspended / etc.)
+   *     - Related entity states (deleted users or shops)
+   *
+   * 2️⃣ **Search-based filtering** — Applies optional filters for:
+   *     - Shop ID
+   *     - Category (array containment)
+   *     - Keyword search (product name, description, categories, or shop name)
+   *
+   * 3️⃣ **Query execution and mapping** — Executes the Prisma query with pagination
+   *     and sorting, then maps raw Prisma results back to domain entities.
+   *
+   * @param shopId        Optional ID of the shop to filter by.
+   * @param category      Optional category string to filter products by.
+   * @param searchWords   Optional keyword(s) for text-based search.
+   * @param page          Pagination and sorting configuration.
+   * @param config        Security and visibility configuration flags.
+   *
+   * @returns A list of domain-level `Product` entities matching the provided filters.
+   */
+  async filter({
+    shopId,
+    productId,
+    category,
+    searchWords,
+    page = {
+      skip: 0,
+      take: 10,
+      orderBy: 'desc' as 'desc' | 'asc',
+    },
+    config = {
+      onShelf: true,
+      isApproved: true,
+      sellerStatus: 'ACTIVE' as const,
+      shopIsDeleted: false,
+      userIsDeleted: false,
+    },
+  }: {
+    shopId?: string;
+    productId?: string;
+    category?: string;
+    searchWords?: string;
+    page?: {
+      skip?: number;
+      take?: number;
+      orderBy?: 'desc' | 'asc';
+    };
+    config?: {
+      onShelf?: boolean;
+      isApproved?: boolean;
+      sellerStatus?: 'ACTIVE' | 'PENDING' | 'DELETED' | 'SUSPENDED';
+      shopIsDeleted?: boolean;
+      userIsDeleted?: boolean;
+    };
+  }): Promise<Product[]> {
+    /* Step 1 – Apply configuration-based filters.
+     * Enforces security and visibility constraints before applying general filters.
+     * Determines inclusion or exclusion of products based on approval state,
+     * shelf status, seller activity, and deletion state of related entities.
+     */
+    const where: Prisma.ProductWhereInput = {
+      onShelf: config.onShelf,
+      isApproved: config.isApproved,
+
+      shop: {
+        ...(config.shopIsDeleted ? { deletedAt: { not: null } } : undefined),
+        seller: {
+          status: config.sellerStatus as PrismaSellerStatus,
+          user: {
+            ...(config.userIsDeleted
+              ? { deletedAt: { not: null } }
+              : undefined),
+          },
+        },
+      },
+    };
+
+    /* Step 2 – Apply search-based filters.
+     * Adds optional filtering by shop, category, and keyword.
+     * Supports fuzzy matching against product and shop names, as well as
+     * product descriptions and categories.
+     */
+
+    if (productId) {
+      where.id = productId;
+    } else {
+      if (shopId) {
+        where.shopId = shopId;
+      }
+
+      if (category) {
+        where.categories = { array_contains: [category] };
+      }
+
+      if (searchWords?.trim()) {
+        where.OR = [
+          { name: { contains: searchWords, mode: 'insensitive' } },
+          { description: { contains: searchWords, mode: 'insensitive' } },
+          { categories: { array_contains: [searchWords] } },
+          {
+            shop: {
+              name: { contains: searchWords, mode: 'insensitive' },
+            },
+          },
+        ];
+      }
+    }
+
+    /* Step 3 – Execute query and transform results.
+     * Fetches data from Prisma with pagination and sorting, then maps
+     * the raw records back into domain-level `Product` entities.
+     */
+    const products = await this.prisma.product.findMany({
+      where,
+      skip: page.skip,
+      take: page.take,
+      orderBy: { updatedAt: page.orderBy },
+    });
+
+    // Step 4 – Transform Prisma results into domain entities.
+    return products.map(mapPrismaProductToDomain) as Product[];
   }
 }
 

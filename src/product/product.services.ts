@@ -7,6 +7,7 @@ import { ProductRepository } from './product.repository';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ViewProductsDto } from './dto';
 
 @Injectable()
 export class ProductService {
@@ -364,5 +365,100 @@ export class ProductService {
         updatedAt: new Date(),
       }),
     );
+  }
+
+  /**
+   * Filters products for the buyer-side view based on optional criteria and pagination.
+   *
+   * This function constructs a query configuration from the provided DTO,
+   * including product ID, shop ID, category, search keywords, and pagination options.
+   * It then delegates the filtering to the product repository.
+   *
+   * The function handles:
+   * - Pagination (`limit` and `page`), with default values if unspecified.
+   * - Sorting order based on `latest` flag (`desc` by default, `asc` if false).
+   * - Optional filters: `productId`, `shopId`, `category`, `search`.
+   *
+   * ⚠️ **Security Warning**:
+   *   All products returned by this function are validated to ensure they are
+   *   safe to show to buyers. It enforces checks on related entities, including
+   *   seller status, user status, and shop deletion state.
+   *   **Do not fetch buyer-visible products using other queries**, as they may
+   *   return products from invalid or unauthorized sellers, users, or shops.
+   *
+   * @param dto - Data transfer object containing filtering and pagination options.
+   * @returns A list of products matching the provided criteria without sensitive data like:
+   *         'reservedStock' | 'isApproved' | 'onShelf' | 'sellerId'
+   */
+  async filterProductsForBuyerSide(dto: ViewProductsDto) {
+    let skip = 0;
+    let page = 1;
+    let limit = 10;
+    let orderBy: 'desc' | 'asc' | undefined = 'desc';
+
+    if (dto.limit) {
+      limit = dto.limit;
+    }
+
+    if (dto.page) {
+      page = dto.page;
+      skip = (page - 1) * limit;
+    }
+
+    if (dto.latest === false) {
+      orderBy = 'asc';
+    }
+
+    const _page = {
+      skip,
+      take: limit,
+      orderBy,
+    };
+
+    const setting = {
+      ...(dto.productId ? { productId: dto.productId } : undefined),
+      ...(dto.shopId ? { shopId: dto.shopId } : undefined),
+      ...(dto.category ? { category: dto.category } : undefined),
+      ...(dto.search?.trim() ? { searchWords: dto.search.trim() } : undefined),
+      page: _page,
+    };
+
+    const _products = await this.productRepository.filter(setting);
+
+    const publicProducts: Omit<
+      Product,
+      'reservedStock' | 'isApproved' | 'onShelf' | 'sellerId'
+    >[] = _products.map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ({ reservedStock, isApproved, onShelf, sellerId, ...publicData }) =>
+        publicData,
+    );
+
+    const totalRecords = publicProducts.length;
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    const start = skip + 1;
+    const end = Math.min(skip + limit, totalRecords);
+
+    const baseApiEndpoint = `${process.env.BASE_URL}/v1/products`;
+    const next =
+      end < totalRecords
+        ? `${baseApiEndpoint}?page=${page + 1}&limit=${limit}`
+        : null;
+
+    const prev =
+      page > 1 ? `${baseApiEndpoint}?page=${page - 1}&limit=${limit}` : null;
+
+    return {
+      products: publicProducts,
+      currentPage: page,
+      limit,
+      totalPages,
+      totalRecords,
+      start,
+      end,
+      next,
+      prev,
+    };
   }
 }

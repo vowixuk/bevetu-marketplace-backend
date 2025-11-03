@@ -23,7 +23,7 @@ import { PreviewProrationAmountDto } from '../../stripe/dto/preview-proation-amo
 import {
   SellerSubscriptionMapping,
   StripeSubscriptionItems,
-} from 'src/stripe/entities/seller-subscription-mapping.entity';
+} from '../../stripe/entities/seller-subscription-mapping.entity';
 import Stripe from 'stripe';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 

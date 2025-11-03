@@ -4,7 +4,7 @@ import {
   Injectable,
   ForbiddenException,
 } from '@nestjs/common';
-import type { IRequest } from 'src/auth/middlewares/auth.middleware';
+import type { IRequest } from '../../auth/middlewares/auth.middleware';
 
 @Injectable()
 export class SellerOriginGuard implements CanActivate {

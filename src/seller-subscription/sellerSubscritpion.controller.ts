@@ -38,7 +38,7 @@ import {
   DowngradeListingSubscriptionDto,
   CancelListingSubscriptionDto,
 } from './dto';
-import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
+import { SellerOriginGuard } from '../share/guards/seller-site-origin.guard';
 
 @UseGuards(SellerOriginGuard)
 @ApiTags('Seller Subscription')

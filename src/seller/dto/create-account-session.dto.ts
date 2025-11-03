@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsString, Matches } from 'class-validator';
-import stripeConnectUiSessionKeys from 'src/stripe/entities/stripe-connect-ui-session-keys.vo';
+import stripeConnectUiSessionKeys from '../../stripe/entities/stripe-connect-ui-session-keys.vo';
 
 export type StripeSessionKeys = (typeof stripeConnectUiSessionKeys)[number];
 

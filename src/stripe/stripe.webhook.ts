@@ -23,7 +23,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { ApiHealthCheck, ApiWebhookListener } from './stripe.swagger';
 import type { RawBodyRequest } from '@nestjs/common';
-import { CompleteSellerListingSubscriptionEnrollmentDto } from 'src/seller-subscription/dto';
+import { CompleteSellerListingSubscriptionEnrollmentDto } from '../seller-subscription/dto';
 
 @ApiTags('Stripe Webhook (For Stripe use only)')
 @Controller({ path: 'stripe-webhook', version: '1' })

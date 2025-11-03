@@ -26,7 +26,7 @@ import {
 
 import { CreateSellerConnectAccountDto } from './dto/create-seller-connected-account.dto';
 import { CreateAccountSessionDto } from './dto/create-account-session.dto';
-import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
+import { SellerOriginGuard } from '../share/guards/seller-site-origin.guard';
 
 @UseGuards(SellerOriginGuard)
 @ApiTags('Seller')

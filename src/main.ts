@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import * as express from 'express';
+
 import * as bodyParser from 'body-parser';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 async function bootstrap() {

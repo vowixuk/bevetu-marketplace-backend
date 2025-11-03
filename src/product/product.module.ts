@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { ProductController } from './product.controller';
+import { ProductSellerController } from './controllers/product.seller.controller';
 import { ProductService } from './product.services';
 import { ProductRepository } from './product.repository';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -17,10 +17,11 @@ import {
   SellerViewProductUseCase,
   DeleteProductUseCase,
 } from './use-cases/seller';
+import { ProductController } from './controllers/product.controller';
 
 @Module({
   imports: [EventEmitterModule, ShopModule, SubscriptionModule, StripeModule],
-  controllers: [ProductController],
+  controllers: [ProductSellerController, ProductController],
   providers: [
     ProductService,
     ProductRepository,

@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 /**
  *  To run this test solely:
  *
@@ -74,7 +72,7 @@ describe('ProductService', () => {
   let seller_2_Subscription: SellerSubscription;
   let seller_2_currentProduct: IProduct;
 
-  // Users who is only user
+  // Users who is only buyer
   let testBuyerUser: User;
   let buyerStripeCustomerId: string | null;
 
@@ -788,7 +786,6 @@ describe('ProductService', () => {
 
     expect(seller_2_products).toHaveLength(15)
 
-
     try {
 
       await services.viewProductListUseCase.execute(
@@ -815,20 +812,21 @@ describe('ProductService', () => {
       console.log(productList1.totalRecords, '<<< productList1 total');
    
 
-
       const productList2 = await services.productService.findAllOnShelfByShopId(
         seller_2_shop.id,
       );
 
+      console.log(productList2.totalRecords, '<<< productList2 total');
+
       const products =
         await services.productService.findAllOnShelfFromMultipleShops(1, 30);
 
+      console.log(products, '<<<  total product');
 
       expect(products.totalRecords).toBe(
         productList2.totalRecords + productList1.totalRecords,
       );
     });
-   
   })
   
 });

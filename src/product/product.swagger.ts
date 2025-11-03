@@ -17,9 +17,11 @@ import {
 import {
   CreateProductReturnSchema,
   ResetProductOnShelfReturnSchema,
+  SafeProductForPublic,
   SellerViewProductReturnSchema,
   SetProductOnShelfReturnSchema,
   UpdateProductReturnSchema,
+  ViewFilteredProductReturnSchema,
   ViewProductListReturnSchema,
 } from './product.type';
 
@@ -57,8 +59,50 @@ const safeProductExample: SellerViewProductReturnSchema = {
   shippingProfileId: 'ship_pro_123',
 };
 
+const safeProducForPublicExample: SafeProductForPublic = {
+  id: 'prod_123',
+  shopId: 'shop_456',
+  name: 'Premium Dog Food',
+  description: 'High-quality dog food for adult dogs',
+  price: 29.99,
+  tags: ['dog', 'food', 'premium'],
+  slug: 'premium-dog-food',
+  imageUrls: [
+    'https://example.com/image1.png',
+    'https://example.com/image2.png',
+  ],
+  stock: 100,
+  createdAt: new Date('2025-08-27T00:00:00.000Z'),
+  updatedAt: new Date('2025-08-27T00:00:00.000Z'),
+  variants: [
+    { id: 'var_1', name: 'Small Pack', additionalPrice: 0, stock: 50 },
+    { id: 'var_2', name: 'Large Pack', additionalPrice: 10, stock: 50 },
+  ],
+  discount: [
+    {
+      price: 5,
+      type: 'fixed',
+      date: { start: new Date('2025-08-01'), end: new Date('2025-08-15') },
+    },
+  ],
+  categories: { pet: 'dog', product: 'food' },
+  shippingProfileId: 'ship_pro_123',
+};
+
 const productListExample: ViewProductListReturnSchema = {
   products: [safeProductExample],
+  currentPage: 1,
+  limit: 10,
+  totalRecords: 1,
+  totalPages: 1,
+  start: 1,
+  end: 1,
+  next: null,
+  prev: null,
+};
+
+const productListForPublicExample: ViewFilteredProductReturnSchema = {
+  products: [safeProducForPublicExample],
   currentPage: 1,
   limit: 10,
   totalRecords: 1,
@@ -195,6 +239,22 @@ export function ApiDeleteProduct() {
       status: 200,
       description: 'Product deleted successfully.',
       schema: { example: { message: 'deleted' } },
+    }),
+  );
+}
+
+export function ApiViewFilteredProducts() {
+  return applyDecorators(
+    ApiOperation({
+      summary: '',
+      description: '',
+      tags: ['Product'],
+    }),
+
+    ApiResponse({
+      status: 200,
+      description: 'Product retrieved successfully.',
+      schema: { example: productListForPublicExample },
     }),
   );
 }

@@ -7,7 +7,7 @@ import { CartRepository } from '../repositories/cart.repository';
 import { CartItemService } from './cart-item.service';
 import { Cart } from '../entities/cart.entity';
 import { CartItem } from '../entities/cart-item.entity';
-import { ProductService } from 'src/product/product.services';
+import { ProductService } from '../../product/product.services';
 
 @Injectable()
 export class CartService {

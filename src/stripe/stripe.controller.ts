@@ -9,8 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { StripeService } from './services/stripe.service';
-import type { IRequest } from 'src/auth/middlewares/auth.middleware';
-import { TestEnvironmentGuard } from 'src/share/guards/testing-environmet.guard';
+import type { IRequest } from '../auth/middlewares/auth.middleware';
+import { TestEnvironmentGuard } from '../share/guards/testing-environmet.guard';
 import {
   DeleteStripeCustomerReturnSchema,
   DeleteStripeSubscriptionReturnSchema,

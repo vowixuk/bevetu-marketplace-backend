@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SellerShippingProfileService } from './services/seller-shipping-profile.service';
-import type { IRequest } from 'src/auth/middlewares/auth.middleware';
+import type { IRequest } from '../auth/middlewares/auth.middleware';
 import { ApiTags } from '@nestjs/swagger';
 import {
   UpdateSellerShippingProfileDto,
@@ -31,7 +31,7 @@ import {
   ApiRemoveShippingProfile,
   ApiUpdateShippingProfile,
 } from './seller-shipping.swagger';
-import { SellerOriginGuard } from 'src/share/guards/seller-site-origin.guard';
+import { SellerOriginGuard } from '../share/guards/seller-site-origin.guard';
 
 @UseGuards(SellerOriginGuard)
 @ApiTags('Seller Shipping')
