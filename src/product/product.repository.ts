@@ -216,7 +216,10 @@ export class ProductRepository {
   }: {
     shopId?: string;
     productId?: string;
-    category?: string;
+    category?: {
+      pet?: string;
+      product?: string;
+    };
     searchWords?: string;
     page?: {
       skip?: number;
@@ -230,7 +233,7 @@ export class ProductRepository {
       shopIsDeleted?: boolean;
       userIsDeleted?: boolean;
     };
-  }): Promise<Product[]> {
+  }): Promise<{ products: Product[]; total: number }> {
     /* Step 1 – Apply configuration-based filters.
      * Enforces security and visibility constraints before applying general filters.
      * Determines inclusion or exclusion of products based on approval state,
@@ -267,7 +270,14 @@ export class ProductRepository {
       }
 
       if (category) {
-        where.categories = { array_contains: [category] };
+        where.categories = {
+          ...(category.pet
+            ? { path: ['pet'], equals: category.pet }
+            : undefined),
+          ...(category.product
+            ? { path: ['product'], equals: category.product }
+            : undefined),
+        };
       }
 
       if (searchWords?.trim()) {
@@ -284,6 +294,10 @@ export class ProductRepository {
       }
     }
 
+    const total = await this.prisma.product.count({
+      where,
+    });
+
     /* Step 3 – Execute query and transform results.
      * Fetches data from Prisma with pagination and sorting, then maps
      * the raw records back into domain-level `Product` entities.
@@ -296,7 +310,10 @@ export class ProductRepository {
     });
 
     // Step 4 – Transform Prisma results into domain entities.
-    return products.map(mapPrismaProductToDomain) as Product[];
+    return {
+      products: products.map(mapPrismaProductToDomain) as Product[],
+      total,
+    };
   }
 }
 

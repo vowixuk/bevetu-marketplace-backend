@@ -43,7 +43,6 @@ export class StripeWebhook {
   @Post()
   @ApiWebhookListener()
   async webhookListener(@Req() req: RawBodyRequest<Request>) {
-
     if (!req.rawBody) {
       throw new BadRequestException(
         'Missing rawBody in request. Stripe webhook verification failed.',

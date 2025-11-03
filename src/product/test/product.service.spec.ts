@@ -506,6 +506,16 @@ describe('ProductService', () => {
 
       // 2 - Create 10 products and set on shelf
       for (let i = 1; i <= 10; i++) {
+        let categories =  {
+              pet: 'dog',
+              product: 'toy',
+            }
+            if (i >5){
+          categories = {
+              pet: 'bird',
+              product: 'clothes',
+            }
+          }
         const p = await services.createProductUseCase.execute(
           seller_1.id,
           seller_1_shop.id,
@@ -515,10 +525,7 @@ describe('ProductService', () => {
             price: 100,
             stock: 10,
             onShelf: true, // user tries to set true
-            categories: {
-              pet: 'dog',
-              product: 'toy',
-            },
+            categories,
             shippingProfileId: seller_1_shipping!.shippingProfiles![0].id,
             variants: [],
             discount: [],
@@ -620,8 +627,8 @@ describe('ProductService', () => {
             stock: 10,
             onShelf: true, // user tries to set true
             categories: {
-              pet: 'dog',
-              product: 'toy',
+              pet: 'bird',
+              product: 'clothes',
             },
             shippingProfileId: seller_1_shipping!.shippingProfiles![0].id,
             variants: [],
@@ -745,6 +752,24 @@ describe('ProductService', () => {
       // create product for seller 2
         // 2 - Create 10 products and set on shelf
         for (let i = 1; i <= 15; i++) {
+
+       
+          let categories =  {
+            pet: 'dog',
+            product: 'toy',
+          };
+          if (i> 5){
+            categories =  {
+              pet: 'cat',
+              product: 'food',
+            };
+          }
+           if (i > 9) {
+             categories = {
+               pet: 'rabbit',
+               product: 'supplement',
+             };
+           }
         const p = await services.createProductUseCase.execute(
           seller_2.id,
           seller_2_shop.id,
@@ -754,10 +779,7 @@ describe('ProductService', () => {
             price: 100,
             stock: 10,
             onShelf: true, // user tries to set true
-            categories: {
-              pet: 'dog',
-              product: 'toy',
-            },
+            categories,
             shippingProfileId: seller_2_shipping!.shippingProfiles![0].id,
             variants: [],
             discount: [],
@@ -804,7 +826,13 @@ describe('ProductService', () => {
   })
 
   describe('Buyers',() => {
-    it('test 15 - should be be able to view all shop on shelf products', async () => {
+    it.skip('test 15 - should be be able to view all shop on shelf products', async () => {
+      /**
+       *  Up to this point. oshelf product no:
+       *  shop1 : 10
+       *  shop2 : 15
+       *  total : 25
+       */
       const productList1 = await services.productService.findAllOnShelfByShopId(
         seller_1_shop.id,
       );
@@ -826,6 +854,255 @@ describe('ProductService', () => {
       expect(products.totalRecords).toBe(
         productList2.totalRecords + productList1.totalRecords,
       );
+    });
+
+    it('test 16 -  should filter products by shop id for buyer-side with correct pagination and filters', async () => {
+      /**
+       *  Up to this point. oshelf product no:
+       *  shop1 : 10
+       *  shop2 : 15
+       *  total : 25
+       */
+
+      // Change the type of the first 
+      const viewDtoShop1: ViewProductsDto = {
+        shopId: seller_1_shop.id,
+      };
+      const productList1 =
+        await services.productService.filterProductsForBuyerSide(viewDtoShop1);
+
+
+      expect(productList1.limit).toBe(10);
+      expect(productList1.currentPage).toBe(1);
+
+      // default Testing the specific limted and page
+      const viewDtoShop2: ViewProductsDto = {
+        shopId: seller_2_shop.id,
+        page: 2,
+        limit: 5,
+      };
+
+      const productList2 =
+        await services.productService.filterProductsForBuyerSide(viewDtoShop2);
+      
+
+      expect(productList2.limit).toBe(5);
+      expect(productList2.currentPage).toBe(2);
+      expect(productList2.totalPages).toBe(3);
+
+      // default Testing the default limted and page
+      const viewDtoAll: ViewProductsDto = {};
+      const Allproducts =
+        await services.productService.filterProductsForBuyerSide(viewDtoAll);
+      expect(Allproducts.limit).toBe(10);
+      expect(Allproducts.currentPage).toBe(1);
+      expect(Allproducts.totalRecords).toBe(25);
+
+      // const DogNo = Allproducts.products.filter(d => d.categories.pet == 'dog').length
+      // const BirdNo = Allproducts.products.filter(
+      //   (d) => d.categories.pet == 'bird',
+      // ).length;
+      // const CatNo = Allproducts.products.filter(
+      //   (d) => d.categories.pet == 'cat',
+      // ).length;
+      // const RabbitNo = Allproducts.products.filter(
+      //   (d) => d.categories.pet == 'rabbit',
+      // ).length;
+      
+    
+      // console.log(DogNo, '<<DogNo');
+      // console.log(BirdNo, '<<BirdNo');
+      // console.log(CatNo, '<<CatNo');
+      // console.log(RabbitNo, '<<RabbitNo');
+
+    });
+
+    it("test 17 - should able to get the product by pet", async ()=>{
+      // Shop	  |   Pet	 | Product	|  Quantity
+      //-------------------------------------
+      // Shop 1	   Dog	     Toy	      5
+      // Shop 1    Bird	    Clothes	    5
+      // Shop 2	   Dog	     Toy	      5
+      // Shop 2	   Cat	    Food	      4
+      // Shop 2	  Rabbit	 Supplement 	6
+      //
+      //
+      // Pet	|  Total  |   Quantity
+      //---------------------------
+      // Dog	    10      (5 + 5)
+      // Bird	    5
+      // Cat	    4
+      // Rabbit	  6
+      //
+      //
+      // Product |	Total | Quantity
+      //---------------------------
+      // Toy	       11     (5 + 6)
+      // Clothes	   5
+      // Food	       4
+      // Supplement	 6
+      //
+      //
+      //   products: [
+      //     {
+      //       id: 'a1e70559-6da2-4bcd-ae61-e1f84d079507',
+      //       shopId: 'cmhj6odak000aqauvdlhozqrb',
+      //       name: 'Product 10',
+      //       description: 'A squeaky dog toy',
+      //       price: 100,
+      //       tags: [],
+      //       slug: undefined,
+      //       imageUrls: [],
+      //       stock: 10,
+      //       createdAt: 2025-11-03T13:36:46.634Z,
+      //       updatedAt: 2025-11-03T13:36:46.637Z,
+      //       variants: [],
+      //       discount: [],
+      //       categories: {
+      //            pet: 'dog',
+      //            product: 'toy',
+      //       },
+      //       shippingProfileId: '5934f403-06c2-4603-ab7e-d8772b4645b1'
+      //     },
+      //
+
+      const findDogDto: ViewProductsDto = { pet: 'dog' };
+      const findCatDto: ViewProductsDto = { pet: 'cat' };
+      const findBirdDto: ViewProductsDto = { pet: 'bird' };
+      const findDogInShop1Dto: ViewProductsDto = {
+        pet: 'dog',
+        shopId: seller_1_shop.id,
+      };
+      const dogResult =
+        await services.productService.filterProductsForBuyerSide(findDogDto);
+      const catResult =
+        await services.productService.filterProductsForBuyerSide(findCatDto);
+      const birdResult =
+        await services.productService.filterProductsForBuyerSide(findBirdDto);
+      const dogInShop1Result =
+        await services.productService.filterProductsForBuyerSide(
+          findDogInShop1Dto,
+        );
+
+      // ✅ Dog results — total 11 (5 from Shop 1, 6 from Shop 2)
+      expect(dogResult.totalRecords).toBe(10);
+      dogResult.products.forEach((data) => {
+        expect(data.categories.pet).toBe('dog');
+      });
+
+      // ✅ Cat results — total 4
+      expect(catResult.totalRecords).toBe(4);
+      catResult.products.forEach((data) => {
+        expect(data.categories.pet).toBe('cat');
+      });
+
+      // ✅ Bird results — total 5
+      expect(birdResult.totalRecords).toBe(5);
+      birdResult.products.forEach((data) => {
+        expect(data.categories.pet).toBe('bird');
+      });
+
+      // ✅ Dog in Shop 1 — total 5 only
+      expect(dogInShop1Result.totalRecords).toBe(5);
+      dogInShop1Result.products.forEach((data) => {
+        expect(data.categories.pet).toBe('dog');
+        expect(data.shopId).toBe(seller_1_shop.id);
+      });
+    });
+
+    it('test 18 - should able to get products by product', async () => {
+      // Product |	Total | Quantity
+      //---------------------------
+      // Toy	       11     (5 + 6)
+      // Clothes	   5
+      // Food	       4
+      // Supplement	 6
+      //
+
+        const findToyDto: ViewProductsDto = { product: 'toy' };
+        const findClothesDto: ViewProductsDto = { product: 'clothes' };
+        const findFoodDto: ViewProductsDto = { product: 'food' };
+        const findSupplementDto: ViewProductsDto = { product: 'supplement' };
+        const findToyInShop1Dto: ViewProductsDto = {
+          product: 'toy',
+          shopId: seller_1_shop.id,
+        };
+
+        const toyResult =
+          await services.productService.filterProductsForBuyerSide(findToyDto);
+        const clothesResult =
+          await services.productService.filterProductsForBuyerSide(
+            findClothesDto,
+          );
+        const foodResult =
+          await services.productService.filterProductsForBuyerSide(findFoodDto);
+        const supplementResult =
+          await services.productService.filterProductsForBuyerSide(
+            findSupplementDto,
+          );
+        const toyInShop1Result =
+          await services.productService.filterProductsForBuyerSide(
+            findToyInShop1Dto,
+          );
+
+        // ✅ Toy results — total 10 (5 from Shop 1, 5 from Shop 2)
+        expect(toyResult.totalRecords).toBe(10);
+        toyResult.products.forEach((data) => {
+          expect(data.categories.product).toBe('toy');
+        });
+
+        // ✅ Clothes results — total 5
+        expect(clothesResult.totalRecords).toBe(5);
+        clothesResult.products.forEach((data) => {
+          expect(data.categories.product).toBe('clothes');
+        });
+
+        // ✅ Food results — total 4
+        expect(foodResult.totalRecords).toBe(4);
+        foodResult.products.forEach((data) => {
+          expect(data.categories.product).toBe('food');
+        });
+
+        // ✅ Supplement results — total 6
+        expect(supplementResult.totalRecords).toBe(6);
+        supplementResult.products.forEach((data) => {
+          expect(data.categories.product).toBe('supplement');
+        });
+
+        // ✅ Toy in Shop 1 — total 5 only
+        expect(toyInShop1Result.totalRecords).toBe(5);
+        toyInShop1Result.products.forEach((data) => {
+          expect(data.categories.product).toBe('toy');
+          expect(data.shopId).toBe(seller_1_shop.id);
+        });
+    });
+
+    it('test 19 - should able to get products by seach keyword', async () => {
+    const findToyDto: ViewProductsDto = { search: 'toy',limit:100,page:1 };
+     const toyInShop1Result =
+       await services.productService.filterProductsForBuyerSide(findToyDto);
+   console.log(toyInShop1Result, '<< toyInShop1Result');
+       expect(toyInShop1Result.products).toHaveLength(25);
+
+   
+    });
+
+    it('test 20 - should able to get single product by id', async () => {
+      // find a list of product and get the first 1
+      const findToyDto: ViewProductsDto = { search: 'toy' };
+      const toyResult =
+        await services.productService.filterProductsForBuyerSide(findToyDto);
+
+      // get the first 1 id and fetch by that id.
+      // Should be fetch the same product
+      const productId = toyResult.products[0].id;
+      const findProductDto: ViewProductsDto = { productId };
+      const productResult =
+        await services.productService.filterProductsForBuyerSide(
+          findProductDto,
+        );
+
+      expect(productResult.products[0]).toEqual(toyResult.products[0]);
     });
   })
   

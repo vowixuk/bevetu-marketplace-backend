@@ -415,27 +415,35 @@ export class ProductService {
       orderBy,
     };
 
+    const category: {
+      pet: string | undefined;
+      product: string | undefined;
+    } = {
+      pet: dto.pet,
+      product: dto.product,
+    };
+
     const setting = {
       ...(dto.productId ? { productId: dto.productId } : undefined),
       ...(dto.shopId ? { shopId: dto.shopId } : undefined),
-      ...(dto.category ? { category: dto.category } : undefined),
+      ...(dto.pet || dto.product ? { category } : undefined),
       ...(dto.search?.trim() ? { searchWords: dto.search.trim() } : undefined),
       page: _page,
     };
 
-    const _products = await this.productRepository.filter(setting);
+    const { products, total } = await this.productRepository.filter(setting);
 
     const publicProducts: Omit<
       Product,
       'reservedStock' | 'isApproved' | 'onShelf' | 'sellerId'
-    >[] = _products.map(
+    >[] = products.map(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ reservedStock, isApproved, onShelf, sellerId, ...publicData }) =>
         publicData,
     );
 
-    const totalRecords = publicProducts.length;
-    const totalPages = Math.ceil(totalRecords / limit);
+    const totalRecords = total;
+    const totalPages = Math.ceil(total / limit);
 
     const start = skip + 1;
     const end = Math.min(skip + limit, totalRecords);

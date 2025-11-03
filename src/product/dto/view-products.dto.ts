@@ -11,6 +11,24 @@ import { Type } from 'class-transformer';
 
 export class ViewProductsDto {
   @ApiProperty({
+    description: 'species type',
+    required: false,
+    example: 'dog',
+  })
+  @IsOptional()
+  @IsString()
+  pet?: string;
+
+  @ApiProperty({
+    description: 'product type',
+    required: false,
+    example: 'toy',
+  })
+  @IsOptional()
+  @IsString()
+  product?: string;
+
+  @ApiProperty({
     description: 'Page number for pagination',
     required: false,
     example: 1,
