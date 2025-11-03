@@ -10,7 +10,7 @@ import { ApiViewFilteredProducts } from '../product.swagger';
 import { ProductService } from '../product.services';
 
 @ApiTags('Product')
-@Controller({ path: 'product', version: '1' })
+@Controller({ path: 'products', version: '1' })
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
