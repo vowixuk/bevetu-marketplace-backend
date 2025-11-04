@@ -1,56 +1,66 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CartItemRepository } from '../repositories/cart-item.repository';
 import { CartItem } from '../entities/cart-item.entity';
+import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
+import { CreateCartItemDto } from '../dto/create-cart-item.dto';
 
 @Injectable()
 export class CartItemService {
   constructor(private readonly cartItemRepository: CartItemRepository) {}
 
+  async findByCartIdIfOwned(
+    buyerId: string,
+    cartId: string,
+  ): Promise<CartItem[]> {
+    return await this.cartItemRepository.findByCartIdIfOwned(buyerId, cartId);
+  }
+
+  async findOneIfOwned(
+    buyerId: string,
+    cartItemId: string,
+  ): Promise<CartItem | null> {
+    return await this.cartItemRepository.findOneIfOwned(buyerId, cartItemId);
+  }
+
+  async updateIfOwned(
+    buyerId: string,
+    cartItemId: string,
+    dto: UpdateCartItemDto,
+  ): Promise<CartItem | null> {
+    const item = await this.findOneIfOwned(buyerId, cartItemId);
+    if (item) {
+      const cartItem = new CartItem({
+        ...item,
+        ...dto,
+      });
+      return await this.cartItemRepository.updateIfOwned(buyerId, cartItem);
+    }
+    return null;
+  }
+
   /**
    * Create a new cart item
+   * Make sure the cart belongs to this user before create cart item!
    */
-  async create(cartId: string, item: Omit<CartItem, 'id'>): Promise<CartItem> {
+  async createIfOwned(
+    buyerId: string,
+    dto: CreateCartItemDto,
+  ): Promise<CartItem> {
     const cartItem = new CartItem({
-      ...item,
-      id: '', // Let Prisma generate UUID
-      cartId,
+      id: '',
+      ...dto,
     });
-
-    return this.cartItemRepository.createItem(cartItem);
-  }
-
-  /**
-   * Get all items in a cart
-   */
-  async findByCartId(cartId: string): Promise<CartItem[]> {
-    return this.cartItemRepository.findItemsByCartId(cartId);
-  }
-
-  /**
-   * Update a cart item
-   */
-  async update(item: CartItem): Promise<CartItem> {
-    const existingItem = await this.cartItemRepository.findItemsByCartId(
-      item.cartId,
-    );
-    const foundItem = existingItem.find((i) => i.id === item.id);
-
-    if (!foundItem) throw new NotFoundException('Cart item not found');
-
-    // optionally merge changes if needed
-    return this.cartItemRepository.updateItem(item);
+    return this.cartItemRepository.createIfOwned(buyerId, cartItem);
   }
 
   /**
    * Remove a cart item
    */
-  async remove(id: string, cartId: string): Promise<CartItem> {
-    const existingItem =
-      await this.cartItemRepository.findItemsByCartId(cartId);
-    const foundItem = existingItem.find((i) => i.id === id);
-
-    if (!foundItem) throw new NotFoundException('Cart item not found');
-
-    return this.cartItemRepository.removeItem(id);
+  async removeIfOwned(
+    buyerId: string,
+    cartId: string,
+    itemId: string,
+  ): Promise<CartItem> {
+    return this.cartItemRepository.removeIfOwned(buyerId, cartId, itemId);
   }
 }

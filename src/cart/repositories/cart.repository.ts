@@ -11,7 +11,7 @@ export class CartRepository {
     return mapPrismaCartToDomain(
       await this.prisma.cart.create({
         data: {
-          userId: cart.userId,
+          buyerId: cart.buyerId,
           isCheckout: cart.isCheckout ?? false,
           orderId: cart.orderId ?? null,
           createdAt: cart.createdAt ?? new Date(),
@@ -30,18 +30,31 @@ export class CartRepository {
     );
   }
 
-  async findManyByUserId(userId: string): Promise<Cart[]> {
-    const carts = await this.prisma.cart.findMany({
-      where: { userId },
-      include: { items: true },
-    });
-    return carts.map((cart) => mapPrismaCartToDomain(cart)) as Cart[];
+  async findOneIfOwned(buyerId: string, cartId: string): Promise<Cart | null> {
+    return mapPrismaCartToDomain(
+      await this.prisma.cart.findUnique({
+        where: { id: cartId, buyerId },
+        include: { items: true },
+      }),
+    );
   }
 
-  async findByUserId(userId: string): Promise<Cart[]> {
+  async findUncheckoutOneByUserId(buyerId: string): Promise<Cart> {
+    return mapPrismaCartToDomain(
+      await this.prisma.cart.findFirst({
+        where: {
+          buyerId,
+          isCheckout: false,
+        },
+        include: { items: true },
+      }),
+    ) as Cart;
+  }
+
+  async findByBuyerId(buyerId: string): Promise<Cart[]> {
     return (
       await this.prisma.cart.findMany({
-        where: { userId },
+        where: { buyerId },
         include: { items: true },
       })
     ).map(mapPrismaCartToDomain) as Cart[];
@@ -60,15 +73,6 @@ export class CartRepository {
       }),
     ) as Cart;
   }
-
-  async remove(id: string): Promise<Cart> {
-    return mapPrismaCartToDomain(
-      await this.prisma.cart.delete({
-        where: { id },
-        include: { items: true },
-      }),
-    ) as Cart;
-  }
 }
 
 export function mapPrismaCartToDomain(
@@ -78,11 +82,11 @@ export function mapPrismaCartToDomain(
 
   return new Cart({
     id: prismaCart.id,
-    userId: prismaCart.userId,
+    buyerId: prismaCart.buyerId as string,
     isCheckout: prismaCart.isCheckout,
     orderId: prismaCart.orderId ?? undefined,
     createdAt: prismaCart.createdAt,
     updatedAt: prismaCart.updatedAt ?? undefined,
-    items: prismaCart.items as Cart['items'], // Load items separately or via service
+    items: prismaCart.items as Cart['items'],
   });
 }

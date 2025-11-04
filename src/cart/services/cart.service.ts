@@ -1,12 +1,7 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CartRepository } from '../repositories/cart.repository';
 import { CartItemService } from './cart-item.service';
 import { Cart } from '../entities/cart.entity';
-import { CartItem } from '../entities/cart-item.entity';
 import { ProductService } from '../../product/product.services';
 
 @Injectable()
@@ -20,43 +15,25 @@ export class CartService {
   /**
    * Create a new cart
    */
-  async create(userId: string): Promise<Cart> {
+  async create(buyerId: string): Promise<Cart> {
     const cart = new Cart({
-      id: '', // let Prisma generate UUID
-      userId,
+      id: '',
+      buyerId,
       isCheckout: false,
       items: [],
       createdAt: new Date(),
     });
-
     return this.cartRepository.create(cart);
   }
 
   /**
-   * Add an item to the cart
+   * Find the active (unchecked-out) cart for the user;
+   * create one if none exists.
    */
-  async addItem(userId: string, item: Omit<CartItem, 'id'>): Promise<Cart> {
-    const cart = await this.findUncheckoutCart(userId);
-
-    const product = await this.productService.findOne(
-      item.productId,
-      item.shopId,
-    );
-
-    if (product.stock <= 0) {
-      throw new ConflictException(
-        `Product ${product.name} has insufficient stock`,
-      );
-    }
-    await this.cartItemService.create(cart.id, item);
-    return this.cartRepository.findOne(cart.id) as Promise<Cart>;
-  }
-
-  async findUncheckoutCart(userId: string): Promise<Cart> {
-    const carts = await this.cartRepository.findManyByUserId(userId);
-    let cart = carts.find((cart) => cart.isCheckout == false);
+  async findOrCreateUncheckoutCart(buyerId: string): Promise<Cart> {
+    const cart = await this.cartRepository.findUncheckoutOneByUserId(buyerId);
     if (!cart) {
-      cart = await this.create(userId);
+      return await this.create(buyerId);
     }
     return cart;
   }
@@ -64,29 +41,25 @@ export class CartService {
   /**
    * Get cart by ID
    */
-  async findOne(cartId: string): Promise<Cart> {
-    const cart = await this.cartRepository.findOne(cartId);
-    if (!cart) throw new NotFoundException('Cart not found');
+  async findOneIfOwned(buyerId: string, cartId: string): Promise<Cart | null> {
+    const cart = await this.cartRepository.findOneIfOwned(buyerId, cartId);
     return cart;
   }
 
   /**
    * Checkout the cart
    */
-  async checkout(cartId: string, orderId: string): Promise<Cart> {
-    const cart = await this.findOne(cartId);
+  async setCheckoutDone(
+    buyerId: string,
+    cartId: string,
+    orderId: string,
+  ): Promise<Cart> {
+    const cart = await this.findOneIfOwned(buyerId, cartId);
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
     cart.isCheckout = true;
     cart.orderId = orderId;
     return this.cartRepository.update(cart);
-  }
-
-  /**
-   * Remove an item from the cart
-   */
-  async removeItem(cartId: string, itemId: string): Promise<Cart> {
-    await this.cartItemService.remove(itemId, cartId);
-
-    // Reload cart with updated items
-    return this.cartRepository.findOne(cartId) as Promise<Cart>;
   }
 }

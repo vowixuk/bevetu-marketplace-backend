@@ -62,6 +62,17 @@ export class ProductService {
   }
 
   /**
+   * Internal-use only — not intended for public access.
+   * This method does not verify whether a product is on-shelf or approved,
+   * nor does it validate product ownership for the caller.
+   * It is meant for admin-level operations or cases where product–shop–seller
+   * ownership is already guaranteed.
+   */
+  async findByIds(ids: string[]): Promise<Product[]> {
+    return await this.productRepository.findByIds(ids);
+  }
+
+  /**
    * Public-facing method — intended for displaying a product to buyers.
    * Unlike `findOne`, this method strips out sensitive or internal fields
    * (e.g. `reservedStock`, `isApproved`, `onShelf`, `sellerId`) so that

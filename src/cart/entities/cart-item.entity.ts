@@ -4,9 +4,12 @@ export class CartItem {
   shopId: string;
   cartId: string;
   productId: string;
-  varientId: string;
+  productName: string;
   quantity: number;
   price: number;
+  available: boolean;
+  varientId?: string;
+  unavailableReason?: string;
 
   constructor(init: CartItemProps) {
     Object.assign(this, init);

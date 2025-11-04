@@ -1,48 +1,106 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
-import { CartItem } from '../entities/cart-item.entity';
 import { CartItem as PrismaCartItem } from '@prisma/client';
+import { CartItem } from '../entities/cart-item.entity';
 
 @Injectable()
 export class CartItemRepository {
   constructor(private readonly prisma: DatabaseService) {}
 
-  async createItem(item: CartItem): Promise<CartItem> {
+  async findByCartIdIfOwned(
+    buyerId: string,
+    cartId: string,
+  ): Promise<CartItem[]> {
+    const items = await this.prisma.cartItem.findMany({
+      where: {
+        cartId,
+        cart: {
+          buyerId,
+        },
+      },
+    });
+
+    return items.map(mapPrismaCartItemToDomain) as CartItem[];
+  }
+
+  async findOneIfOwned(buyerId: string, cartItemId: string) {
+    return mapPrismaCartItemToDomain(
+      await this.prisma.cartItem.findUnique({
+        where: {
+          id: cartItemId,
+          cart: {
+            buyerId,
+          },
+        },
+      }),
+    );
+  }
+
+  async updateIfOwned(buyerId: string, item: CartItem): Promise<CartItem> {
+    return mapPrismaCartItemToDomain(
+      await this.prisma.cartItem.update({
+        where: {
+          id: item.id,
+          cart: {
+            buyerId,
+          },
+        },
+        data: {
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.price,
+          available: item.available,
+          unavailableReason: item.unavailableReason,
+        },
+      }),
+    ) as CartItem;
+  }
+
+  async createIfOwned(buyerId: string, item: CartItem): Promise<CartItem> {
+    const cart = await this.prisma.cart.findUnique({
+      where: {
+        id: item.cartId,
+      },
+      select: { buyerId: true },
+    });
+
+    if (!cart || cart.buyerId !== buyerId) {
+      throw new BadRequestException('Cart does not belong to this buyer');
+    }
     return mapPrismaCartItemToDomain(
       await this.prisma.cartItem.create({
         data: {
           cartId: item.cartId,
           shopId: item.shopId,
           productId: item.productId,
-          varientId: item.varientId,
+          productName: item.productName,
+          varientId: item.varientId ?? undefined,
+          ...(item.unavailableReason
+            ? { unavailableReason: item.unavailableReason }
+            : undefined),
           quantity: item.quantity,
           price: item.price,
+          available: item.available,
         },
       }),
     ) as CartItem;
   }
 
-  async findItemsByCartId(cartId: string): Promise<CartItem[]> {
-    return (await this.prisma.cartItem.findMany({ where: { cartId } })).map(
-      mapPrismaCartItemToDomain,
-    ) as CartItem[];
-  }
-
-  async updateItem(item: CartItem): Promise<CartItem> {
+  async removeIfOwned(
+    buyerId: string,
+    cartId: string,
+    itemId: string,
+  ): Promise<CartItem> {
     return mapPrismaCartItemToDomain(
-      await this.prisma.cartItem.update({
-        where: { id: item.id },
-        data: {
-          quantity: item.quantity,
-          price: item.price,
+      await this.prisma.cartItem.delete({
+        where: {
+          id: itemId,
+          cartId,
+          cart: {
+            buyerId,
+          },
         },
       }),
-    ) as CartItem;
-  }
-
-  async removeItem(id: string): Promise<CartItem> {
-    return mapPrismaCartItemToDomain(
-      await this.prisma.cartItem.delete({ where: { id } }),
     ) as CartItem;
   }
 }
@@ -56,9 +114,15 @@ export function mapPrismaCartItemToDomain(
     id: prismaItem.id,
     shopId: prismaItem.shopId,
     cartId: prismaItem.cartId,
+    productName: prismaItem.productName as string,
     productId: prismaItem.productId,
-    varientId: prismaItem.varientId,
+    varientId: prismaItem.varientId ?? undefined,
+    unavailableReason: prismaItem.unavailableReason ?? undefined,
     quantity: prismaItem.quantity,
     price: prismaItem.price,
+    available: prismaItem.available === true ? true : false,
+    ...(prismaItem.unavailableReason
+      ? { unavailableReason: prismaItem.unavailableReason }
+      : undefined),
   });
 }

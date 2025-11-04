@@ -419,15 +419,15 @@ enum OrderEventRecordType {
  ************************************************************/
 model Cart {
   id         String     @id @default(cuid())
-  userId     String
+  buyerId    String
   isCheckout Boolean    @default(false)
-  orderId    String?    // only populated after checkout
+  orderId    String?    
   createdAt  DateTime   @default(now())
   updatedAt  DateTime?  @updatedAt
 
   items      CartItem[]
 
-  @@index([userId])
+  @@index([buyerId])
 
   // Joining Table
   order          Order?   @relation(fields: [orderId], references: [id],onDelete: Cascade)
@@ -438,9 +438,12 @@ model CartItem {
   shopId    String
   cartId    String
   productId String
-  varientId String
+  productName      String
+  varientId String?
   quantity  Int
   price     Float
+  available Boolean
+  unavailableReason String?
 
   // Joining Table
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)

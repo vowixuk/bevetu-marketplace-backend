@@ -26,16 +26,6 @@ export const csrfMiddlewareExclusionList = [
   { path: 'v1/stripe-webhook', method: RequestMethod.POST },
   { path: 'v1/stripe-webhook', method: RequestMethod.GET },
   { path: 'v1/products', method: RequestMethod.GET },
-  // { path: '/metrics', method: RequestMethod.GET },
-
-  // {
-  //   path: 'v1/documents/pets/:petId/ai-diagnosis-records/:recordId/public-access',
-  //   method: RequestMethod.POST,
-  // },
-  // {
-  //   path: '/v1/document-viewers/document/:documentId/view-count',
-  //   method: RequestMethod.GET,
-  // },
 ];
 
 @Injectable()

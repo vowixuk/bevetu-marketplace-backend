@@ -2,8 +2,8 @@ import { CartItem } from './cart-item.entity';
 type CartProps = Omit<Cart, 'getTotal' | 'getItemCount'>;
 export class Cart {
   id: string;
-  userId: string;
-  isCheckout: boolean;
+  buyerId: string;
+  isCheckout: boolean; // if this cart id checkedout, set true
   items: CartItem[];
   orderId?: string; // only after checkkout
   updatedAt?: Date;
