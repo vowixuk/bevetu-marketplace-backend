@@ -17,7 +17,7 @@ export class OrderEventRecordRepository {
   async create<T extends EventRecordType>(
     record: OrderEventRecord<T>,
   ): Promise<OrderEventRecord<T>> {
-    return mapPrismaOrderToDomain(
+    return mapPrismaOrderEventRecordToDomain(
       await this.prisma.orderEventRecord.create({
         data: {
           orderId: record.orderId,
@@ -28,39 +28,13 @@ export class OrderEventRecordRepository {
       }),
     ) as OrderEventRecord<T>;
   }
-
-  async findAllByOrderId(
-    orderId: string,
-  ): Promise<OrderEventRecord<EventRecordType>[]> {
-    return (
-      await this.prisma.orderEventRecord.findMany({
-        where: { orderId },
-      })
-    ).map(mapPrismaOrderToDomain) as OrderEventRecord<EventRecordType>[];
-  }
-
-  async findOne(id: string): Promise<OrderEventRecord<EventRecordType> | null> {
-    return mapPrismaOrderToDomain(
-      await this.prisma.orderEventRecord.findUnique({
-        where: { id },
-      }),
-    );
-  }
-
-  async remove(id: string): Promise<OrderEventRecord<EventRecordType>> {
-    return mapPrismaOrderToDomain(
-      await this.prisma.orderEventRecord.delete({
-        where: { id },
-      }),
-    ) as OrderEventRecord<EventRecordType>;
-  }
 }
 
 /**
  * Map Prisma order event record to domain OrderEventRecord entity.
  * Keeps Prisma types locked in the repository layer.
  */
-export function mapPrismaOrderToDomain(
+export function mapPrismaOrderEventRecordToDomain(
   prismaRecord?: PrismaOrderEventRecord | null,
 ): OrderEventRecord<EventRecordType> | null {
   if (!prismaRecord) return null;

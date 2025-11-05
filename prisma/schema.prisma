@@ -424,7 +424,7 @@ model OrderItem {
   orderId        String
   shopId         String
   productId      String
-  varientId      String
+  varientId      String?
   productName    String
   quantity       Int
   price          Float
