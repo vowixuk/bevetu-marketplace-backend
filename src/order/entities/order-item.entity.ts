@@ -1,7 +1,14 @@
 import { OptionalProperties } from '../../share/types';
+
+export type OrderRefundStatus =
+  | 'NONE'
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'COMPLETED';
+
 export class OrderItem {
   id: string;
-
   orderId: string;
   shopId: string;
   productId: string;
@@ -9,19 +16,16 @@ export class OrderItem {
   productName: string;
   quantity: number;
   price: number;
-
   shippingFee: number;
   discount: number;
-
-  refundedQuantity: number = 0;
-  refundedAmount: number = 0;
-  refundStatus: OrderRefundStatus;
+  refundedQuantity?: number;
+  refundedAmount?: number;
+  refundStatus?: OrderRefundStatus;
+  createdAt: Date;
+  updatedAt: Date;
 
   attributes?: Record<string, any>;
   remark?: string;
-
-  createdAt: Date = new Date();
-  updatedAt: Date = new Date();
 
   constructor(
     init: Omit<OrderItem, OptionalProperties<OrderItem>> &
@@ -30,5 +34,3 @@ export class OrderItem {
     Object.assign(this, init);
   }
 }
-
-type OrderRefundStatus = 'NONE' | 'PENDING' | 'COMPLETED' | 'REJECTED';

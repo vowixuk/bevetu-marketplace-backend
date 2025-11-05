@@ -24,8 +24,35 @@ export class OrderCarrierRepository {
       }),
     ) as OrderCarrier;
   }
-}
 
+  //   async sellerUpdateIfOwned(
+  //     sellerId: string,
+  //     orderCarrier: OrderCarrier,
+  //   ): Promise<OrderCarrier> {
+  //     return mapPrismaOrderCarrierToDomain(
+  //       await this.prisma.orderCarrier.update({
+  //         where: {
+  //           id: orderCarrier.id,
+  //           order: {
+  //             sellerId,
+  //           },
+  //         },
+  //         data: {
+  //           orderId: orderCarrier.orderId,
+  //           carrierName: orderCarrier.carrierName,
+  //           serviceType: orderCarrier.serviceType,
+  //           trackingNumber: orderCarrier.trackingNumber,
+  //           trackingUrl: orderCarrier.trackingUrl,
+  //           shippedAt: orderCarrier.shippedAt,
+  //           estimatedDelivery: orderCarrier.estimatedDelivery,
+  //           deliveredAt: orderCarrier.deliveredAt,
+  //           remark: orderCarrier.remark,
+  //         },
+  //       }),
+  //     ) as OrderCarrier;
+  //   }
+  // }
+}
 function mapPrismaOrderCarrierToDomain(
   prismaCarrier?: PrismaOrderCarrier | null,
 ): OrderCarrier | null {

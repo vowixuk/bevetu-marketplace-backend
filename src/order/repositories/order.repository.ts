@@ -5,9 +5,10 @@ import {
   Order as PrismaOrder,
   OrderEventRecord as PrismaOrderEventRecord,
   OrderItem as PrismaOrderItem,
+  OrderAddress as PrismaOrderAddress,
 } from '@prisma/client';
 import { mapPrismaOrderItemToDomain } from '../repositories/order-item.repository';
-
+import { mapPrismaOrderAddressToDomain } from './order-address.repository';
 import { mapPrismaOrderEventRecordToDomain } from '../repositories/event-record.repository';
 
 @Injectable()
@@ -21,7 +22,6 @@ export class OrderRepository {
         sellerId: order.sellerId,
         shopId: order.shopId,
         cartId: order.cartId,
-        addressId: order.addressId,
         carrierId: order.carrierId,
 
         totalAmount: order.totalAmount,
@@ -40,6 +40,7 @@ export class OrderRepository {
       include: {
         eventRecords: true,
         items: true,
+        orderAddress: true,
       },
     });
 
@@ -49,31 +50,74 @@ export class OrderRepository {
   /**
    *  Seller side
    */
-  async sellerfindAllIfOwned(sellerId: string): Promise<Order[]> {
-    return (
+  async sellerFindAllIfOwned(
+    sellerId: string,
+    page: {
+      skip?: number;
+      take?: number;
+      orderBy?: 'desc' | 'asc';
+    } = {
+      skip: 0,
+      take: 10,
+      orderBy: 'desc',
+    },
+  ): Promise<{ orders: Order[]; total: number }> {
+    const total = await this.prisma.order.count({
+      where: { sellerId },
+    });
+    const orders = (
       await this.prisma.order.findMany({
         where: { sellerId },
         include: { items: true, eventRecords: true },
+        skip: page.skip,
+        take: page.take,
+        orderBy: { updatedAt: page.orderBy },
       })
     ).map(mapPrismaOrderToDomain) as Order[];
+    return {
+      orders,
+      total,
+    };
   }
 
-  async sellerfindOneIfOwned(id: string, sellerId: string): Promise<Order> {
+  async sellerFindOneIfOwned(id: string, sellerId: string): Promise<Order> {
     return mapPrismaOrderToDomain(
       await this.prisma.order.findUnique({
         where: { id, sellerId },
-        include: { items: true, eventRecords: true },
+        include: { items: true, eventRecords: true, orderAddress: true },
       }),
     ) as Order;
   }
 
-  async shopfindAllIfOwned(shopId: string, sellerId: string): Promise<Order[]> {
-    return (
+  async shopFindAllIfOwned(
+    shopId: string,
+    sellerId: string,
+    page: {
+      skip?: number;
+      take?: number;
+      orderBy?: 'desc' | 'asc';
+    } = {
+      skip: 0,
+      take: 10,
+      orderBy: 'desc',
+    },
+  ): Promise<{ orders: Order[]; total: number }> {
+    const total = await this.prisma.order.count({
+      where: { shopId, sellerId },
+    });
+    const orders = (
       await this.prisma.order.findMany({
         where: { shopId, sellerId },
         include: { items: true, eventRecords: true },
+        skip: page.skip,
+        take: page.take,
+        orderBy: { updatedAt: page.orderBy },
       })
     ).map(mapPrismaOrderToDomain) as Order[];
+    return {
+      orders,
+      total,
+    };
   }
 
   async sellerUpdateIfOwned(
@@ -97,7 +141,7 @@ export class OrderRepository {
           // discount: order.discount,
           // currency: order.currency,
 
-          paymentStatus: order.paymentStatus,
+          // paymentStatus: order.paymentStatus,
           // paymentMethod: order.paymentMethod,
           orderStatus: order.orderStatus,
           attributes: order.attributes ?? {},
@@ -108,41 +152,85 @@ export class OrderRepository {
     ) as Order;
   }
 
+  async update(id: string, order: Order) {
+    const prismaOrder = await this.prisma.order.update({
+      where: {
+        id,
+      },
+      data: {
+        buyerId: order.buyerId,
+        sellerId: order.sellerId,
+        shopId: order.shopId,
+        cartId: order.cartId,
+        carrierId: order.carrierId,
+
+        totalAmount: order.totalAmount,
+        shippingFee: order.shippingFee,
+        discount: order.discount,
+        currency: order.currency,
+
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        orderStatus: order.orderStatus,
+
+        attributes: order.attributes ?? {},
+        remark: order.remark,
+      },
+      include: {
+        eventRecords: true,
+        items: true,
+        orderAddress: true,
+      },
+    });
+
+    return mapPrismaOrderToDomain(prismaOrder) as Order;
+  }
+
   /**
    *  Buyer side
    */
-  async buyerfindAllIfOwned(buyerId: string): Promise<Order[]> {
-    return (
+  async buyerFindAllIfOwned(
+    buyerId: string,
+    page: {
+      skip?: number;
+      take?: number;
+      orderBy?: 'desc' | 'asc';
+    } = {
+      skip: 0,
+      take: 10,
+      orderBy: 'desc',
+    },
+  ): Promise<{ orders: Order[]; total: number }> {
+    const total = await this.prisma.order.count({
+      where: { buyerId },
+    });
+    const orders = (
       await this.prisma.order.findMany({
         where: { buyerId },
-        include: { items: true, eventRecords: true },
+        include: { items: true, eventRecords: true, orderAddress: true },
+        skip: page.skip,
+        take: page.take,
+        orderBy: { updatedAt: page.orderBy },
       })
     ).map(mapPrismaOrderToDomain) as Order[];
+
+    return {
+      orders,
+      total,
+    };
   }
-  async buyerfindOneIfOwned(id: string, buyerId: string): Promise<Order> {
+  async buyerFindOneIfOwned(id: string, buyerId: string): Promise<Order> {
     return mapPrismaOrderToDomain(
       await this.prisma.order.findUnique({
         where: { id, buyerId },
-        include: { items: true, eventRecords: true },
+        include: {
+          items: true,
+          eventRecords: true,
+          orderAddress: true,
+        },
       }),
     ) as Order;
   }
-
-  // async findOne(id: string): Promise<Order | null> {
-  //   const order = await this.prisma.order.findUnique({
-  //     where: { id },
-  //     include: { items: true, eventRecords: true },
-  //   });
-  //   return mapPrismaOrderToDomain(order);
-  // }
-
-  // async findByBuyerId(buyerId: string): Promise<Order[]> {
-  //   const orders = await this.prisma.order.findMany({
-  //     where: { buyerId },
-  //     include: { items: true, eventRecords: true },
-  //   });
-  //   return orders.map(mapPrismaOrderToDomain) as Order[];
-  // }
 
   // async update(order: Order): Promise<Order> {
   //   const updated = await this.prisma.order.update({
@@ -160,14 +248,6 @@ export class OrderRepository {
 
   //   return mapPrismaOrderToDomain(updated) as Order;
   // }
-
-  // async remove(id: string): Promise<Order> {
-  //   const deleted = await this.prisma.order.delete({
-  //     where: { id },
-  //     include: { items: true, eventRecords: true },
-  //   });
-  //   return mapPrismaOrderToDomain(deleted) as Order;
-  // }
 }
 
 /**
@@ -175,9 +255,16 @@ export class OrderRepository {
  */
 export function mapPrismaOrderToDomain(
   prismaOrder?:
-    | (PrismaOrder & { items: PrismaOrderItem[] | undefined } & {
+    | (PrismaOrder & {
+        items: PrismaOrderItem[] | undefined;
+      } & {
         eventRecords: PrismaOrderEventRecord[] | undefined;
       })
+    | (PrismaOrder & {
+        items: PrismaOrderItem[] | undefined;
+      } & {
+        eventRecords: PrismaOrderEventRecord[] | undefined;
+      } & { orderAddress: PrismaOrderAddress })
     | null,
 ): Order | null {
   if (!prismaOrder) return null;
@@ -188,7 +275,7 @@ export function mapPrismaOrderToDomain(
     sellerId: prismaOrder.sellerId,
     shopId: prismaOrder.shopId,
     cartId: prismaOrder.cartId,
-    addressId: prismaOrder.addressId,
+
     carrierId: prismaOrder.carrierId ?? undefined,
     items:
       (prismaOrder.items?.map(mapPrismaOrderItemToDomain) as Order['items']) ??
@@ -207,5 +294,13 @@ export function mapPrismaOrderToDomain(
     ...(prismaOrder.remark ? { remark: prismaOrder.remark } : undefined),
     createdAt: prismaOrder.createdAt,
     updatedAt: prismaOrder.updatedAt,
+
+    ...('orderAddress' in prismaOrder
+      ? {
+          orderAddress:
+            mapPrismaOrderAddressToDomain(prismaOrder.orderAddress) ??
+            undefined,
+        }
+      : undefined),
   });
 }

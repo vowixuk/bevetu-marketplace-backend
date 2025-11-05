@@ -336,9 +336,8 @@ model Order {
   sellerId       String
   shopId         String
   cartId         String
-  addressId      String
   carrierId      String?
-
+  orderAddress   OrderAddress?    @relation("OrderToOrderAddress")
   items          OrderItem[]
 
   totalAmount    Float
@@ -362,8 +361,9 @@ model Order {
   cart           Cart?            @relation("OrderToCart")
   buyer          Buyer?           @relation("BuyerOrders", fields: [buyerId], references: [id])
   seller         Seller?          @relation("SellerOrders", fields: [sellerId], references: [id])
-  orderAddress   OrderAddress?    @relation("OrderToOrderAddress")
+  
   orderCarrier OrderCarrier?      @relation("OrderToCarrier")
+  
 }
 
 

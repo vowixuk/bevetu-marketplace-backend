@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OrderEventRecordRepository } from '../repositories/event-record.repository';
 import {
   OrderEventRecord,
@@ -27,31 +27,31 @@ export class OrderEventRecordService {
     return this.orderEventRepository.create(record);
   }
 
-  async findAllByOrderId(
-    orderId: string,
-  ): Promise<OrderEventRecord<EventRecordType>[]> {
-    const events = await this.orderEventRepository.findAllByOrderId(orderId);
+  // async findAllByOrderId(
+  //   orderId: string,
+  // ): Promise<OrderEventRecord<EventRecordType>[]> {
+  //   const events = await this.orderEventRepository.findAllByOrderId(orderId);
 
-    if (!events || events.length === 0) {
-      return [];
-    }
+  //   if (!events || events.length === 0) {
+  //     return [];
+  //   }
 
-    return events;
-  }
+  //   return events;
+  // }
 
-  async findOne(id: string): Promise<OrderEventRecord<EventRecordType>> {
-    const event = await this.orderEventRepository.findOne(id);
+  // async findOne(id: string): Promise<OrderEventRecord<EventRecordType>> {
+  //   const event = await this.orderEventRepository.findOne(id);
 
-    if (!event) {
-      throw new NotFoundException('Order event record not found');
-    }
+  //   if (!event) {
+  //     throw new NotFoundException('Order event record not found');
+  //   }
 
-    return event;
-  }
+  //   return event;
+  // }
 
-  async remove(id: string): Promise<OrderEventRecord<EventRecordType>> {
-    // Ensure it exists before deleting
-    await this.findOne(id);
-    return this.orderEventRepository.remove(id);
-  }
+  // async remove(id: string): Promise<OrderEventRecord<EventRecordType>> {
+  //   // Ensure it exists before deleting
+  //   await this.findOne(id);
+  //   return this.orderEventRepository.remove(id);
+  // }
 }

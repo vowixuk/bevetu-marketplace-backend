@@ -1,5 +1,6 @@
 import { OptionalProperties } from '../../share/types';
 import { EventRecordType, OrderEventRecord } from './event-record.entity';
+import { OrderAddress } from './order-address';
 import { OrderItem } from './order-item.entity';
 
 export class Order {
@@ -9,8 +10,10 @@ export class Order {
   sellerId: string;
   shopId: string;
   cartId: string;
-  addressId: string;
+
   carrierId?: string;
+
+  orderAddress?: OrderAddress;
 
   items: OrderItem[];
 

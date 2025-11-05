@@ -1,57 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { OrderEventRecordRepository } from '../repositories/event-record.repository';
-import {
-  OrderEventRecord,
-  EventRecordType,
-} from '../entities/event-record.entity';
-import { CreateOrderEventRecordDto } from '../dto/create-event-record.dto';
+import { Injectable } from '@nestjs/common';
+import { OrderAddressRepository } from '../repositories/order-address.repository';
+import { CreateOrderAddressDto } from '../dto/create-order-address.dto';
+import { OrderAddress } from '../entities/order-address';
 
 @Injectable()
-export class OrderEventRecordService {
+export class OrderAddressService {
   constructor(
-    private readonly orderEventRepository: OrderEventRecordRepository,
+    private readonly orderAddressRepository: OrderAddressRepository,
   ) {}
 
-  async create<T extends EventRecordType>(
-    orderId: string,
-    createDto: CreateOrderEventRecordDto<T>,
-  ): Promise<OrderEventRecord<T>> {
-    const record = new OrderEventRecord<T>({
-      id: '',
-      orderId,
-      type: createDto.type,
-      metadata: createDto.metadata ?? null,
-      createdAt: new Date(),
-    });
-
-    return this.orderEventRepository.create(record);
-  }
-
-  async findAllByOrderId(
-    orderId: string,
-  ): Promise<OrderEventRecord<EventRecordType>[]> {
-    const events = await this.orderEventRepository.findAllByOrderId(orderId);
-
-    if (!events || events.length === 0) {
-      return [];
-    }
-
-    return events;
-  }
-
-  async findOne(id: string): Promise<OrderEventRecord<EventRecordType>> {
-    const event = await this.orderEventRepository.findOne(id);
-
-    if (!event) {
-      throw new NotFoundException('Order event record not found');
-    }
-
-    return event;
-  }
-
-  async remove(id: string): Promise<OrderEventRecord<EventRecordType>> {
-    // Ensure it exists before deleting
-    await this.findOne(id);
-    return this.orderEventRepository.remove(id);
+  async create(dto: CreateOrderAddressDto): Promise<OrderAddress> {
+    const address = new OrderAddress({ id: '', ...dto });
+    return this.orderAddressRepository.create(address);
   }
 }

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { OrderItem } from '../entities/order-item.entity';
-import { OrderItem as PrismaOrderItem } from '@prisma/client';
+import {
+  OrderItem as PrismaOrderItem,
+  OrderRefundStatus as PrismaOrderRefundStatus,
+} from '@prisma/client';
 
 @Injectable()
 export class OrderItemRepository {
@@ -24,7 +27,58 @@ export class OrderItemRepository {
 
           refundedQuantity: item.refundedQuantity,
           refundedAmount: item.refundedAmount,
-          refundStatus: item.refundStatus,
+          refundStatus: item.refundStatus as PrismaOrderRefundStatus,
+          attributes: item.attributes ?? {},
+          remark: item.remark,
+        },
+      }),
+    ) as OrderItem;
+  }
+
+  async sellerFindOneIfOwned(
+    id: string,
+    sellerId: string,
+  ): Promise<OrderItem | null> {
+    return mapPrismaOrderItemToDomain(
+      await this.prisma.orderItem.findUnique({
+        where: {
+          id,
+          order: {
+            sellerId,
+          },
+        },
+      }),
+    );
+  }
+
+  async sellerUpdateIfOwned(
+    id: string,
+    sellerId: string,
+    item: OrderItem,
+  ): Promise<OrderItem> {
+    return mapPrismaOrderItemToDomain(
+      await this.prisma.orderItem.update({
+        where: {
+          id,
+          order: {
+            sellerId,
+          },
+        },
+        data: {
+          // orderId: item.orderId,
+          // shopId: item.shopId,
+          // productId: item.productId,
+          // varientId: item.varientId ?? undefined,
+          // productName: item.productName,
+          // quantity: item.quantity,
+          // price: item.price,
+
+          // shippingFee: item.shippingFee,
+          // discount: item.discount,
+
+          refundedQuantity: item.refundedQuantity,
+          refundedAmount: item.refundedAmount,
+          refundStatus: item.refundStatus as PrismaOrderRefundStatus,
           attributes: item.attributes ?? {},
           remark: item.remark,
         },
@@ -52,9 +106,10 @@ export function mapPrismaOrderItemToDomain(
     price: prismaItem.price,
     shippingFee: prismaItem.shippingFee,
     discount: prismaItem.discount,
-    refundedQuantity: prismaItem.refundedQuantity ?? 0,
-    refundedAmount: prismaItem.refundedAmount ?? 0,
-    refundStatus: prismaItem.refundStatus as OrderItem['refundStatus'],
+    refundedQuantity: prismaItem.refundedQuantity ?? undefined,
+    refundedAmount: prismaItem.refundedAmount ?? undefined,
+    refundStatus:
+      (prismaItem.refundStatus as OrderItem['refundStatus']) ?? undefined,
     attributes: (prismaItem.attributes as OrderItem['attributes']) ?? undefined,
     remark: (prismaItem.remark as OrderItem['remark']) ?? undefined,
     createdAt: prismaItem.createdAt,
