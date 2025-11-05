@@ -37,6 +37,24 @@ import {
   ProductModule,
   SellerViewProductUseCase,
   SetupShopUseCase,
+  OrderService,
+  OrderAddressService,
+  OrderItemService,
+  OrderEventRecordService,
+  OrderRepository,
+  OrderAddressRepository,
+  OrderItemRepository,
+  OrderEventRecordRepository,
+  OrderCarrierRepository,
+  AfterPaymentSuccessUseCase,
+  AfterPaymentFailUseCase,
+  CreateOrderUseCase,
+  UpdateProcessStatusUseCase,
+  CartService,
+  CartRepository,
+  CartItemService,
+  CartItemRepository,
+  CheckItemsAvailability,
 } from './index';
 
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
@@ -61,6 +79,26 @@ export type ServicesType = {
   resetProductOnShelfUseCase: ResetProductOnShelfUseCase;
   sellerViewProductUseCase: SellerViewProductUseCase;
   setupShopUseCase: SetupShopUseCase;
+
+  orderService: OrderService;
+  orderAddressService: OrderAddressService;
+  orderItemService: OrderItemService;
+  orderEventRecordService: OrderEventRecordService;
+
+  orderRepository: OrderRepository;
+  orderAddressRepository: OrderAddressRepository;
+  orderItemRepository: OrderItemRepository;
+  orderEventRecordRepository: OrderEventRecordRepository;
+  orderCarrierRepository: OrderCarrierRepository;
+  afterPaymentSuccessUseCase: AfterPaymentSuccessUseCase;
+  afterPaymentFailUseCase: AfterPaymentFailUseCase;
+  createOrderUseCase: CreateOrderUseCase;
+  updateProcessStatusUseCase: UpdateProcessStatusUseCase;
+  cartService: CartService;
+  cartRepository: CartRepository;
+  cartItemService: CartItemService;
+  cartItemRepository: CartItemRepository;
+  checkItemsAvailability: CheckItemsAvailability;
 };
 export async function testTestingMoudleHelper(): Promise<{
   module: TestingModule;
@@ -112,6 +150,26 @@ export async function testTestingMoudleHelper(): Promise<{
       EventEmitter2,
       SetupShopUseCase,
       SellerViewProductUseCase,
+      OrderService,
+      OrderAddressService,
+      OrderItemService,
+      OrderEventRecordService,
+      OrderRepository,
+      OrderAddressRepository,
+      OrderItemRepository,
+      OrderEventRecordRepository,
+      OrderCarrierRepository,
+
+      AfterPaymentSuccessUseCase,
+      AfterPaymentFailUseCase,
+      CreateOrderUseCase,
+      UpdateProcessStatusUseCase,
+
+      CartService,
+      CartRepository,
+      CartItemService,
+      CartItemRepository,
+      CheckItemsAvailability,
     ],
   }).compile();
 
@@ -158,6 +216,57 @@ export async function testTestingMoudleHelper(): Promise<{
       setupShopUseCase: module.get<SetupShopUseCase>(SetupShopUseCase),
       sellerViewProductUseCase: module.get<SellerViewProductUseCase>(
         SellerViewProductUseCase,
+      ),
+      orderService: module.get<OrderService>(OrderService),
+
+      orderAddressService: module.get<OrderAddressService>(OrderAddressService),
+
+      orderItemService: module.get<OrderItemService>(OrderItemService),
+
+      orderEventRecordService: module.get<OrderEventRecordService>(
+        OrderEventRecordService,
+      ),
+
+      orderRepository: module.get<OrderRepository>(OrderRepository),
+
+      orderAddressRepository: module.get<OrderAddressRepository>(
+        OrderAddressRepository,
+      ),
+
+      orderItemRepository: module.get<OrderItemRepository>(OrderItemRepository),
+
+      orderEventRecordRepository: module.get<OrderEventRecordRepository>(
+        OrderEventRecordRepository,
+      ),
+
+      orderCarrierRepository: module.get<OrderCarrierRepository>(
+        OrderCarrierRepository,
+      ),
+
+      afterPaymentSuccessUseCase: module.get<AfterPaymentSuccessUseCase>(
+        AfterPaymentSuccessUseCase,
+      ),
+
+      afterPaymentFailUseCase: module.get<AfterPaymentFailUseCase>(
+        AfterPaymentFailUseCase,
+      ),
+
+      createOrderUseCase: module.get<CreateOrderUseCase>(CreateOrderUseCase),
+
+      updateProcessStatusUseCase: module.get<UpdateProcessStatusUseCase>(
+        UpdateProcessStatusUseCase,
+      ),
+
+      cartService: module.get<CartService>(CartService),
+
+      cartRepository: module.get<CartRepository>(CartRepository),
+
+      cartItemService: module.get<CartItemService>(CartItemService),
+
+      cartItemRepository: module.get<CartItemRepository>(CartItemRepository),
+
+      checkItemsAvailability: module.get<CheckItemsAvailability>(
+        CheckItemsAvailability,
       ),
     },
   };

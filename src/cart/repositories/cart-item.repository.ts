@@ -86,6 +86,46 @@ export class CartItemRepository {
     ) as CartItem;
   }
 
+  async createManyIfOwned(buyerId: string, items: CartItem[]) {
+    if (!items.length) return [];
+
+    const cartIds = Array.from(new Set(items.map((i) => i.cartId)));
+
+    const carts = await this.prisma.cart.findMany({
+      where: { id: { in: cartIds } },
+      select: { id: true, buyerId: true },
+    });
+
+    const ownedCartIds = carts
+      .filter((c) => c.buyerId === buyerId)
+      .map((c) => c.id);
+
+    const unauthorizedCart = items.find(
+      (i) => !ownedCartIds.includes(i.cartId),
+    );
+    if (unauthorizedCart) {
+      throw new BadRequestException(
+        'One or more carts do not belong to this buyer',
+      );
+    }
+
+    // Bulk insert
+    await this.prisma.cartItem.createMany({
+      data: items.map((item) => ({
+        cartId: item.cartId,
+        shopId: item.shopId,
+        productId: item.productId,
+        productName: item.productName,
+        varientId: item.varientId ?? undefined,
+        unavailableReason: item.unavailableReason ?? undefined,
+        quantity: item.quantity,
+        price: item.price,
+        available: item.available,
+      })),
+      skipDuplicates: false,
+    });
+  }
+
   async removeIfOwned(
     buyerId: string,
     cartId: string,
@@ -114,7 +154,7 @@ export function mapPrismaCartItemToDomain(
     id: prismaItem.id,
     shopId: prismaItem.shopId,
     cartId: prismaItem.cartId,
-    productName: prismaItem.productName as string,
+    productName: prismaItem.productName,
     productId: prismaItem.productId,
     varientId: prismaItem.varientId ?? undefined,
     unavailableReason: prismaItem.unavailableReason ?? undefined,

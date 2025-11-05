@@ -257,6 +257,10 @@ export class OrderRepository {
 
   //   return mapPrismaOrderToDomain(updated) as Order;
   // }
+
+  async remove(id: string) {
+    await this.prisma.order.delete({ where: { id } });
+  }
 }
 
 /**

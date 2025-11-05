@@ -35,6 +35,34 @@ export class OrderItemRepository {
     ) as OrderItem;
   }
 
+  async createMany(items: OrderItem[]): Promise<boolean>{
+    if (!items.length) return false;
+
+    await this.prisma.orderItem.createMany({
+      data: items.map((item) => ({
+        orderId: item.orderId,
+        shopId: item.shopId,
+        productId: item.productId,
+        varientId: item.varientId ?? undefined,
+        productName: item.productName,
+        quantity: item.quantity,
+        price: item.price,
+
+        shippingFee: item.shippingFee,
+        discount: item.discount,
+
+        refundedQuantity: item.refundedQuantity,
+        refundedAmount: item.refundedAmount,
+        refundStatus: item.refundStatus as PrismaOrderRefundStatus,
+        attributes: item.attributes ?? {},
+        remark: item.remark,
+      })),
+      skipDuplicates: false,
+    });
+
+    return true;
+  }
+
   async sellerFindOneIfOwned(
     id: string,
     sellerId: string,

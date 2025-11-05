@@ -213,4 +213,13 @@ export class OrderService {
       ...updateDto,
     });
   }
+
+  /**
+   * ⚠️ Warning: TESTING USE ONLY
+   * Do NOT expose this update method publicly.
+   * It donly be used in testing for remove testing record
+   */
+  async remove(orderId: string) {
+    await this.orderRepository.remove(orderId);
+  }
 }

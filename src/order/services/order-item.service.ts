@@ -19,6 +19,25 @@ export class OrderItemService {
     return this.orderItemRepository.create(orderItem);
   }
 
+  async createMany(dtos: CreateOrderItemDto[]): Promise<boolean> {
+    if (!dtos.length) return false;
+
+    const now = new Date();
+
+    const orderItems = dtos.map(
+      (dto) =>
+        new OrderItem({
+          ...dto,
+          id: '',
+          createdAt: now,
+          updatedAt: now,
+        }),
+    );
+
+    await this.orderItemRepository.createMany(orderItems);
+    return true;
+  }
+
   async sellerUpdateIfOwned(
     sellerId: string,
     orderId: string,

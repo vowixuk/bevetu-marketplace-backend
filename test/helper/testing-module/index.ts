@@ -38,3 +38,26 @@ export { ProductModule } from '../../../src/product/product.module';
 
 export { SellerViewProductUseCase } from '../../../src/product/use-cases/seller/seller-view-product.useCase';
 export { SetupShopUseCase } from '../../../src/shop/use-cases/setup-shop.useCase';
+
+export { CartService } from '../../../src/cart/services/cart.service';
+export { CartRepository } from '../../../src/cart/repositories/cart.repository';
+export { CartItemService } from '../../../src/cart/services/cart-item.service';
+export { CartItemRepository } from '../../../src/cart/repositories/cart-item.repository';
+export { CheckItemsAvailability } from '../../../src/cart/use-cases/check-items-availability.useCase';
+
+
+
+export { OrderService } from '../../../src/order/services/order.service';
+export { OrderEventRecordRepository } from '../../../src/order/repositories/event-record.repository';
+export { OrderAddressRepository } from '../../../src/order/repositories/order-address.repository';
+export { OrderCarrierRepository } from '../../../src/order/repositories/order-carrier.repository';
+export { OrderItemRepository } from '../../../src/order/repositories/order-item.repository';
+export { OrderRepository } from '../../../src/order/repositories/order.repository';
+export { OrderEventRecordService } from '../../../src/order/services/event-record.service';
+export { OrderAddressService } from '../../../src/order/services/order-address.service';
+export { OrderItemService } from '../../../src/order/services/order-item.service';
+
+export { AfterPaymentSuccessUseCase } from '../../../src/order/use-cases/after-payment-success.useCase';
+export { AfterPaymentFailUseCase } from '../../../src/order/use-cases/after-payment-fail.useCase';
+export { CreateOrderUseCase } from '../../../src/order/use-cases/create-order.useCase';
+export { UpdateProcessStatusUseCase } from '../../../src/order/use-cases/update-process-status.useCase';

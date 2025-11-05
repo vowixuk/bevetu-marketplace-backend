@@ -6,10 +6,17 @@ import { CartRepository } from './repositories/cart.repository';
 import { CartItemService } from './services/cart-item.service';
 import { CartItemRepository } from './repositories/cart-item.repository';
 import { ProductModule } from '../product/product.module';
+import { CheckItemsAvailability } from './use-cases/check-items-availability.useCase';
 
 @Module({
   imports: [ProductModule],
   controllers: [CartController],
-  providers: [CartService, CartRepository, CartItemService, CartItemRepository],
+  providers: [
+    CartService,
+    CartRepository,
+    CartItemService,
+    CartItemRepository,
+    CheckItemsAvailability,
+  ],
 })
 export class CartModule {}
