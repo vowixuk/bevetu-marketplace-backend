@@ -22,16 +22,19 @@ export type MetadataSchema = {
     orderItemId: string;
     refundedQuantity: number;
     refundedAmount: string;
+    reason?: string;
   };
   REFUND_COMPLETED: {
     orderItemId: string;
     refundedQuantity: number;
     refundedAmount: string;
+    reason?: string;
   };
   REFUND_REJECTED: {
     orderItemId: string;
     refundedQuantity: number;
     refundedAmount: string;
+    reason?: string;
   };
 };
 

@@ -4,18 +4,32 @@ import { OrderItem } from './order-item.entity';
 
 export class Order {
   id: string;
-  buyerId: string; // Who placed the order
+
+  buyerId: string;
+  sellerId: string;
   shopId: string;
-  totalAmount: number; // Total price for all items
+  cartId: string;
+  addressId: string;
+  carrierId?: string;
+
+  items: OrderItem[];
+
+  totalAmount: number;
+  shippingFee: number;
+  discount: number;
   currency: string;
-  paymentStatus: 'PENDING' | 'SUCCESS' | 'FAILED';
-  paymentMethod: string; // e.g., stripe, paypal
-  orderStatus: 'CREATED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-  createdAt: Date;
-  updatedAt: Date;
-  eventRecords: OrderEventRecord<EventRecordType>[]; // Order events
-  items: OrderItem[]; // Products in this order
+
+  paymentStatus: OrderPaymentStatus;
+  paymentMethod: string;
+  orderStatus: OrderStatus;
+
+  createdAt: Date = new Date();
+  updatedAt: Date = new Date();
+
+  eventRecords: OrderEventRecord<EventRecordType>[];
   attributes?: Record<string, any>;
+
+  remark?: string;
 
   constructor(
     init: Omit<Order, OptionalProperties<Order>> &
@@ -24,3 +38,12 @@ export class Order {
     Object.assign(this, init);
   }
 }
+
+export type OrderPaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
+
+export type OrderStatus =
+  | 'CREATED'
+  | 'PROCESSING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED';

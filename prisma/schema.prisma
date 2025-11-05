@@ -51,6 +51,8 @@ model Buyer {
    // Joining Table
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   BuyerStripeCustomerAccountMapping BuyerStripeCustomerAccountMapping?
+  Order Order[] @relation("BuyerOrders")
+  OrderAddress OrderAddress[] @relation("OrderToBuyer")
 }
 
 model BuyerStripeCustomerAccountMapping {
@@ -83,8 +85,8 @@ model Seller {
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   SellerStripeAccountMapping SellerStripeAccountMapping[]
   Shop Shop[]
-
   SellerSubscription SellerSubscription[]
+  Order Order[] @relation("SellerOrders")
 }
 
 enum SellerStatus {
@@ -124,8 +126,7 @@ model Shop {
   seller      Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   product Product[]
   sellerShipping SellerShipping[]
-
-
+  OrderItem OrderItem[]
 }
 
 
@@ -332,20 +333,78 @@ model ProductReviewReply {
 model Order {
   id             String           @id @default(cuid())
   buyerId        String
+  sellerId       String
   shopId         String
+  cartId         String
+  addressId      String
+  carrierId      String?
+
+  items          OrderItem[]
+
   totalAmount    Float
+  shippingFee    Float
+  discount       Float
   currency       String
+
   paymentStatus  OrderPaymentStatus
   paymentMethod  String
   orderStatus    OrderStatus
+
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  items          OrderItem[]
-  eventRecords   OrderEventRecord[]
+  
+  eventRecords   OrderEventRecord[] 
   attributes     Json
 
-  cart Cart[]
+  remark         String?  @db.Text
+
+  // Relations
+  cart           Cart?            @relation("OrderToCart")
+  buyer          Buyer?           @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller         Seller?          @relation("SellerOrders", fields: [sellerId], references: [id])
+  orderAddress   OrderAddress?    @relation("OrderToOrderAddress")
+  orderCarrier OrderCarrier?      @relation("OrderToCarrier")
 }
+
+
+model OrderAddress {
+  id          String  @id @default(cuid())
+  buyerId     String  
+  orderId     String  @unique
+  fullName    String
+  phoneNumber String?
+  line1       String
+  line2       String?
+  city        String
+  state       String?
+  postalCode  String
+  country     String
+
+  // Joining Table
+  order       Order   @relation("OrderToOrderAddress", fields: [orderId], references: [id], onDelete: Cascade)
+  buyer       Buyer   @relation("OrderToBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+}
+
+model OrderCarrier {
+  id             String   @id @default(cuid())
+  orderId        String   @unique
+  carrierName    String          
+  serviceType    String?         
+  trackingNumber String?        
+  trackingUrl    String?     
+  shippedAt      DateTime?        
+  estimatedDelivery DateTime?     
+  deliveredAt    DateTime?  
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt     
+
+  remark         String? @db.Text // Any additional notes (optional)
+
+  // Relationship
+  order Order @relation("OrderToCarrier",fields: [orderId], references: [id], onDelete: Cascade)
+}
+
 enum OrderPaymentStatus {
   PENDING
   SUCCESS
@@ -363,21 +422,29 @@ enum OrderStatus {
 model OrderItem {
   id             String   @id @default(cuid())
   orderId        String
+  shopId         String
   productId      String
   varientId      String
   productName    String
   quantity       Int
   price          Float
 
+  shippingFee    Float
+  discount       Float
+
   refundedQuantity Int     @default(0)
   refundedAmount   Float   @default(0)
   refundStatus     OrderRefundStatus @default(NONE)
+
+  attributes     Json
+  remark         String?  @db.Text
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Joining Table
   order          Order    @relation(fields: [orderId], references: [id],onDelete: Cascade)
+  shop           Shop     @relation(fields: [shopId], references: [id],onDelete: Cascade)
 }
 
 
@@ -414,6 +481,8 @@ enum OrderEventRecordType {
 
 
 
+
+
 /************************************************************
  *                        CART MODELS                      *
  ************************************************************/
@@ -421,7 +490,7 @@ model Cart {
   id         String     @id @default(cuid())
   buyerId    String
   isCheckout Boolean    @default(false)
-  orderId    String?    
+  orderId    String?     @unique
   createdAt  DateTime   @default(now())
   updatedAt  DateTime?  @updatedAt
 
@@ -430,7 +499,7 @@ model Cart {
   @@index([buyerId])
 
   // Joining Table
-  order          Order?   @relation(fields: [orderId], references: [id],onDelete: Cascade)
+  order          Order?   @relation("OrderToCart",fields: [orderId], references: [id],onDelete: Cascade)
 }
 
 model CartItem {
