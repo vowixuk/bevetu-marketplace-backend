@@ -152,6 +152,15 @@ export class OrderRepository {
     ) as Order;
   }
 
+  async findOne(id: string): Promise<Order> {
+    return mapPrismaOrderToDomain(
+      await this.prisma.order.findUnique({
+        where: { id },
+        include: { items: true, eventRecords: true, orderAddress: true },
+      }),
+    ) as Order;
+  }
+
   async update(id: string, order: Order) {
     const prismaOrder = await this.prisma.order.update({
       where: {

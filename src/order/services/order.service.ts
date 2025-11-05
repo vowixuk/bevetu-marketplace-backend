@@ -206,16 +206,8 @@ export class OrderService {
    * It does NOT verify whether the buyer or seller actually owns the order.
    * Intended for internal use only.
    */
-  async update(
-    orderId: string,
-    buyerId: string,
-    updateDto: UpdateOrderDto,
-  ): Promise<Order> {
-    const order = await this.orderRepository.buyerFindOneIfOwned(
-      orderId,
-      buyerId,
-    );
-
+  async update(orderId: string, updateDto: UpdateOrderDto): Promise<Order> {
+    const order = await this.orderRepository.findOne(orderId);
     return this.orderRepository.update(orderId, {
       ...order,
       ...updateDto,
