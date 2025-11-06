@@ -4,17 +4,16 @@ import { CartService } from '../services/cart.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Product } from 'src/product/entities/product.entity';
 import { CartItem } from '../entities/cart-item.entity';
-import { Cart } from '../entities/cart.entity';
 
 @Injectable()
-export class CheckItemsAvailability {
+export class CalculateShippingFeeUseCase {
   constructor(
     private productService: ProductService,
     private cartItemService: CartItemService,
     private cartService: CartService,
   ) {}
 
-  async execute(buyerId: string, cartId: string): Promise<Cart> {
+  async execute(buyerId: string, cartId: string): Promise<number> {
     /* Step 1 – Retrieve all items in the cart */
     const cart = await this.cartService.findOneIfOwned(buyerId, cartId);
 
@@ -68,7 +67,7 @@ export class CheckItemsAvailability {
       await this.cartItemService.updateMany(cartItemsToUpdate);
     }
 
-    return (await this.cartService.findOneIfOwned(buyerId, cartId)) as Cart;
+    return 0;
   }
 
   checkProductAvailability(product: Product): {

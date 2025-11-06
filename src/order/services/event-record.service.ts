@@ -13,14 +13,11 @@ export class OrderEventRecordService {
   ) {}
 
   async create<T extends EventRecordType>(
-    orderId: string,
     createDto: CreateOrderEventRecordDto<T>,
   ): Promise<OrderEventRecord<T>> {
     const record = new OrderEventRecord<T>({
       id: '',
-      orderId,
-      type: createDto.type,
-      metadata: createDto.metadata ?? null,
+      ...createDto,
       createdAt: new Date(),
     });
 

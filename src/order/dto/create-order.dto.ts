@@ -23,8 +23,8 @@ export class CreateOrderDto {
   @IsString()
   cartId: string;
 
-  @IsString()
-  addressId: string;
+  // @IsString()
+  // addressId: string;
 
   @IsOptional()
   @IsString()

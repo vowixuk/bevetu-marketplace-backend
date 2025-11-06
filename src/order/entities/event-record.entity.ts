@@ -5,6 +5,15 @@ export type MetadataSchema = {
     paymentMethod: string;
     itemCount: number;
   };
+  PAYMENT_SUCCESS: {
+    totalAmount: number;
+    currency: string;
+    transactionNo: string;
+    invoiceUrl: string;
+  };
+  PAYMENT_FAIL: {
+    reason: string;
+  };
   PROCESSING: {
     processingBy?: string;
     notes?: string;

@@ -17,10 +17,16 @@ export class AfterPaymentSuccessUseCase {
 
   async execute(orderId: string) {
     /**
-     * step 1 - fetch the order record and update status
+     * step 1 - fetch the order record
      */
     /**
-     * Step 4 – Create the order address record.
+     * Step 2 – Update order status to 'SUCCESS'
+     */
+    /**
+     * Step 3 – update cart's `orderId` and `unchecked` to false
+     */
+    /**
+     * Step 4 – update order event record 'PAYMENT_SUCCESS'
      */
   }
 }

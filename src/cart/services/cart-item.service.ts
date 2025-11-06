@@ -39,7 +39,7 @@ export class CartItemService {
   }
 
   /**
-   * Create a new cart item
+   * Create a new cart item (add into cart)
    * Make sure the cart belongs to this user before create cart item!
    */
   async createIfOwned(
@@ -62,5 +62,14 @@ export class CartItemService {
     itemId: string,
   ): Promise<CartItem> {
     return this.cartItemRepository.removeIfOwned(buyerId, cartId, itemId);
+  }
+
+  /**
+   * Update multiple cart items.
+   * ⚠️ Internal use only — No checking the owner of the cart.
+   * not intended for public use.
+   */
+  async updateMany(cartItems: CartItem[]) {
+    await this.cartItemRepository.updateMany(cartItems);
   }
 }

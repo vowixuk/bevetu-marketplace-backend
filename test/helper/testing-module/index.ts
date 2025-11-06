@@ -45,8 +45,6 @@ export { CartItemService } from '../../../src/cart/services/cart-item.service';
 export { CartItemRepository } from '../../../src/cart/repositories/cart-item.repository';
 export { CheckItemsAvailability } from '../../../src/cart/use-cases/check-items-availability.useCase';
 
-
-
 export { OrderService } from '../../../src/order/services/order.service';
 export { OrderEventRecordRepository } from '../../../src/order/repositories/event-record.repository';
 export { OrderAddressRepository } from '../../../src/order/repositories/order-address.repository';

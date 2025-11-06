@@ -56,6 +56,23 @@ export class CartItemRepository {
     ) as CartItem;
   }
 
+  async updateMany(items: CartItem[]) {
+    await Promise.all(
+      items.map((item) =>
+        this.prisma.cartItem.update({
+          where: { id: item.id },
+          data: {
+            productName: item.productName,
+            quantity: item.quantity,
+            price: item.price,
+            available: item.available,
+            unavailableReason: item.unavailableReason,
+          },
+        }),
+      ),
+    );
+  }
+
   async createIfOwned(buyerId: string, item: CartItem): Promise<CartItem> {
     const cart = await this.prisma.cart.findUnique({
       where: {

@@ -82,7 +82,7 @@ export function mapPrismaCartToDomain(
 
   return new Cart({
     id: prismaCart.id,
-    buyerId: prismaCart.buyerId as string,
+    buyerId: prismaCart.buyerId,
     isCheckout: prismaCart.isCheckout,
     orderId: prismaCart.orderId ?? undefined,
     createdAt: prismaCart.createdAt,

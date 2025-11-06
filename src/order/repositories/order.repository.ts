@@ -46,7 +46,6 @@ export class OrderRepository {
 
     return mapPrismaOrderToDomain(prismaOrder) as Order;
   }
-
   /**
    *  Seller side
    */
