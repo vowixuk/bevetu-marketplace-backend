@@ -36,7 +36,8 @@ export class ProductRepository {
           variants: product.variants ?? [],
           discount: product.discount ?? [],
           categories: product.categories,
-          createdAt: product.createdAt ?? new Date(),
+          dimensions: product.dimensions ?? undefined,
+          // createdAt: product.createdAt ?? new Date(),
         },
       }),
     ) as Product;
@@ -140,6 +141,7 @@ export class ProductRepository {
           discount: product.discount,
           categories: product.categories,
           shippingProfileId: product.shippingProfileId,
+          dimensions: product.dimensions,
           updatedAt: new Date(),
         },
       }),
@@ -353,6 +355,8 @@ export function mapPrismaProductToDomain(
     categories: prismaProduct.categories as Categories, // JSON -> TypeScript type
     createdAt: prismaProduct.createdAt,
     updatedAt: prismaProduct.updatedAt,
+    dimensions:
+      (prismaProduct.dimensions as Product['dimensions']) ?? undefined,
     shippingProfileId: prismaProduct.shippingProfileId ?? undefined,
   });
 }

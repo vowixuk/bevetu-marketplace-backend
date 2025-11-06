@@ -15,6 +15,6 @@ export class SellerShipping {
 }
 
 export type FreeShippingOption = {
-  freeShippingThresholdAmount: string;
+  freeShippingThresholdAmount: number;
   currency: string;
 };

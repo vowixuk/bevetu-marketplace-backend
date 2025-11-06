@@ -7,9 +7,10 @@ export type MetadataSchema = {
   };
   PAYMENT_SUCCESS: {
     totalAmount: number;
+    discountAmount: number;
     currency: string;
-    transactionNo: string;
-    invoiceUrl: string;
+    transactionNo?: string;
+    invoiceUrl?: string;
   };
   PAYMENT_FAIL: {
     reason: string;

@@ -44,6 +44,15 @@ export class SellerShippingRepository {
     return mapPrismaSellerShippingToDomain(shipping);
   }
 
+  async findByShopIds(shopIds: string[]): Promise<SellerShipping[]> {
+    const shippings = await this.prisma.sellerShipping.findMany({
+      where: { shopId: { in: shopIds } },
+      include: { shippingProfiles: true },
+    });
+
+    return shippings.map(mapPrismaSellerShippingToDomain) as SellerShipping[];
+  }
+
   async update(shipping: SellerShipping): Promise<SellerShipping> {
     const prismaShipping = await this.prisma.sellerShipping.update({
       where: { id: shipping.id },
@@ -89,6 +98,7 @@ export function mapPrismaSellerShippingToDomain(
     createdAt: prismaShipping.createdAt,
     updatedAt: prismaShipping.updatedAt ?? undefined,
     shippingProfiles:
-      prismaShipping.shippingProfiles as unknown as SellerShipping['shippingProfiles'],
+      (prismaShipping.shippingProfiles as SellerShipping['shippingProfiles']) ??
+      [],
   });
 }

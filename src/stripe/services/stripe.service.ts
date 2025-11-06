@@ -71,6 +71,94 @@ export class StripeService {
   /**/
 
   /* *********************************************************************
+   *          -----  Buyer Checkout -----
+   * The following methods are for buyer checkout use
+   * *********************************************************************/
+
+
+  async createCheckoutSession({
+    items,
+    shippingFee,
+    currency = 'GBP',
+    successUrl,
+    cancelUrl,
+    orderId,
+    buyerId,
+    promotionCode,
+  }: {
+    items: {
+      name: string;
+      unitAmount: number;
+      quantity: number;
+      shopId: string;
+    }[];
+    shippingFee: number;
+    currency?: string;
+    successUrl: string;
+    cancelUrl: string;
+    orderId: string;
+    buyerId: string;
+    promotionCode? :string;
+  }): Promise<Stripe.Response<Stripe.Checkout.Session>> {
+    try {
+     
+      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
+        (item) => ({
+          price_data: {
+            currency,
+            product_data: {
+               name: item.name ,
+               metadata: {
+                shopId: item.shopId, 
+              },
+            },
+            unit_amount: item.unitAmount, 
+          },
+          quantity: item.quantity,
+        })
+      );
+
+      // Add shipping fee as a separate line item
+      if (shippingFee > 0) {
+        lineItems.push({
+          price_data: {
+            currency,
+            product_data: { name: 'Shipping Fee' },
+            unit_amount: shippingFee,
+          },
+          quantity: 1,
+        });
+      }
+
+
+      const session = await this.stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: lineItems,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        discounts: promotionCode ? [{ promotion_code: promotionCode }] : undefined,
+        metadata: {
+          orderId: orderId,     
+          buyerId: buyerId,     
+        },
+      });
+
+      return session;
+    } catch (error) {
+      console.error('Stripe checkout session error:', error);
+      throw new Error('Failed to create Stripe Checkout session');
+    }
+  }
+}
+  /* (End) ----- Buyer Checkout----- (End) */
+  /**/
+  /**/
+  /**/
+  /**/
+  /**/
+
+  /* *********************************************************************
    *                   ----- Subscription Management -----
    * The following methods are for seller onboarding use
    * *********************************************************************/

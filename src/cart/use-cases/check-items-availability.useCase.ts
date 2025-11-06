@@ -7,7 +7,7 @@ import { CartItem } from '../entities/cart-item.entity';
 import { Cart } from '../entities/cart.entity';
 
 @Injectable()
-export class CheckItemsAvailability {
+export class CheckItemsAvailabilityUseCase {
   constructor(
     private productService: ProductService,
     private cartItemService: CartItemService,

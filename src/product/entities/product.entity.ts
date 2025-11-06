@@ -25,6 +25,13 @@ export type Categories = {
   product: ProductType;
 };
 
+export type Dimensions = {
+  weight?: number; // in g
+  height?: number; // in mm
+  width?: number; // in mm
+  depth?: number; // in mm
+};
+
 export class Product {
   id: string;
   shopId: string;
@@ -57,6 +64,8 @@ export class Product {
   categories: Categories;
 
   shippingProfileId?: string;
+
+  dimensions?: Dimensions;
 
   constructor(
     init: Omit<Product, OptionalProperties<Product>> &

@@ -43,7 +43,7 @@ export { CartService } from '../../../src/cart/services/cart.service';
 export { CartRepository } from '../../../src/cart/repositories/cart.repository';
 export { CartItemService } from '../../../src/cart/services/cart-item.service';
 export { CartItemRepository } from '../../../src/cart/repositories/cart-item.repository';
-export { CheckItemsAvailability } from '../../../src/cart/use-cases/check-items-availability.useCase';
+export { CheckItemsAvailabilityUseCase } from '../../../src/cart/use-cases/check-items-availability.useCase';
 
 export { OrderService } from '../../../src/order/services/order.service';
 export { OrderEventRecordRepository } from '../../../src/order/repositories/event-record.repository';

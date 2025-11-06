@@ -103,6 +103,18 @@ export class SellerShippingProfileRepository {
     });
     return count > 0;
   }
+
+  async findManyByIds(ids: string[]): Promise<SellerShippingProfile[]> {
+    const profiles = await this.prisma.sellerShippingProfile.findMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+
+    return profiles.map(
+      mapPrismaSellerShippingProfileToDomain,
+    ) as SellerShippingProfile[];
+  }
 }
 
 export function mapPrismaSellerShippingProfileToDomain(

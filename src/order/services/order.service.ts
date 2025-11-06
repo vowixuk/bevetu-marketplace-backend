@@ -215,6 +215,15 @@ export class OrderService {
   }
 
   /**
+   * ⚠️ Warning: Do NOT expose this update method publicly.
+   * It does NOT verify whether the buyer or seller actually owns the order.
+   * Intended for internal use only.
+   */
+  async fineOne(orderId: string): Promise<Order> {
+    return await this.orderRepository.findOne(orderId);
+  }
+
+  /**
    * ⚠️ Warning: TESTING USE ONLY
    * Do NOT expose this update method publicly.
    * It donly be used in testing for remove testing record

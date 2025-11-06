@@ -54,7 +54,7 @@ export class ShopService {
    * Returns only basic shop information and excludes sensitive fields
    * (e.g., sellerId, updatedAt, deletedAt, website).
    */
-  async findShopsBasicInfoByIds(shipId: string[]): Promise<
+  async findShopsBasicInfoByIds(shipIds: string[]): Promise<
     {
       id: string;
       name: string;
@@ -63,7 +63,8 @@ export class ShopService {
       shopUrl: string;
     }[]
   > {
-    const shops = await this.shopRepository.findAllByIds(shipId);
+    const uniqueIds = Array.from(new Set(shipIds));
+    const shops = await this.shopRepository.findAllByIds(uniqueIds);
     return shops
       .filter((shop) => !shop.deletedAt)
       .map(

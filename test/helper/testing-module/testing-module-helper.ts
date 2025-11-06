@@ -54,7 +54,7 @@ import {
   CartRepository,
   CartItemService,
   CartItemRepository,
-  CheckItemsAvailability,
+  CheckItemsAvailabilityUseCase,
 } from './index';
 
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
@@ -98,7 +98,7 @@ export type ServicesType = {
   cartRepository: CartRepository;
   cartItemService: CartItemService;
   cartItemRepository: CartItemRepository;
-  checkItemsAvailability: CheckItemsAvailability;
+  CheckItemsAvailabilityUseCase: CheckItemsAvailabilityUseCase;
 };
 export async function testTestingMoudleHelper(): Promise<{
   module: TestingModule;
@@ -169,7 +169,7 @@ export async function testTestingMoudleHelper(): Promise<{
       CartRepository,
       CartItemService,
       CartItemRepository,
-      CheckItemsAvailability,
+      CheckItemsAvailabilityUseCase,
     ],
   }).compile();
 
@@ -265,8 +265,8 @@ export async function testTestingMoudleHelper(): Promise<{
 
       cartItemRepository: module.get<CartItemRepository>(CartItemRepository),
 
-      checkItemsAvailability: module.get<CheckItemsAvailability>(
-        CheckItemsAvailability,
+      CheckItemsAvailabilityUseCase: module.get<CheckItemsAvailabilityUseCase>(
+        CheckItemsAvailabilityUseCase,
       ),
     },
   };

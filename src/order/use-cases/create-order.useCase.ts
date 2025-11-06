@@ -3,7 +3,6 @@ import { OrderEventRecordService } from '../services/event-record.service';
 import { OrderAddressService } from '../services/order-address.service';
 import { OrderItemService } from '../services/order-item.service';
 import { OrderService } from '../services/order.service';
-import { CartService } from 'src/cart/services/cart.service';
 import { StripeService } from 'test/helper/testing-module';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { CalculateShippingFeeUseCase } from '../../cart/use-cases/calculate-shipping-fee.useCase';
@@ -11,6 +10,8 @@ import { OrderPaymentStatus, OrderStatus } from '../entities/order.entity';
 import { CreateOrderItemDto } from '../dto/create-order-item.dto';
 import { CreateOrderAddressDto } from '../dto/create-order-address.dto';
 import { CreateOrderEventRecordDto } from '../dto/create-event-record.dto';
+import { UpdateOrderDto } from '../dto/update-order.dto';
+import { CheckItemsAvailabilityUseCase } from '../../cart/use-cases/check-items-availability.useCase';
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -19,20 +20,24 @@ export class CreateOrderUseCase {
     private orderAddressService: OrderAddressService,
     private orderItemService: OrderItemService,
     private orderService: OrderService,
-    private cartService: CartService,
     private stripeService: StripeService,
     private calculateShippingFeeUseCase: CalculateShippingFeeUseCase,
+    private checkItemsAvailabilityUseCase: CheckItemsAvailabilityUseCase,
   ) {}
 
   async execute(
     buyerId: string,
     cartId: string,
     createOrderAddressDto: CreateOrderAddressDto,
+    promotionCode?: string,
   ) {
     /**
-     * step 1 - fetch the cart item out
+     * step 1 - fetch the cart item out with CheckItemsAvailabilityUseCase to make sure all the product are up to date
      */
-    const cart = await this.cartService.findOneIfOwned(buyerId, cartId);
+    const cart = await this.checkItemsAvailabilityUseCase.execute(
+      buyerId,
+      cartId,
+    );
 
     if (!cart) {
       throw new BadRequestException('Cart not found');
@@ -70,19 +75,36 @@ export class CreateOrderUseCase {
     /**
      * Step 3 – Create the associated order items.
      */
-    const createOrderItemDtos = cart.items.map((item) => {
-      return Object.assign(new CreateOrderItemDto(), {
-        refundStatus: 'None',
-        discount: 0,
-        shippingFee: 0,
-        price: 0,
+
+    const lineItemForStripeCheckout: {
+      name: string;
+      unitAmount: number;
+      quantity: number;
+      shopId: string;
+    }[] = [];
+    const createOrderItemDtos: CreateOrderItemDto[] = [];
+    for (const item of cart.items) {
+      createOrderItemDtos.push(
+        Object.assign(new CreateOrderItemDto(), {
+          refundStatus: 'None',
+          discount: 0,
+          shippingFee: 0,
+          price: item.price,
+          quantity: item.quantity,
+          productName: item.productName,
+          productId: item.productId,
+          shopId: item.shopId,
+          orderId: order.id,
+        }),
+      );
+
+      lineItemForStripeCheckout.push({
+        name: item.productName,
+        unitAmount: item.price * 100,
         quantity: item.quantity,
-        productName: item.productName,
-        productId: item.productId,
         shopId: item.shopId,
-        orderId: order.id,
       });
-    });
+    }
 
     await this.orderItemService.createMany(createOrderItemDtos);
 
@@ -111,5 +133,28 @@ export class CreateOrderUseCase {
     /**
      * Step 6 – redirect to Stripe payment page
      */
+    const { url, id: stripeSessionId } =
+      await this.stripeService.createCheckoutSession({
+        items: lineItemForStripeCheckout,
+        shippingFee: shippingFee,
+        currency: 'GBP',
+        successUrl: process.env.BUYER_CHECKOUT_SUCCESS_URL || '',
+        cancelUrl: process.env.BUYER_CHECKOUT_CANCEL_URL || '',
+        orderId: order.id,
+        buyerId,
+        promotionCode,
+      });
+
+    /**
+     *  Step 7 - save the session id
+     */
+    await this.orderService.update(
+      order.id,
+      Object.assign(new UpdateOrderDto(), {
+        stripeSessionId,
+      }),
+    );
+
+    return url;
   }
 }

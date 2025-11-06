@@ -277,6 +277,7 @@ model Product {
   variants       Json
   discount       Json
   categories     Json
+  dimensions      Json?
 
 
 

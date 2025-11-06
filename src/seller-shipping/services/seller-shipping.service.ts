@@ -82,6 +82,16 @@ export class SellerShippingService {
   }
 
   /**
+   * Internal-use only — not intended for public access.
+   * This method does not verify who triggeres the function
+   * It is meant for admin-level operations
+   */
+  async findByShopIds(shopIds: string[]): Promise<SellerShipping[]> {
+    const uniqueShopIds = Array.from(new Set(shopIds));
+    return await this.sellerShippingRepository.findByShopIds(uniqueShopIds);
+  }
+
+  /**
    * Update a seller shipping record
    */
   async update(

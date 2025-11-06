@@ -123,4 +123,13 @@ export class SellerShippingProfileService {
     const profile = await this.findOne(id, sellerId, shippingId);
     return this.sellerShippingProfileRepository.remove(profile.id);
   }
+
+  /**
+   * ⚠️ ing: Do NOT expose this method publicly.
+   * It does NOT verify who triggers this function
+   * Intended for internal system use only.
+   */
+  async findByIds(ids: string[]) {
+    return this.sellerShippingProfileRepository.findManyByIds(ids);
+  }
 }

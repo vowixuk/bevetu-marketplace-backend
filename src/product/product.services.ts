@@ -36,6 +36,7 @@ export class ProductService {
       shippingProfileId: createDto.shippingProfileId ?? undefined,
       variants: createDto.variants ?? [],
       discount: createDto.discount ?? [],
+      dimensions: createDto.dimensions ?? undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

@@ -35,5 +35,16 @@ import { CartModule } from 'src/cart/cart.module';
     CreateOrderUseCase,
     UpdateProductUseCase,
   ],
+  exports: [
+    OrderService,
+    OrderAddressService,
+    OrderItemService,
+    OrderEventRecordService,
+    OrderItemService,
+    AfterPaymentSuccessUseCase,
+    AfterPaymentFailUseCase,
+    CreateOrderUseCase,
+    UpdateProductUseCase,
+  ],
 })
 export class OrderModule {}

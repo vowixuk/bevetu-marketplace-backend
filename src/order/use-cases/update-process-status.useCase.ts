@@ -1,9 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OrderEventRecordService } from '../services/event-record.service';
 import { OrderAddressService } from '../services/order-address.service';
 import { OrderItemService } from '../services/order-item.service';
-import { OrderService } from '../order.service';
-import { CartService } from 'src/cart/services/cart.service';
+import { OrderService } from '../services/order.service';
+import { CartService } from '../../cart/services/cart.service';
 import { OrderStatus } from '../entities/order.entity';
 
 @Injectable()

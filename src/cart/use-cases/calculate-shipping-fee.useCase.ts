@@ -1,9 +1,31 @@
 import { ProductService } from 'src/product/product.services';
 import { CartItemService } from '../services/cart-item.service';
 import { CartService } from '../services/cart.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Product } from 'src/product/entities/product.entity';
-import { CartItem } from '../entities/cart-item.entity';
+import { Cart } from '../entities/cart.entity';
+import { SellerShippingProfileService } from '../../seller-shipping/services/seller-shipping-profile.service';
+
+import { SellerShippingProfile } from '../../seller-shipping/entities/seller-shipping-profile.entity';
+import { SellerShippingService } from '../../seller-shipping/services/seller-shipping.service';
+import { SellerShipping } from '../../seller-shipping/entities/seller-shipping.entity';
+
+export type ShippingCalculationReturn = {
+  cartTotalShippingFee: number;
+  shopShippingFee: Record<
+    string,
+    {
+      shipping: SellerShipping;
+      products: {
+        product: { id: string; name: string };
+        qty: number;
+        shippingFee: number;
+      }[];
+      totalShippingFee: number;
+      freeShippingAmount: number | undefined;
+    }
+  >;
+};
 
 @Injectable()
 export class CalculateShippingFeeUseCase {
@@ -11,80 +33,182 @@ export class CalculateShippingFeeUseCase {
     private productService: ProductService,
     private cartItemService: CartItemService,
     private cartService: CartService,
+    private sellerShippingProfileService: SellerShippingProfileService,
+    private sellerShippingService: SellerShippingService,
   ) {}
 
-  async execute(buyerId: string, cartId: string): Promise<number> {
-    /* Step 1 – Retrieve all items in the cart */
-    const cart = await this.cartService.findOneIfOwned(buyerId, cartId);
-
-    if (!cart) {
-      throw new NotFoundException('Cart not found');
-    }
+  async execute(cart: Cart): Promise<ShippingCalculationReturn> {
     /*
-     * Step 2 – Validate each cart item against the product data:
-     *   - Remove items that are out of stock or no longer available for sale
+     * Step 1 – Find all Products in cart
+     */
+    const products = await this.productService.findByIds(
+      cart.items.map((item) => item.productId),
+    );
+
+    const productIdToQtyMapping = Object.fromEntries(
+      cart.items.map((item) => [item.productId, item.quantity]),
+    );
+
+    /*
+     * Step 2 – Find Shipping Profile of  product
+     */
+    const shippingProfilles = await this.sellerShippingProfileService.findByIds(
+      products.map((product) => product.shippingProfileId) as string[],
+    );
+
+    /**
+     * Step 3 – Merge the shipping profile into the product item
      */
 
-    const productIdItemIdMapping = Object.fromEntries(
-      cart.items.map((item) => [item.productId, item]),
+    /*
+     * Step 4a – profile Id to profit object mapping
+     * {'profileId': <Profile Object>}
+     * So that can get the object by its id directly
+     */
+    const IdProfitMapping = Object.fromEntries(
+      shippingProfilles.map((profille) => [profille.id, profille]),
+    );
+    const productWithShippingProfileArray = products.map((product) => {
+      return {
+        ...product,
+        shippingProfile: IdProfitMapping[product.shippingProfileId as string],
+      };
+    });
+
+    /**
+     *  Step 4 – Find the shipping policy of the shop
+     */
+    const shippings = await this.sellerShippingService.findByShopIds(
+      cart.items.map((item) => item.shopId),
+    );
+    const shopIdShippingMapping = Object.fromEntries(
+      shippings.map((shipping) => [shipping.shopId, shipping]),
     );
 
-    const products = await this.productService.findByIds(
-      Object.keys(productIdItemIdMapping),
+    /**
+     * Step 5 – Re-Group the products by shop id :
+     * {
+     *   'shop-Id-1':{
+     *      shipping: <SellerShipping>
+     *      products: [
+     *          {
+     *              product:  <Product & { shippingProfile: <SellerShippingProfile>} >,
+     *              qty: number,
+     *              shippingFee : number,
+     *
+     *          },
+     *          {
+     *              product:  <Product & { shippingProfile: <SellerShippingProfile>} >,
+     *              qty: number,
+     *              shippingFee : number
+     *          }
+     *      ],
+     *      totalShippingFee: number
+     *   },
+     *  'shop-Id-2':{
+     *      shipping: <SellerShipping>
+     *      products: [
+     *        {
+     *          product:  <Product> & { shippingProfile: <SellerShippingProfile>
+     *          qty: number,
+     *          shippingFee : number
+     *        }
+     *      ],
+     *      totalShippingFee: number
+     *   };
+     * }
+     */
+    const shopShippingFee = productWithShippingProfileArray.reduce(
+      (acc, product) => {
+        const shopId = product.shopId;
+
+        const qty = productIdToQtyMapping[product.id];
+        const shippingFee = this.calculateShippingFee({
+          profile: product.shippingProfile,
+          qty,
+          dimensions: product.dimensions!,
+        });
+
+        const shipping = shopIdShippingMapping[shopId];
+
+        // if this shop not yet exists in accumulator, create it
+        if (!acc[shopId]) {
+          acc[shopId] = {
+            shipping,
+            products: [],
+            totalShippingFee: 0,
+            freeShippingAmount: shipping.freeShippingOption
+              ? shipping.freeShippingOption.freeShippingThresholdAmount
+              : undefined,
+          };
+        }
+
+        acc[shopId].products.push({
+          product: { id: product.id, name: product.name },
+          qty,
+          shippingFee,
+        });
+        acc[shopId].totalShippingFee += shippingFee;
+
+        // Apply free shipping threshold (if total exceeds threshold)
+        const threshold = acc[shopId].freeShippingAmount;
+        if (threshold && acc[shopId].totalShippingFee >= threshold) {
+          acc[shopId].totalShippingFee = 0;
+        }
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          shipping: SellerShipping;
+          products: {
+            product: { id: string; name: string };
+            qty: number;
+            shippingFee: number;
+          }[];
+          totalShippingFee: number;
+          freeShippingAmount: number | undefined;
+        }
+      >,
     );
 
-    const cartItemsToUpdate: CartItem[] = [];
+    /*
+     * Step 7 – Calculate Total Shipping Fee for the Cart
+     */
+    const cartTotalShippingFee = Object.values(shopShippingFee).reduce(
+      (sum, shopData) => sum + shopData.totalShippingFee,
+      0,
+    );
 
-    for (const product of products) {
-      const { isAvailable, reason } = this.checkProductAvailability(product);
-
-      let updateRequired = false;
-      const cartItem = productIdItemIdMapping[product.id];
-
-      // Update the status of cart item
-      if (!isAvailable) {
-        cartItem.available = false;
-        cartItem.unavailableReason = reason;
-        updateRequired = true;
-      }
-
-      // Update the name and price
-      if (
-        product.name !== cartItem.productName ||
-        product.price !== cartItem.price
-      ) {
-        cartItem.productName = product.name;
-        cartItem.price = product.price;
-        updateRequired = true;
-      }
-
-      if (updateRequired) {
-        cartItemsToUpdate.push(cartItem);
-      }
-    }
-
-    if (cartItemsToUpdate.length > 0) {
-      await this.cartItemService.updateMany(cartItemsToUpdate);
-    }
-
-    return 0;
+    return { cartTotalShippingFee, shopShippingFee };
   }
 
-  checkProductAvailability(product: Product): {
-    isAvailable: boolean;
-    reason?: string;
-  } {
-    try {
-      if (!product.isApproved)
-        return { isAvailable: false, reason: 'Product offshelf' };
-      if (!product.onShelf)
-        return { isAvailable: false, reason: 'Product offshelf' };
-      if (product.stock === 0)
-        return { isAvailable: false, reason: 'Out of stock' };
+  calculateShippingFee({
+    profile,
+    qty,
+    dimensions,
+  }: {
+    profile: SellerShippingProfile;
+    qty: number;
+    dimensions: Product['dimensions'];
+  }): number {
+    if (!profile) return 0;
+    switch (profile.feeType) {
+      case 'flat':
+        return qty > 0 ? profile.feeAmount : 0;
 
-      return { isAvailable: true };
-    } catch {
-      return { isAvailable: false, reason: 'Product not found' };
+      case 'per_item':
+        return profile.feeAmount * qty;
+
+      case 'by_weight':
+        return dimensions!.weight! * qty * (profile.feeAmount ?? 0);
+
+      case 'free':
+        return 0;
+
+      default:
+        return 0;
     }
   }
 }

@@ -30,7 +30,7 @@ export class Order {
   updatedAt: Date = new Date();
 
   eventRecords: OrderEventRecord<EventRecordType>[];
-  attributes?: Record<string, any>;
+  attributes?: { stripeSessionId?: string } & Record<string, any>;
 
   remark?: string;
 
