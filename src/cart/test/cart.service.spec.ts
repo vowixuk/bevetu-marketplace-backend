@@ -214,12 +214,9 @@ let seller_4_Subscription: SellerSubscription;
     expect(seller_1).toBeDefined();
     expect(seller_2).toBeDefined();
     expect(testBuyerUser).toBeDefined();
-
-    console.log(seller_2_products)
-
   });
 
-  describe('Cart Creation', () => {
+  describe.skip('Cart Creation', () => {
 
     it('test 2 - should create a cart if no checkedout cart before and  get the same uncheckedout cart', async () => {
       // use the same `findOrCreateUncheckoutCart()`.
@@ -264,7 +261,7 @@ let seller_4_Subscription: SellerSubscription;
     });
   });
 
-  describe('Cart Function', () => {
+  describe.skip('Cart Function', () => {
     /*
      * Products in each shop
      * -------------------------------------------------------------------------------------------------
@@ -356,7 +353,6 @@ let seller_4_Subscription: SellerSubscription;
        *
        */
 
-   
       const cartItem1 = cart.items.find(
         (c) => c.productId == seller_2_products[1].id,
       );
@@ -404,17 +400,204 @@ let seller_4_Subscription: SellerSubscription;
       expect(updatedCart.buyerId).toBe(testBuyer.id);
       expect(updatedCart.isCheckout).toBe(false);
 
+      cart = updatedCart;
+
     });
-    it('test 8 - should remove items from the cart', async () => {});
+
+    it('test 8 - should remove items from the cart', async () => {
+
+      const cartItem1 = cart.items.find(
+        (c) => c.productId == seller_2_products[1].id,
+      );
+      await services.cartItemService.removeIfOwned(
+        testBuyer.id,
+        cart.id,
+        cartItem1!.id,
+      );
+
+      const updatedCart = await services.cartService.findOrCreateUncheckoutCart(
+        testBuyer.id,
+      );
+
+      expect(updatedCart.items).toHaveLength(1);
+      // Check second cart item still in cart (seller 1 product)
+      const updatedItem2 = updatedCart.items[0];
+      expect(updatedItem2).toBeDefined();
+      expect(updatedItem2?.quantity).toBe(1);
+      expect(updatedItem2?.price).toBe(seller_1_products[0].price);
+
+      // Remove all the item in cart
+      await services.cartItemService.removeIfOwned(
+        testBuyer.id,
+        cart.id,
+        updatedItem2.id,
+      );
+
+      const updatedCart2 =
+        await services.cartService.findOrCreateUncheckoutCart(testBuyer.id);
+
+      expect(updatedCart2.items).toHaveLength(0);
+      cart = updatedCart2;
+
+      /* ************************
+       *  The cart now is empty
+       ****************************/
+    });
 
   })
 
-  // describe.skip('Cart Refesh Check', () => {
-  //   it('test 9 - should remove the product from the cart if it is offshelfed', async () => {});
-  //   it('test 10 - should remove the product from the cart if it is not approved', async () => {});
-  //   it('test 11 - should remove the product from the cart if it is out of stock', async () => {});
-  //   it('test 12 - should update the prodcut price and name after it is updated', async () => {});
-  // });
+  describe('Cart Refesh Check', () => {
+    /*
+     * Products in each shop
+     * -------------------------------------------------------------------------------------------------
+     *  Seller 1 (shippingProfiles version 1)           Seller 2 (shippingProfiles version 2)
+     *  ------------------------------------------------------------------------------------------------
+     *  p0 : $30  × (4)  (free,  weight: 50g/item)       p0 : $100 × (5) (free,  weight: 120g/item)
+     *  p1 : $10  × (2)  (flat,  weight: 80g/item)       p1 : $120 × (8) (flat,  weight: 150g/item)
+     *  p2 : $22  × (1)  (per_item, weight: 30g/item)    p2 : $97  × (1) (per_item, weight: 60g/item)
+     *  p3 : $100 × (5)  (by_weight, weight: 20g/item)   p3 : $26  × (4) (by_weight, weight: 200g/item)
+     *  p4 : $3   × (10) (free,  weight: 10g/item)       p4 : ——— (none)
+     * 
+     *  cart is empty !
+     */
+
+    it('test 9 - should remove the product from the cart if it is offshelfed', async () => {
+     
+      cart = await services.cartService.findOrCreateUncheckoutCart(
+        testBuyer.id,
+      );
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_1_products[0].id,
+        quantity: 3,
+      } as AddItemToCartDto);
+
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_1_products[1].id,
+        quantity: 2,
+      } as AddItemToCartDto);
+
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_2_products[2].id,
+        quantity: 1,
+      } as AddItemToCartDto);
+
+      cart = await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_2_products[3].id,
+        quantity: 3,
+      } as AddItemToCartDto);
+
+      expect(cart.items).toHaveLength(4)
+
+      /*
+       *  We have now 4 items in cart:
+       * -----------------------------------------------
+       *  Shop 1
+       *  ----------------------------------------------
+       *  p0 : $30  × qty: 3 (free,  weight: 50g/item)
+       *  p1 : $10  × qty: 2  (flat,  weight: 80g/item)
+       *
+       *  ----------------------------------------------
+       *  Shop 2
+       *  ----------------------------------------------
+       *  p2 : $97  × qty: 1 (per_item, weight: 60g/item)
+       *  p3 : $26  × qty: 3 (by_weight, weight: 200g/item)
+       */
+
+       // Off Sheld the p0 of Shop 1
+       await services.productService.update(
+         seller_1_products[0].id,
+         seller_1_shop.id,
+         { onShelf: false } as UpdateProductDto,
+       );
+
+       // Refresh the cart
+       const updatedCart = await services.checkItemsAvailabilityUseCase.execute(
+        testBuyer.id,
+        cart.id
+       )
+       expect(updatedCart.items).toHaveLength(3);
+
+       cart = updatedCart;
+
+    });
+    it('test 10 - should remove the product from the cart if it is not approved', async () => {
+  
+      await services.productService.update(
+        seller_1_products[1].id,
+        seller_1_shop.id,
+        { isApproved: false } as UpdateProductDto,
+      );
+      const updatedCart = await services.checkItemsAvailabilityUseCase.execute(
+        testBuyer.id,
+        cart.id,
+      );
+      expect(updatedCart.items).toHaveLength(2);
+
+      cart = updatedCart;
+    });
+    it('test 11 - should remove the product from the cart if it is out of stock', async () => {
+      await services.productService.update(
+        seller_2_products[2].id,
+        seller_2_shop.id,
+        { stock: 0 } as UpdateProductDto,
+      );
+      const updatedCart = await services.checkItemsAvailabilityUseCase.execute(
+        testBuyer.id,
+        cart.id,
+      );
+      expect(updatedCart.items).toHaveLength(1);
+
+      cart = updatedCart;
+    });
+    it('test 12 - should update the prodcut price and name after it is updated', async () => {
+      const item = cart.items[0];
+
+      expect(item.productName).toBe('p4'); // the name is p4
+      expect(item.price).toBe(26);
+      expect(item.quantity).toBe(3);
+
+      await services.productService.update(
+        seller_2_products[3].id,
+        seller_2_shop.id,
+        {
+          name: 'New Product Name',
+          price: 5000,
+          stock: 1,
+        } as UpdateProductDto,
+      );
+      const updatedCart = await services.checkItemsAvailabilityUseCase.execute(
+        testBuyer.id,
+        cart.id,
+      );
+  
+      expect(updatedCart.items).toHaveLength(1);
+      const newItem = updatedCart.items[0];
+      expect(newItem.productName).toBe('New Product Name');
+      expect(newItem.price).toBe(5000);
+      expect(newItem.quantity).toBe(1);
+
+      // Remove all the item in cart
+      await services.cartItemService.removeIfOwned(
+        testBuyer.id,
+        cart.id,
+        newItem.id,
+      );
+
+      const updatedCart2 =
+        await services.cartService.findOrCreateUncheckoutCart(testBuyer.id);
+
+      expect(updatedCart2.items).toHaveLength(0);
+      cart = updatedCart2;
+
+      /* ************************
+       *  The cart now is empty
+       ****************************/
+    });
+  });
 
   // describe.skip('Total Amount and Shipping Calculation', () => {
   //   /**

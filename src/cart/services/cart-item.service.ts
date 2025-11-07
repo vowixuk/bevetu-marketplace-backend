@@ -72,4 +72,14 @@ export class CartItemService {
   async updateMany(cartItems: CartItem[]) {
     await this.cartItemRepository.updateMany(cartItems);
   }
+
+  /**
+   * Update multiple cart items.
+   * ⚠️ Internal use only — No checking the owner of the cart.
+   * not intended for public use.
+   */
+  async removeMany(ids: string[]) {
+    const uniqueIds = Array.from(new Set(ids));
+    await this.cartItemRepository.removeMany(uniqueIds);
+  }
 }

@@ -35,6 +35,7 @@ export class CheckItemsAvailabilityUseCase {
     );
 
     const cartItemsToUpdate: CartItem[] = [];
+    const cartItemIdsToRemove: string[] = [];
 
     for (const product of products) {
       const { isAvailable, reason } = this.checkProductAvailability(product);
@@ -46,7 +47,9 @@ export class CheckItemsAvailabilityUseCase {
       if (!isAvailable) {
         cartItem.available = false;
         cartItem.unavailableReason = reason;
-        updateRequired = true;
+        // updateRequired = true;
+        cartItemIdsToRemove.push(cartItem.id);
+        continue;
       }
 
       // Update the name and price
@@ -72,6 +75,14 @@ export class CheckItemsAvailabilityUseCase {
 
     if (cartItemsToUpdate.length > 0) {
       await this.cartItemService.updateMany(cartItemsToUpdate);
+    }
+
+    /**
+     * !!! Important change.
+     * Remove the unavilable items
+     */
+    if (cartItemIdsToRemove.length > 0) {
+      await this.cartItemService.removeMany(cartItemIdsToRemove);
     }
 
     return (await this.cartService.findOneIfOwned(buyerId, cartId)) as Cart;

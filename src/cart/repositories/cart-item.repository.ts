@@ -160,6 +160,16 @@ export class CartItemRepository {
       }),
     ) as CartItem;
   }
+
+  async removeMany(ids: string[]) {
+    await Promise.all(
+      ids.map((id) =>
+        this.prisma.cartItem.delete({
+          where: { id },
+        }),
+      ),
+    );
+  }
 }
 
 export function mapPrismaCartItemToDomain(
