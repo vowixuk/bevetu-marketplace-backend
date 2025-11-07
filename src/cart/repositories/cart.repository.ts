@@ -8,6 +8,7 @@ export class CartRepository {
   constructor(private readonly prisma: DatabaseService) {}
 
   async create(cart: Cart): Promise<Cart> {
+    console.log(cart, '<< cart in repo');
     return mapPrismaCartToDomain(
       await this.prisma.cart.create({
         data: {

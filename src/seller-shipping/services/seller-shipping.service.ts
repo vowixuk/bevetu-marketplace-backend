@@ -26,7 +26,8 @@ export class SellerShippingService {
       id: '',
       sellerId,
       shopId: createSellerShippingDto.shopId,
-      freeShippingOption: createSellerShippingDto.freeShippingOption,
+      freeShippingOption:
+        createSellerShippingDto.freeShippingOption ?? undefined,
       createdAt: new Date(),
     });
 

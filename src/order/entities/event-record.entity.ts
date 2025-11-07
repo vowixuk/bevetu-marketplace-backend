@@ -1,6 +1,9 @@
+import type { ShippingCalculationReturn } from '../../cart/use-cases/calculate-shipping-fee.useCase';
+
 export type MetadataSchema = {
   CREATE: {
     totalAmount: number;
+    shipping: ShippingCalculationReturn | object;
     currency: string;
     paymentMethod: string;
     itemCount: number;

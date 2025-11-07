@@ -30,6 +30,33 @@ export async function createTestUser_3(
   return await userService.create(createUserDto);
 }
 
+export async function createTestUser_4(
+  userService: UserService,
+): Promise<User> {
+  const createUserDto = new CreateUserDto();
+  createUserDto.email = 'testingUser4@bevetu.marketplace.com';
+  createUserDto.mainId = 'Testing_4_mainId';
+  return await userService.create(createUserDto);
+}
+
+export async function createTestUser_5(
+  userService: UserService,
+): Promise<User> {
+  const createUserDto = new CreateUserDto();
+  createUserDto.email = 'testingUser4@bevetu.marketplace.com';
+  createUserDto.mainId = 'Testing_4_mainId';
+  return await userService.create(createUserDto);
+}
+
+export async function createTestUser_6(
+  userService: UserService,
+): Promise<User> {
+  const createUserDto = new CreateUserDto();
+  createUserDto.email = 'testingUser4@bevetu.marketplace.com';
+  createUserDto.mainId = 'Testing_4_mainId';
+  return await userService.create(createUserDto);
+}
+
 export async function removeTestingUser(
   userService: UserService,
   testUserId: string,

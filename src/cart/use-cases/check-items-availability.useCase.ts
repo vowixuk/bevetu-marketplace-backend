@@ -1,8 +1,8 @@
-import { ProductService } from 'src/product/product.services';
+import { ProductService } from '../../product/product.services';
 import { CartItemService } from '../services/cart-item.service';
 import { CartService } from '../services/cart.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Product } from 'src/product/entities/product.entity';
+import { Product } from '../../product/entities/product.entity';
 import { CartItem } from '../entities/cart-item.entity';
 import { Cart } from '../entities/cart.entity';
 

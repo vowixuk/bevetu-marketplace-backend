@@ -53,6 +53,7 @@ model Buyer {
   BuyerStripeCustomerAccountMapping BuyerStripeCustomerAccountMapping?
   Order Order[] @relation("BuyerOrders")
   OrderAddress OrderAddress[] @relation("OrderToBuyer")
+  carts Cart[]
 }
 
 model BuyerStripeCustomerAccountMapping {
@@ -497,9 +498,10 @@ model Cart {
 
   items      CartItem[]
 
-  @@index([buyerId])
+  // @@index([buyerId])
 
   // Joining Table
+  buyer        Buyer @relation(fields: [buyerId], references: [id],onDelete: Cascade)
   order          Order?   @relation("OrderToCart",fields: [orderId], references: [id],onDelete: Cascade)
 }
 

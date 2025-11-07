@@ -13,6 +13,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import type { PetType, ProductType } from '../entities/category.vo';
+
 export class VariantDto {
   @ApiProperty({
     description: 'Unique identifier of the variant',
@@ -111,6 +112,28 @@ export class CategoriesDto {
   product: ProductType;
 }
 
+export class DimensionsDto {
+  @ApiPropertyOptional({ description: 'Weight in grams', example: 500 })
+  @IsOptional()
+  @IsNumber()
+  weight?: number;
+
+  @ApiPropertyOptional({ description: 'Height in millimeters', example: 200 })
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+
+  @ApiPropertyOptional({ description: 'Width in millimeters', example: 100 })
+  @IsOptional()
+  @IsNumber()
+  width?: number;
+
+  @ApiPropertyOptional({ description: 'Depth in millimeters', example: 50 })
+  @IsOptional()
+  @IsNumber()
+  depth?: number;
+}
+
 export class CreateProductDto {
   @ApiProperty({ description: 'Product name', example: 'Squeaky Dog Toy' })
   @IsString()
@@ -195,30 +218,7 @@ export class CreateProductDto {
   shippingProfileId?: string;
 
   @ApiPropertyOptional({ description: 'Product dimensions' })
-  @IsOptional()
   @ValidateNested()
   @Type(() => DimensionsDto) // Important for class-transformer
-  dimensions?: DimensionsDto;
-}
-
-export class DimensionsDto {
-  @ApiPropertyOptional({ description: 'Weight in grams', example: 500 })
-  @IsOptional()
-  @IsNumber()
-  weight?: number;
-
-  @ApiPropertyOptional({ description: 'Height in millimeters', example: 200 })
-  @IsOptional()
-  @IsNumber()
-  height?: number;
-
-  @ApiPropertyOptional({ description: 'Width in millimeters', example: 100 })
-  @IsOptional()
-  @IsNumber()
-  width?: number;
-
-  @ApiPropertyOptional({ description: 'Depth in millimeters', example: 50 })
-  @IsOptional()
-  @IsNumber()
-  depth?: number;
+  dimensions: DimensionsDto;
 }

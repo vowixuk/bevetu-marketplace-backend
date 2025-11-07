@@ -1,8 +1,6 @@
-import { ProductService } from 'src/product/product.services';
-import { CartItemService } from '../services/cart-item.service';
-import { CartService } from '../services/cart.service';
+import { ProductService } from '../../product/product.services';
 import { Injectable } from '@nestjs/common';
-import { Product } from 'src/product/entities/product.entity';
+import { Product } from '../../product/entities/product.entity';
 import { Cart } from '../entities/cart.entity';
 import { SellerShippingProfileService } from '../../seller-shipping/services/seller-shipping-profile.service';
 
@@ -31,8 +29,6 @@ export type ShippingCalculationReturn = {
 export class CalculateShippingFeeUseCase {
   constructor(
     private productService: ProductService,
-    private cartItemService: CartItemService,
-    private cartService: CartService,
     private sellerShippingProfileService: SellerShippingProfileService,
     private sellerShippingService: SellerShippingService,
   ) {}

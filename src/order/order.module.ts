@@ -12,7 +12,7 @@ import { AfterPaymentSuccessUseCase } from './use-cases/after-payment-success.us
 import { AfterPaymentFailUseCase } from './use-cases/after-payment-fail.useCase';
 import { CreateOrderUseCase } from './use-cases/create-order.useCase';
 import { StripeModule, UpdateProductUseCase } from 'test/helper/testing-module';
-import { CartModule } from 'src/cart/cart.module';
+import { CartModule } from '../cart/cart.module';
 // import { OrderController } from './order.controller';
 
 @Module({

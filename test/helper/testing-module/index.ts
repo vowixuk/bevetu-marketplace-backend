@@ -14,6 +14,7 @@ export { UserService } from '../../../src/user/user.service';
 
 export { BuyerRepository } from '../../../src/buyer/buyer.repository';
 export { ProductRepository } from '../../../src/product/product.repository';
+
 export { SellerRepository } from '../../../src/seller/seller.repository';
 export { SellerShippingRepository } from '../../../src/seller-shipping/repositories/seller-shipping.repository';
 export { SellerShippingProfileRepository } from '../../../src/seller-shipping/repositories/seller-shipping-profile.repository';
@@ -44,7 +45,7 @@ export { CartRepository } from '../../../src/cart/repositories/cart.repository';
 export { CartItemService } from '../../../src/cart/services/cart-item.service';
 export { CartItemRepository } from '../../../src/cart/repositories/cart-item.repository';
 export { CheckItemsAvailabilityUseCase } from '../../../src/cart/use-cases/check-items-availability.useCase';
-
+export { CalculateShippingFeeUseCase } from '../../../src/cart/use-cases/calculate-shipping-fee.useCase';
 export { OrderService } from '../../../src/order/services/order.service';
 export { OrderEventRecordRepository } from '../../../src/order/repositories/event-record.repository';
 export { OrderAddressRepository } from '../../../src/order/repositories/order-address.repository';

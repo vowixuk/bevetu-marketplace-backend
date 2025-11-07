@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OrderEventRecordService } from '../services/event-record.service';
 import { OrderService } from '../services/order.service';
-import { CartService } from 'src/cart/services/cart.service';
+import { CartService } from '../../cart/services/cart.service';
 import { UpdateOrderDto } from '../dto/update-order.dto';
 import { CreateOrderEventRecordDto } from '../dto/create-event-record.dto';
 @Injectable()

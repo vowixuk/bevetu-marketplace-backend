@@ -52,14 +52,14 @@ export class CartService {
   async setCheckoutDone(
     buyerId: string,
     cartId: string,
-    orderId: string,
+    orderId?: string,
   ): Promise<Cart> {
     const cart = await this.findOneIfOwned(buyerId, cartId);
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
     cart.isCheckout = true;
-    cart.orderId = orderId;
+    cart.orderId = orderId ?? undefined;
     return this.cartRepository.update(cart);
   }
 }

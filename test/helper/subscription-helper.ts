@@ -30,7 +30,7 @@ export async function testEnrollSubscription(
       stripeCustomerId,
       email,
       productCode,
-      null,
+      undefined,
     );
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();

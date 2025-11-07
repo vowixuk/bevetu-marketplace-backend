@@ -75,8 +75,7 @@ export class StripeService {
    * The following methods are for buyer checkout use
    * *********************************************************************/
 
-
-  async createCheckoutSession({
+  async createBuyerCheckoutSession({
     items,
     shippingFee,
     currency = 'GBP',
@@ -98,25 +97,23 @@ export class StripeService {
     cancelUrl: string;
     orderId: string;
     buyerId: string;
-    promotionCode? :string;
+    promotionCode?: string;
   }): Promise<Stripe.Response<Stripe.Checkout.Session>> {
     try {
-     
-      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
-        (item) => ({
+      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
+        items.map((item) => ({
           price_data: {
             currency,
             product_data: {
-               name: item.name ,
-               metadata: {
-                shopId: item.shopId, 
+              name: item.name,
+              metadata: {
+                shopId: item.shopId,
               },
             },
-            unit_amount: item.unitAmount, 
+            unit_amount: item.unitAmount,
           },
           quantity: item.quantity,
-        })
-      );
+        }));
 
       // Add shipping fee as a separate line item
       if (shippingFee > 0) {
@@ -130,17 +127,18 @@ export class StripeService {
         });
       }
 
-
       const session = await this.stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'payment',
         line_items: lineItems,
         success_url: successUrl,
         cancel_url: cancelUrl,
-        discounts: promotionCode ? [{ promotion_code: promotionCode }] : undefined,
+        discounts: promotionCode
+          ? [{ promotion_code: promotionCode }]
+          : undefined,
         metadata: {
-          orderId: orderId,     
-          buyerId: buyerId,     
+          orderId: orderId,
+          buyerId: buyerId,
         },
       });
 
@@ -150,7 +148,7 @@ export class StripeService {
       throw new Error('Failed to create Stripe Checkout session');
     }
   }
-}
+
   /* (End) ----- Buyer Checkout----- (End) */
   /**/
   /**/

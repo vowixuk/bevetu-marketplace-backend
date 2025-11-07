@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 
 export class FreeShippingOptionDto {
   @IsString()
-  freeShippingThresholdAmount: string;
+  freeShippingThresholdAmount: number;
 
   @IsString()
   currency: string;

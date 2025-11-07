@@ -7,6 +7,7 @@ import { CartItemService } from './services/cart-item.service';
 import { CartItemRepository } from './repositories/cart-item.repository';
 import { ProductModule } from '../product/product.module';
 import { CheckItemsAvailabilityUseCase } from './use-cases/check-items-availability.useCase';
+import { CalculateShippingFeeUseCase } from './use-cases/calculate-shipping-fee.useCase';
 
 @Module({
   imports: [ProductModule],
@@ -17,7 +18,13 @@ import { CheckItemsAvailabilityUseCase } from './use-cases/check-items-availabil
     CartItemService,
     CartItemRepository,
     CheckItemsAvailabilityUseCase,
+    CalculateShippingFeeUseCase,
   ],
-  exports: [CartService, CartItemService, CheckItemsAvailabilityUseCase],
+  exports: [
+    CartService,
+    CartItemService,
+    CheckItemsAvailabilityUseCase,
+    CalculateShippingFeeUseCase,
+  ],
 })
 export class CartModule {}

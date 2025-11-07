@@ -130,6 +130,7 @@ export class SellerShippingProfileService {
    * Intended for internal system use only.
    */
   async findByIds(ids: string[]) {
-    return this.sellerShippingProfileRepository.findManyByIds(ids);
+    const uniqueIds = Array.from(new Set(ids));
+    return this.sellerShippingProfileRepository.findManyByIds(uniqueIds);
   }
 }

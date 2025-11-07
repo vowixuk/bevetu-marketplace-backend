@@ -160,6 +160,7 @@ describe('ProductService', () => {
     if (testSellerUser_2 && testSellerUser_2.id) {
       await removeTestingUser(services.userService, testSellerUser_2.id);
     }
+    
     if (testBuyerUser && testBuyerUser.id) {
       await removeTestingUser(services.userService, testBuyerUser.id);
     }
@@ -176,6 +177,7 @@ describe('ProductService', () => {
         `Seller account ${seller_2_StripeAccountId} removed from stripe`,
       );
     }
+   
 
     // -- Remove stripe customer account in Stripe -- //
     if (seller_1_StripeCustomerId) {
@@ -194,6 +196,7 @@ describe('ProductService', () => {
         `Buyer customer account ${seller_2_StripeCustomerId} removed from stripe`,
       );
     }
+  
     if (buyerStripeCustomerId) {
       await services.stripeService.removeStripeCustomer(buyerStripeCustomerId);
       console.log(
@@ -222,6 +225,7 @@ describe('ProductService', () => {
         },
         variants: [],
         discount: [],
+
       };
 
       try {

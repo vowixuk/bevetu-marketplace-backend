@@ -3,7 +3,7 @@ import { OrderEventRecordService } from '../services/event-record.service';
 import { OrderAddressService } from '../services/order-address.service';
 import { OrderItemService } from '../services/order-item.service';
 import { OrderService } from '../services/order.service';
-import { StripeService } from 'test/helper/testing-module';
+import { StripeService } from '../../stripe/services/stripe.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { CalculateShippingFeeUseCase } from '../../cart/use-cases/calculate-shipping-fee.useCase';
 import { OrderPaymentStatus, OrderStatus } from '../entities/order.entity';
@@ -50,10 +50,7 @@ export class CreateOrderUseCase {
      *          Initialize the order with a `PENDING` payment status,
      *          which will be updated to `SUCCESS` after payment confirmation.
      */
-    const shippingFee: number = await this.calculateShippingFeeUseCase.execute(
-      buyerId,
-      cartId,
-    );
+    const shippingFee = await this.calculateShippingFeeUseCase.execute(cart);
 
     const order = await this.orderService.buyerCreateOrder(
       buyerId,
@@ -63,7 +60,7 @@ export class CreateOrderUseCase {
         shopId: '',
         cartId: cart.id,
         totalAmount: cart.getTotal(),
-        shippingFee,
+        shippingFee: shippingFee.cartTotalShippingFee,
         discount: 0,
         currency: 'GBP',
         paymentStatus: 'PENDING' as OrderPaymentStatus,
@@ -88,7 +85,7 @@ export class CreateOrderUseCase {
         Object.assign(new CreateOrderItemDto(), {
           refundStatus: 'None',
           discount: 0,
-          shippingFee: 0,
+          shippingFee: shippingFee.cartTotalShippingFee,
           price: item.price,
           quantity: item.quantity,
           productName: item.productName,
@@ -122,7 +119,7 @@ export class CreateOrderUseCase {
         orderId: order.id,
         type: 'CREATE',
         metadata: {
-          totalAmount: shippingFee + cart.getTotal(),
+          totalAmount: shippingFee.cartTotalShippingFee + cart.getTotal(),
           currency: 'GBP',
           paymentMethod: 'Stripe',
           itemCount: cart.getItemCount(),
@@ -134,9 +131,9 @@ export class CreateOrderUseCase {
      * Step 6 – redirect to Stripe payment page
      */
     const { url, id: stripeSessionId } =
-      await this.stripeService.createCheckoutSession({
+      await this.stripeService.createBuyerCheckoutSession({
         items: lineItemForStripeCheckout,
-        shippingFee: shippingFee,
+        shippingFee: shippingFee.cartTotalShippingFee,
         currency: 'GBP',
         successUrl: process.env.BUYER_CHECKOUT_SUCCESS_URL || '',
         cancelUrl: process.env.BUYER_CHECKOUT_CANCEL_URL || '',

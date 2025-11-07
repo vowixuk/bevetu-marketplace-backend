@@ -70,7 +70,8 @@ export class ProductService {
    * ownership is already guaranteed.
    */
   async findByIds(ids: string[]): Promise<Product[]> {
-    return await this.productRepository.findByIds(ids);
+    const uniqueIds = Array.from(new Set(ids));
+    return await this.productRepository.findByIds(uniqueIds);
   }
 
   /**
