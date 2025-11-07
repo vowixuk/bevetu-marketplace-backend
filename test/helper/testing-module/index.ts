@@ -46,6 +46,9 @@ export { CartItemService } from '../../../src/cart/services/cart-item.service';
 export { CartItemRepository } from '../../../src/cart/repositories/cart-item.repository';
 export { CheckItemsAvailabilityUseCase } from '../../../src/cart/use-cases/check-items-availability.useCase';
 export { CalculateShippingFeeUseCase } from '../../../src/cart/use-cases/calculate-shipping-fee.useCase';
+export { AddItemToCartUseCase } from '../../../src/cart/use-cases/add-item-to-cart.useCase';
+export { UpdateItemQtyInCartUseCase } from '../../../src/cart/use-cases/update-item-qty-in-cart.useCase';
+
 export { OrderService } from '../../../src/order/services/order.service';
 export { OrderEventRecordRepository } from '../../../src/order/repositories/event-record.repository';
 export { OrderAddressRepository } from '../../../src/order/repositories/order-address.repository';

@@ -56,6 +56,8 @@ import {
   CartItemRepository,
   CheckItemsAvailabilityUseCase,
   CalculateShippingFeeUseCase,
+  AddItemToCartUseCase,
+  UpdateItemQtyInCartUseCase,
 } from './index';
 
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
@@ -101,6 +103,8 @@ export type ServicesType = {
   cartItemRepository: CartItemRepository;
   checkItemsAvailabilityUseCase: CheckItemsAvailabilityUseCase;
   calculateShippingFeeUseCase: CalculateShippingFeeUseCase;
+  addItemToCartUseCase: AddItemToCartUseCase;
+  updateItemQtyInCartUseCase: UpdateItemQtyInCartUseCase;
 };
 export async function testTestingMoudleHelper(): Promise<{
   module: TestingModule;
@@ -172,6 +176,8 @@ export async function testTestingMoudleHelper(): Promise<{
       CartItemRepository,
       CheckItemsAvailabilityUseCase,
       CalculateShippingFeeUseCase,
+      AddItemToCartUseCase,
+      UpdateItemQtyInCartUseCase,
     ],
   }).compile();
 
@@ -273,6 +279,13 @@ export async function testTestingMoudleHelper(): Promise<{
 
       calculateShippingFeeUseCase: module.get<CalculateShippingFeeUseCase>(
         CalculateShippingFeeUseCase,
+      ),
+
+      addItemToCartUseCase:
+        module.get<AddItemToCartUseCase>(AddItemToCartUseCase),
+
+      updateItemQtyInCartUseCase: module.get<UpdateItemQtyInCartUseCase>(
+        UpdateItemQtyInCartUseCase,
       ),
     },
   };

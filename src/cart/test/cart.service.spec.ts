@@ -46,6 +46,9 @@ import { SellerShipping } from '../../seller-shipping/entities/seller-shipping.e
 import { Buyer } from '../../buyer/entities/buyer.entity';
 import { Cart } from '../entities/cart.entity';
 import { SellerShippingProfile } from '../../seller-shipping/entities/seller-shipping-profile.entity';
+import { CreateCartItemDto } from '../dto/create-cart-item.dto';
+import { AddItemToCartDto } from '../dto/add-item-to-cart.dto';
+import { UpdateItemQtyInCartDto } from '../dto/update-item-qty-in-cart.dto';
 
 describe('CartService', () => {
   let services: ServicesType;
@@ -154,7 +157,7 @@ let seller_4_Subscription: SellerSubscription;
     testBuyerUser = buyer.user
     testBuyer = buyer.buyer
     buyerStripeCustomerId = buyer.buyerStripeCustomerId;
-  }, 50000);
+  }, 100000);
 
   afterAll(async () => {
     // -- Remove user account in our database -- //
@@ -216,7 +219,8 @@ let seller_4_Subscription: SellerSubscription;
 
   });
 
-  describe.skip('Cart Creation', () => {
+  describe('Cart Creation', () => {
+
     it('test 2 - should create a cart if no checkedout cart before and  get the same uncheckedout cart', async () => {
       // use the same `findOrCreateUncheckoutCart()`.
       const createdCart = await services.cartService.findOrCreateUncheckoutCart(
@@ -260,95 +264,202 @@ let seller_4_Subscription: SellerSubscription;
     });
   });
 
-  describe.skip('Cart Function', () => {
-    it('test 5 - should seller1 products', async () => {
+  describe('Cart Function', () => {
+    /*
+     * Products in each shop
+     * -------------------------------------------------------------------------------------------------
+     *  Seller 1 (shippingProfiles version 1)           Seller 2 (shippingProfiles version 2)
+     *  ------------------------------------------------------------------------------------------------
+     *  p0 : $30  × (4)  (free,  weight: 50g/item)       p0 : $100 × (5) (free,  weight: 120g/item)
+     *  p1 : $10  × (2)  (flat,  weight: 80g/item)       p1 : $120 × (8) (flat,  weight: 150g/item)
+     *  p2 : $22  × (1)  (per_item, weight: 30g/item)    p2 : $97  × (1) (per_item, weight: 60g/item)
+     *  p3 : $100 × (5)  (by_weight, weight: 20g/item)   p3 : $26  × (4) (by_weight, weight: 200g/item)
+     *  p4 : $3   × (10) (free,  weight: 10g/item)       p4 : ——— (none)
+     */
 
-        const createDto: CreateProductDto = {
-          name: 'Dog Toy',
-          description: 'A squeaky dog toy',
-          price: 100,
-          stock: 10,
-          onShelf: true, // user tries to set true
-          categories: {
-            pet: 'dog',
-            product: 'toy',
-          },
-          dimensions:{
-            weight: 1,
-            width: 2,
-            height: 3,
-            depth : 4,
-          },
-          variants: [],
-          discount: [],
-        };
+    it('test 4 - should not be able to add items in the cart if the qty is excess then stock', async () => {
+      try{
+        await services.addItemToCartUseCase.execute(testBuyer.id, {
+          cartId: cart.id,
+          productId: seller_1_products[0].id,
+          quantity: 10,
+        } as AddItemToCartDto);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
+    });
 
-        await services.createProductUseCase.execute(
-          seller_1.id,
-          seller_1_shop.id,
-          createDto,
+    it('test 5 - should be able to add item to cart if qty within stock ', async () => {
+
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_2_products[1].id,
+        quantity: 8,
+      } as AddItemToCartDto);
+      const updatedCart = await services.addItemToCartUseCase.execute(
+        testBuyer.id,
+        {
+          cartId: cart.id,
+          productId: seller_1_products[0].id,
+          quantity: 3,
+        } as AddItemToCartDto,
+      );
+
+      // Assertions
+      expect(updatedCart.items).toHaveLength(2);
+
+      const item1 = updatedCart.items.find(
+        (item) => item.productId === seller_2_products[1].id,
+      );
+      const item2 = updatedCart.items.find(
+        (item) => item.productId === seller_1_products[0].id,
+      );
+
+      expect(item1).toBeDefined();
+      expect(item1?.quantity).toBe(8);
+      expect(item1?.price).toBe(seller_2_products[1].price);
+
+      expect(item2).toBeDefined();
+      expect(item2?.quantity).toBe(3);
+      expect(item2?.price).toBe(seller_1_products[0].price);
+    });
+
+    it('test 6 - should not be able to update if items qty excess the stock ', async () => {
+
+      try{
+        const cartItem1 = cart.items.find(
+          (c) => c.productId == seller_2_products[1].id,
         );
+        await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+          cartId: cart.id,
+          cartItemId: cartItem1?.id,
+          productId: seller_2_products[1].id,
+          quantity: 100000
+        } as UpdateItemQtyInCartDto);
+      } catch (e) {
+          expect(e).toBeInstanceOf(BadRequestException);
+      }
+    });
+
+    it('test 7 - should update the items qty in the cart', async () => {
+      /*
+       *  We have now 2 items in cart:
+       * -----------------------------------------------
+       *  Shop 1
+       *  ----------------------------------------------
+       *  p0 : $30  × qty: 3 (free,  weight: 50g/item) 
+       *
+       *  ----------------------------------------------
+       *  Shop 2 
+       *  ----------------------------------------------
+       *  p1 : $120 × qty: 8  (flat,  weight: 150g/item)
+       *
+       */
+
+   
+      const cartItem1 = cart.items.find(
+        (c) => c.productId == seller_2_products[1].id,
+      );
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId:cartItem1?.id,
+        productId: seller_2_products[1].id,
+        quantity: 5
+      } as UpdateItemQtyInCartDto);
 
 
+      const cartItem2 = cart.items.find(
+        (c) => c.productId == seller_1_products[0].id,
+      );
+      const updatedCart = await services.updateItemQtyInCartUseCase.execute(
+        testBuyer.id,
+        {
+          cartId: cart.id,
+          cartItemId: cartItem2?.id,
+          productId: seller_1_products[0].id,
+          quantity: 1,
+        } as UpdateItemQtyInCartDto,
+      );
+
+      expect(updatedCart.items).toHaveLength(2);
+
+      // Check first cart item (seller 2 product)
+      const updatedItem1 = updatedCart.items.find(
+        (item) => item.productId === seller_2_products[1].id,
+      );
+      expect(updatedItem1).toBeDefined();
+      expect(updatedItem1?.quantity).toBe(5);
+      expect(updatedItem1?.price).toBe(seller_2_products[1].price);
+
+      // Check second cart item (seller 1 product)
+      const updatedItem2 = updatedCart.items.find(
+        (item) => item.productId === seller_1_products[0].id,
+      );
+      expect(updatedItem2).toBeDefined();
+      expect(updatedItem2?.quantity).toBe(1);
+      expect(updatedItem2?.price).toBe(seller_1_products[0].price);
+
+      // Optional: check cart ID and buyer
+      expect(updatedCart.id).toBe(cart.id);
+      expect(updatedCart.buyerId).toBe(testBuyer.id);
+      expect(updatedCart.isCheckout).toBe(false);
 
     });
-    it('test 6 - should seller2 create shipping profile and products', async () => {});
-    it('test 6 - should add items in the cart', async () => {});
-    it('test 7 - should remove items from the cart', async () => {});
-    it('test 8 - should update the items qty in the cart', async () => {});
+    it('test 8 - should remove items from the cart', async () => {});
+
   })
 
-  describe.skip('Cart Refesh Check', () => {
-    it('test 9 - should remove the product from the cart if it is offshelfed', async () => {});
-    it('test 10 - should remove the product from the cart if it is not approved', async () => {});
-    it('test 11 - should remove the product from the cart if it is out of stock', async () => {});
-    it('test 12 - should update the prodcut price and name after it is updated', async () => {});
-  });
+  // describe.skip('Cart Refesh Check', () => {
+  //   it('test 9 - should remove the product from the cart if it is offshelfed', async () => {});
+  //   it('test 10 - should remove the product from the cart if it is not approved', async () => {});
+  //   it('test 11 - should remove the product from the cart if it is out of stock', async () => {});
+  //   it('test 12 - should update the prodcut price and name after it is updated', async () => {});
+  // });
 
-  describe.skip('Total Amount and Shipping Calculation', () => {
-    /**
-     *  feeAmount
-     * -------------------------------------------------
-     *  Seller 1                 Seller 2 
-     *  feeAmount = {            feeAmount = {
-          free: 0,                  free: 0,         
-          flat: 5,                  flat: 7,
-          per_item: 12,             per_item: 2,
-          by_weight: 3,             by_weight: 9,
-      };
+  // describe.skip('Total Amount and Shipping Calculation', () => {
+  //   /**
+  //    *  feeAmount
+  //    * -------------------------------------------------
+  //    *  Seller 1                 Seller 2 
+  //    *  feeAmount = {            feeAmount = {
+  //         free: 0,                  free: 0,         
+  //         flat: 5,                  flat: 7,
+  //         per_item: 12,             per_item: 2,
+  //         by_weight: 3,             by_weight: 9,
+  //     };
 
 
-     * FreeShippingAmount:
-     * -------------------------------------------------
-     *  Seller 1  :  20           Seller 2 : 30000
+  //    * FreeShippingAmount:
+  //    * -------------------------------------------------
+  //    *  Seller 1  :  20           Seller 2 : 30000
     
 
-     * Products in Cart
-     * -------------------------------------------------
-     *  Seller 1                             Seller 2 
-     *  p1 : $30  x (4)(free)                p1 : $100 x (5)(free) 
-     *  p2 : $10  x (2)(flat)                p2 : $120 x (8)(flat) 
-     *  p3 : $22  x (1)(per_item)            p3 : $97 x  (1)(per_item) 
-     *  p4 : $100 x (5)(by_weight,20g/item)  p4 : $26 x  (4)(by_weight,200g/item) 
-     *  p5 : $3   x (10)(free)               p5 :    ------
-     * 
-     * 
-     * Seller 1                                  Seller 2 — 
-     * per-product shipping:                     per-product shipping:
-     * {p1:0, p2:5, p3:12, p4:3, p5:0} →         {p1:0, p2:7, p3:2, p4:72}
-     * subtotal 20 →                             final 81
-     * threshold 20 ⇒ final 0
-     * 
-     * Cart total shipping = 81
+  //    * Products in Cart
+  //    * -------------------------------------------------
+  //    *  Seller 1                             Seller 2 
+  //    *  p1 : $30  x (4)(free)                p1 : $100 x (5)(free) 
+  //    *  p2 : $10  x (2)(flat)                p2 : $120 x (8)(flat) 
+  //    *  p3 : $22  x (1)(per_item)            p3 : $97 x  (1)(per_item) 
+  //    *  p4 : $100 x (5)(by_weight,20g/item)  p4 : $26 x  (4)(by_weight,200g/item) 
+  //    *  p5 : $3   x (10)(free)               p5 :    ------
+  //    * 
+  //    * 
+  //    * Seller 1                                  Seller 2 — 
+  //    * per-product shipping:                     per-product shipping:
+  //    * {p1:0, p2:5, p3:12, p4:3, p5:0} →         {p1:0, p2:7, p3:2, p4:72}
+  //    * subtotal 20 →                             final 81
+  //    * threshold 20 ⇒ final 0
+  //    * 
+  //    * Cart total shipping = 81
 
 
 
 
-    */
-    it('test 9 - should get a correct total amount', async () => {});
-    it('test 10 - should get a correct shipping cost.', async () => {});
-    it('test 12 - should update the shipping cost after shipping profile updated', async () => {});
-    it('test 13 - should set the shipping cost zero after hit the free shipping amount', async () => {});
-  });
+  //   */
+  //   it('test 9 - should get a correct total amount', async () => {});
+  //   it('test 10 - should get a correct shipping cost.', async () => {});
+  //   it('test 12 - should update the shipping cost after shipping profile updated', async () => {});
+  //   it('test 13 - should set the shipping cost zero after hit the free shipping amount', async () => {});
+  // });
 
 });

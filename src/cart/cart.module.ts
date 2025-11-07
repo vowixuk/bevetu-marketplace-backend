@@ -8,6 +8,8 @@ import { CartItemRepository } from './repositories/cart-item.repository';
 import { ProductModule } from '../product/product.module';
 import { CheckItemsAvailabilityUseCase } from './use-cases/check-items-availability.useCase';
 import { CalculateShippingFeeUseCase } from './use-cases/calculate-shipping-fee.useCase';
+import { AddItemToCartUseCase } from './use-cases/add-item-to-cart.useCase';
+import { UpdateItemQtyInCartUseCase } from './use-cases/update-item-qty-in-cart.useCase';
 
 @Module({
   imports: [ProductModule],
@@ -19,12 +21,16 @@ import { CalculateShippingFeeUseCase } from './use-cases/calculate-shipping-fee.
     CartItemRepository,
     CheckItemsAvailabilityUseCase,
     CalculateShippingFeeUseCase,
+    AddItemToCartUseCase,
+    UpdateItemQtyInCartUseCase,
   ],
   exports: [
     CartService,
     CartItemService,
     CheckItemsAvailabilityUseCase,
     CalculateShippingFeeUseCase,
+    AddItemToCartUseCase,
+    UpdateItemQtyInCartUseCase,
   ],
 })
 export class CartModule {}

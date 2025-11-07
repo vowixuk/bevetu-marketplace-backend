@@ -25,7 +25,7 @@ export class CartItemRepository {
 
   async findOneIfOwned(buyerId: string, cartItemId: string) {
     return mapPrismaCartItemToDomain(
-      await this.prisma.cartItem.findUnique({
+      await this.prisma.cartItem.findFirst({
         where: {
           id: cartItemId,
           cart: {

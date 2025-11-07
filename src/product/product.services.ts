@@ -13,6 +13,12 @@ import { ViewProductsDto } from './dto';
 export class ProductService {
   constructor(private readonly productRepository: ProductRepository) {}
 
+  /**
+   * Warning!
+   * If calling this method directly from the controller,
+   * So to avoid the product on shelf without shpping profile attached
+   * make sure to set `createDto.onShelf` to `false`.
+   */
   async create(
     sellerId: string,
     shopId: string,
@@ -30,7 +36,7 @@ export class ProductService {
       imageUrls: createDto.imageUrls ?? [],
       stock: createDto.stock,
       reservedStock: 0,
-      onShelf: false,
+      onShelf: createDto.onShelf,
       isApproved: true,
       categories: createDto.categories,
       shippingProfileId: createDto.shippingProfileId ?? undefined,
@@ -72,6 +78,21 @@ export class ProductService {
   async findByIds(ids: string[]): Promise<Product[]> {
     const uniqueIds = Array.from(new Set(ids));
     return await this.productRepository.findByIds(uniqueIds);
+  }
+
+  /**
+   * Internal-use only — not intended for public access.
+   * This method does not verify whether a product is on-shelf or approved,
+   * nor does it validate product ownership for the caller.
+   * Find only products that are onShelf, approved,
+   * and belong to active shops, users, and sellers.
+   *
+   * but the sensitive field remain
+   * (e.g. `reservedStock`, `isApproved`, `onShelf`, `sellerId`)
+   *
+   */
+  async findOneValidForDisplay(id: string): Promise<Product | null> {
+    return await this.productRepository.findOneValidForDisplay(id);
   }
 
   /**

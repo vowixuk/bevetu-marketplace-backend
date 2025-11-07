@@ -68,6 +68,24 @@ export class ProductRepository {
     };
   }
 
+  async findOneValidForDisplay(id: string): Promise<Product | null> {
+    return mapPrismaProductToDomain(
+      await this.prisma.product.findUnique({
+        where: {
+          id,
+          onShelf: true,
+          isApproved: true,
+          shop: {
+            deletedAt: null,
+            seller: {
+              status: 'ACTIVE',
+              user: { deletedAt: null },
+            },
+          },
+        },
+      }),
+    );
+  }
   async findOne(id: string): Promise<Product | null> {
     return mapPrismaProductToDomain(
       await this.prisma.product.findUnique({ where: { id } }),

@@ -59,6 +59,12 @@ export class CheckItemsAvailabilityUseCase {
         updateRequired = true;
       }
 
+      // check if excess the stock number
+      if (cartItem.quantity > product.stock) {
+        cartItem.quantity = product.stock;
+        updateRequired = true;
+      }
+
       if (updateRequired) {
         cartItemsToUpdate.push(cartItem);
       }
