@@ -7,6 +7,7 @@ import { SellerShippingProfileService } from '../../seller-shipping/services/sel
 import { SellerShippingProfile } from '../../seller-shipping/entities/seller-shipping-profile.entity';
 import { SellerShippingService } from '../../seller-shipping/services/seller-shipping.service';
 import { SellerShipping } from '../../seller-shipping/entities/seller-shipping.entity';
+import { CheckItemsAvailabilityUseCase } from './check-items-availability.useCase';
 
 export type ShippingCalculationReturn = {
   cartTotalShippingFee: number;
@@ -31,9 +32,15 @@ export class CalculateShippingFeeUseCase {
     private productService: ProductService,
     private sellerShippingProfileService: SellerShippingProfileService,
     private sellerShippingService: SellerShippingService,
+    private checkItemsAvailabilityUseCase: CheckItemsAvailabilityUseCase,
   ) {}
 
-  async execute(cart: Cart): Promise<ShippingCalculationReturn> {
+  async execute(_cart: Cart): Promise<ShippingCalculationReturn> {
+    // Always check update the cart before calculation
+    const cart = await this.checkItemsAvailabilityUseCase.execute(
+      _cart.buyerId,
+      _cart.id,
+    );
     /*
      * Step 1 – Find all Products in cart
      */
@@ -143,12 +150,19 @@ export class CalculateShippingFeeUseCase {
           product: { id: product.id, name: product.name },
           qty,
           shippingFee,
+          price: product.price,
         });
+
         acc[shopId].totalShippingFee += shippingFee;
+
+        const shopSubtotal = acc[shopId].products.reduce(
+          (sum, p) => sum + p.price * p.qty,
+          0,
+        );
 
         // Apply free shipping threshold (if total exceeds threshold)
         const threshold = acc[shopId].freeShippingAmount;
-        if (threshold && acc[shopId].totalShippingFee >= threshold) {
+        if (threshold && shopSubtotal >= threshold) {
           acc[shopId].totalShippingFee = 0;
         }
 
@@ -162,6 +176,7 @@ export class CalculateShippingFeeUseCase {
             product: { id: string; name: string };
             qty: number;
             shippingFee: number;
+            price: number;
           }[];
           totalShippingFee: number;
           freeShippingAmount: number | undefined;
@@ -198,7 +213,9 @@ export class CalculateShippingFeeUseCase {
         return profile.feeAmount * qty;
 
       case 'by_weight':
-        return dimensions!.weight! * qty * (profile.feeAmount ?? 0);
+        return Number(
+          (dimensions!.weight! * qty * profile.feeAmount).toFixed(2),
+        );
 
       case 'free':
         return 0;

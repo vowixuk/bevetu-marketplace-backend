@@ -112,17 +112,21 @@ export async function testSetFreeShippingAmount(
   shippingId: string,
   sellerId: string,
   shopId: string,
-  freeShippingThresholdAmount: number,
+  freeShippingThresholdAmount?: number,
 ) {
   await sellerShippingService.update(
     shippingId,
     sellerId,
     Object.assign(new UpdateSellerShippingDto(), {
       shopId,
-      freeShippingOption: {
-        freeShippingThresholdAmount,
-        currency: 'GBP',
-      },
+      ...(freeShippingThresholdAmount
+        ? {
+            freeShippingOption: {
+              freeShippingThresholdAmount,
+              currency: 'GBP',
+            },
+          }
+        : undefined),
     }),
   );
 }

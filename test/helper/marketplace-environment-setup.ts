@@ -145,11 +145,11 @@ export async function setupMarketplaceTestEnvironment(services: ServicesType) {
     services.stripeService,
     services.sellerSubscriptionService,
     services.sellerShippingProfileService,
-    1,
+    1, // use version 1 profile
     services.sellerShippingService,
-    20,
+    undefined, // Freeshipping amount
     services.createProductUseCase,
-    1,
+    1, // use version 1 product list
   );
   const seller2 = await setupTestSeller(
     createTestUser_2,
@@ -165,7 +165,7 @@ export async function setupMarketplaceTestEnvironment(services: ServicesType) {
     services.sellerShippingProfileService,
     2,
     services.sellerShippingService,
-    30000,
+    undefined, // Freeshipping amount
     services.createProductUseCase,
     2,
   );
@@ -263,7 +263,7 @@ function getProductArray(
         stock: 5,
         shippingProfileId: shippingProfiles.by_weight.id,
         feeType: 'by_weight' as 'flat' | 'per_item' | 'by_weight' | 'free',
-        dimensions: { weight: 20, width: 5, height: 5, depth: 5 },
+        dimensions: { weight: 0.02, width: 5, height: 5, depth: 5 },
       },
       {
         name: 'p5',
@@ -306,7 +306,7 @@ function getProductArray(
         stock: 4,
         feeType: 'by_weight' as 'flat' | 'per_item' | 'by_weight' | 'free',
         shippingProfileId: shippingProfiles.by_weight.id,
-        dimensions: { weight: 200, width: 20, height: 15, depth: 12 },
+        dimensions: { weight: 0.2, width: 20, height: 15, depth: 12 },
       },
     ];
   }

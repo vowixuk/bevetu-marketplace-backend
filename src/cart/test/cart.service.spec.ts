@@ -216,7 +216,7 @@ let seller_4_Subscription: SellerSubscription;
     expect(testBuyerUser).toBeDefined();
   });
 
-  describe.skip('Cart Creation', () => {
+  describe('Cart Creation', () => {
 
     it('test 2 - should create a cart if no checkedout cart before and  get the same uncheckedout cart', async () => {
       // use the same `findOrCreateUncheckoutCart()`.
@@ -261,7 +261,7 @@ let seller_4_Subscription: SellerSubscription;
     });
   });
 
-  describe.skip('Cart Function', () => {
+  describe('Cart Function', () => {
     /*
      * Products in each shop
      * -------------------------------------------------------------------------------------------------
@@ -595,54 +595,498 @@ let seller_4_Subscription: SellerSubscription;
 
       /* ************************
        *  The cart now is empty
+       *  Below restore back the product to default
        ****************************/
+
+        await services.productService.update(
+         seller_1_products[0].id,
+         seller_1_shop.id,
+         { onShelf: true } as UpdateProductDto,
+       );
+
+          await services.productService.update(
+        seller_1_products[1].id,
+        seller_1_shop.id,
+        { isApproved: true } as UpdateProductDto,
+      );
+
+      await services.productService.update(
+        seller_2_products[2].id,
+        seller_2_shop.id,
+        { stock: 1 } as UpdateProductDto,
+      );
+
+      await services.productService.update(
+        seller_2_products[3].id,
+        seller_2_shop.id,
+        {
+          name: 'p4',
+          price: 26,
+          stock: 4,
+        } as UpdateProductDto,
+      );
+
     });
   });
 
-  // describe.skip('Total Amount and Shipping Calculation', () => {
-  //   /**
-  //    *  feeAmount
-  //    * -------------------------------------------------
-  //    *  Seller 1                 Seller 2 
-  //    *  feeAmount = {            feeAmount = {
-  //         free: 0,                  free: 0,         
-  //         flat: 5,                  flat: 7,
-  //         per_item: 12,             per_item: 2,
-  //         by_weight: 3,             by_weight: 9,
-  //     };
+  describe('Total Amount and Shipping Calculation', () => {
+    /**
+       *  feeAmount
+       * -------------------------------------------------
+       *  Seller 1                 Seller 2
+       *  feeAmount = {            feeAmount = {
+            free: 0,                  free: 0,
+            flat: 5,                  flat: 7,
+            per_item: 12,             per_item: 2,
+            by_weight: 3, (per kg)    by_weight: 9,(per kg)
+        };
 
+       * FreeShippingAmount:
+       * -------------------------------------------------
+       *  Seller 1  :  undefined           Seller 2 : undefined
 
-  //    * FreeShippingAmount:
-  //    * -------------------------------------------------
-  //    *  Seller 1  :  20           Seller 2 : 30000
-    
+       * Products in Cart
+       * -------------------------------------------------
+       *  Seller 1                             Seller 2
+       *  p1 : $30  x (4)(free)                p1 : $100 x (5)(free)
+       *  p2 : $10  x (2)(flat)                p2 : $120 x (8)(flat)
+       *  p3 : $22  x (1)(per_item)            p3 : $97 x  (1)(per_item)
+       *  p4 : $100 x (5)(by_weight,20g/item)  p4 : $26 x  (4)(by_weight,200g/item)
+       *  p5 : $3   x (10)(free)               p5 :    ------
+       *
 
-  //    * Products in Cart
-  //    * -------------------------------------------------
-  //    *  Seller 1                             Seller 2 
-  //    *  p1 : $30  x (4)(free)                p1 : $100 x (5)(free) 
-  //    *  p2 : $10  x (2)(flat)                p2 : $120 x (8)(flat) 
-  //    *  p3 : $22  x (1)(per_item)            p3 : $97 x  (1)(per_item) 
-  //    *  p4 : $100 x (5)(by_weight,20g/item)  p4 : $26 x  (4)(by_weight,200g/item) 
-  //    *  p5 : $3   x (10)(free)               p5 :    ------
-  //    * 
-  //    * 
-  //    * Seller 1                                  Seller 2 — 
-  //    * per-product shipping:                     per-product shipping:
-  //    * {p1:0, p2:5, p3:12, p4:3, p5:0} →         {p1:0, p2:7, p3:2, p4:72}
-  //    * subtotal 20 →                             final 81
-  //    * threshold 20 ⇒ final 0
-  //    * 
-  //    * Cart total shipping = 81
+       * Calculation
+       * ------------------------------------------------------------------------------------
+       * Seller 1                                                   Seller 2
+       * ------------------------------------------------------------------------------------
+       * p1 : free        → 4 × $0      = $0            p1 : free        → 5 × $0      = $0
+       * p2 : flat        → flat $5     = $5            p2 : flat        → flat $7     = $7
+       * p3 : per_item    → 1 × $12     = $12           p3 : per_item    → 1 × $2      = $2
+       * p4 : by_weight   → 5 × 0.02kg × $3 = $0.30     p4 : by_weight   → 4 × 0.2kg × $9 = $7.20
+       * p5 : free        → 10 × $0     = $0            p5 : ——          → ——           = $0
+       * -----------------------------------------------------------------------------------------
+       * Seller 1 subtotal: $17.30                    Seller 2 subtotal: $16.20
+       * ----------------------------------------------------------------------------------------------
+       * 🧾 Total Shipping Fee (Seller1 + Seller2) = $33.50
+      */
+    it('test 9 - should get a correct total amount', async () => {
+      cart = await services.cartService.findOrCreateUncheckoutCart(
+        testBuyer.id,
+      );
 
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_1_products[0].id,
+        quantity: 4,
+      } as AddItemToCartDto);
 
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_1_products[1].id,
+        quantity: 2,
+      } as AddItemToCartDto);
 
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_1_products[2].id,
+        quantity: 1,
+      } as AddItemToCartDto);
 
-  //   */
-  //   it('test 9 - should get a correct total amount', async () => {});
-  //   it('test 10 - should get a correct shipping cost.', async () => {});
-  //   it('test 12 - should update the shipping cost after shipping profile updated', async () => {});
-  //   it('test 13 - should set the shipping cost zero after hit the free shipping amount', async () => {});
-  // });
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_1_products[3].id,
+        quantity: 5,
+      } as AddItemToCartDto);
+
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_1_products[4].id,
+        quantity: 10,
+      } as AddItemToCartDto);
+
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_2_products[0].id,
+        quantity: 5,
+      } as AddItemToCartDto);
+
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_2_products[1].id,
+        quantity: 8,
+      } as AddItemToCartDto);
+
+      await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_2_products[2].id,
+        quantity: 1,
+      } as AddItemToCartDto);
+
+      cart = await services.addItemToCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        productId: seller_2_products[3].id,
+        quantity: 4,
+      } as AddItemToCartDto);
+
+      expect(cart.items).toHaveLength(9);
+
+      const result = await services.calculateShippingFeeUseCase.execute(cart);
+      // Result should be:
+      // {
+      //   cartTotalShippingFee: 33.5,
+      //   shopShippingFee: {
+      //     cmhpgma7d000aqapuuflg4z80: { # Shop 1
+      //       shipping: [SellerShipping],
+      //       products: [Array],
+      //       totalShippingFee: 17.3,
+      //       freeShippingAmount: undefined
+      //     },
+      //     cmhpgmurl000uqapu2h5r3n1o: { # Shop 2
+      //       shipping: [SellerShipping],
+      //       products: [Array],
+      //       totalShippingFee: 16.2,
+      //       freeShippingAmount: undefined
+      //     }
+      //   }
+      // }
+
+      expect(result).toBeDefined();
+      expect(result.cartTotalShippingFee).toBeCloseTo(33.5, 2);
+
+      const shopFees = result.shopShippingFee;
+      expect(shopFees).toBeDefined();
+
+      const shopIds = Object.keys(shopFees);
+      expect(shopIds.length).toBe(2);
+
+      // ✅ Each shop should have the required structure
+      for (const shopId of shopIds) {
+        const shop = shopFees[shopId];
+
+        expect(shop).toHaveProperty('totalShippingFee');
+        expect(shop).toHaveProperty('shipping');
+        expect(shop).toHaveProperty('products');
+        expect(shop.products).toBeInstanceOf(Array);
+        expect(shop.freeShippingAmount).toBeUndefined();
+        expect(shop.totalShippingFee).toBeGreaterThan(0);
+      }
+    });
+    it('test 10 - should not apply free shipping for Shop 1 if minimum amount not reached', async () => {
+      await services.sellerShippingService.update(
+        seller_1_shipping.id,
+        seller_1.id,
+        {
+          freeShippingOption: {
+            freeShippingThresholdAmount: 200000,
+            currency: 'GBP',
+          },
+        } as UpdateSellerShippingDto,
+      );
+
+      cart = await services.cartService.findOrCreateUncheckoutCart(
+        testBuyer.id,
+      );
+
+      const result = await services.calculateShippingFeeUseCase.execute(cart);
+       expect(result).toBeDefined();
+       expect(result.cartTotalShippingFee).toBeCloseTo(33.5, 2);
+
+    });
+    it('test 12 - should apply free shipping for Shop 2 if minimum amount reached', async () => {
+      await services.sellerShippingService.update(
+        seller_2_shipping.id,
+        seller_2.id,
+        {
+          freeShippingOption: {
+            freeShippingThresholdAmount: 10,
+            currency: 'GBP',
+          },
+        } as UpdateSellerShippingDto,
+      );
+
+      cart = await services.cartService.findOrCreateUncheckoutCart(
+        testBuyer.id,
+      );
+
+      const result = await services.calculateShippingFeeUseCase.execute(cart);
+      // Result should be:
+      // {
+      //   cartTotalShippingFee: 17.3,
+      //   shopShippingFee: {
+      //     cmhpgma7d000aqapuuflg4z80: { # Shop 1
+      //       shipping: [SellerShipping],
+      //       products: [Array],
+      //       totalShippingFee: 17.3,
+      //       freeShippingAmount: 200000
+      //     },
+      //     cmhpgmurl000uqapu2h5r3n1o: { # Shop 2
+      //       shipping: [SellerShipping],
+      //       products: [Array],
+      //       totalShippingFee: 0  # <<< from 16.2 to 0,
+      //       freeShippingAmount: 10
+      //     }
+      //   }
+      // }
+
+      expect(result).toBeDefined();
+      expect(result.cartTotalShippingFee).toBeCloseTo(17.3, 2);
+    });
+    it('test 13 - should update shipping cost after cart qty changed', async () => {
+      await services.productService.update(
+        seller_1_products[0].id,
+        seller_1_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_1_products[1].id,
+        seller_1_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_1_products[2].id,
+        seller_1_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_1_products[3].id,
+        seller_1_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_1_products[4].id,
+        seller_1_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_2_products[0].id,
+        seller_2_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_2_products[1].id,
+        seller_2_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_2_products[2].id,
+        seller_2_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+      await services.productService.update(
+        seller_2_products[3].id,
+        seller_2_shop.id,
+        {
+          stock: 100,
+        } as UpdateProductDto,
+      );
+
+      const sell_1_cartItem1 = cart.items.find(
+        (c) => c.productId == seller_1_products[0].id,
+      );
+      const sell_1_cartItem2 = cart.items.find(
+        (c) => c.productId == seller_1_products[1].id,
+      );
+      const sell_1_cartItem3 = cart.items.find(
+        (c) => c.productId == seller_1_products[2].id,
+      );
+      const sell_1_cartItem4 = cart.items.find(
+        (c) => c.productId == seller_1_products[3].id,
+      );
+      const sell_1_cartItem5 = cart.items.find(
+        (c) => c.productId == seller_1_products[4].id,
+      );
+      const sell_2_cartItem1 = cart.items.find(
+        (c) => c.productId == seller_2_products[0].id,
+      );
+      const sell_2_cartItem2 = cart.items.find(
+        (c) => c.productId == seller_2_products[1].id,
+      );
+      const sell_2_cartItem3 = cart.items.find(
+        (c) => c.productId == seller_2_products[2].id,
+      );
+      const sell_2_cartItem4 = cart.items.find(
+        (c) => c.productId == seller_2_products[3].id,
+      );
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_1_cartItem1!.id,
+        productId: seller_1_products[0].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_1_cartItem2!.id,
+        productId: seller_1_products[1].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_1_cartItem3!.id,
+        productId: seller_1_products[2].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_1_cartItem4!.id,
+        productId: seller_1_products[3].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_1_cartItem5!.id,
+        productId: seller_1_products[4].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_2_cartItem1!.id,
+        productId: seller_2_products[0].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_2_cartItem2!.id,
+        productId: seller_2_products[1].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_2_cartItem3!.id,
+        productId: seller_2_products[2].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      await services.updateItemQtyInCartUseCase.execute(testBuyer.id, {
+        cartId: cart.id,
+        cartItemId: sell_2_cartItem4!.id,
+        productId: seller_2_products[3].id,
+        quantity: 20,
+      } as UpdateItemQtyInCartDto);
+
+      /**
+       *  feeAmount
+       * -------------------------------------------------
+       *  Seller 1                 Seller 2
+       *  feeAmount = {            feeAmount = {
+            free: 0,                  free: 0,
+            flat: 5,                  flat: 7,
+            per_item: 12,             per_item: 2,
+            by_weight: 3, (per kg)    by_weight: 9,(per kg)
+        };
+
+       * FreeShippingAmount:
+       * -------------------------------------------------
+       *  Seller 1  :  20000           Seller 2 : 10
+
+       * Products in Cart
+       * -------------------------------------------------
+       *  Seller 1                             Seller 2
+       *  p1 : $30  x (1)(free)                p1 : $100 x (2)(free)
+       *  p2 : $10  x (1)(flat)                p2 : $120 x (7)(flat)
+       *  p3 : $22  x (1)(per_item)            p3 : $97 x  (1)(per_item)
+       *  p4 : $100 x (5)(by_weight,20g/item)  p4 : $26 x  (4)(by_weight,200g/item)
+       *  p5 : $3   x (2)(free)                p5 :    ------
+       *
+
+    * Calculation
+     * ----------------------------------------------------------------------------------------------------
+     * Seller 1                                                       Seller 2
+     * -----------------------------------------------------------------------------------------------------
+     * p1 : free        → 20 × $0          = $0              p1 : free        → 20 × $0          = $0
+     * p2 : flat        → flat $5          = $5              p2 : flat        → flat $7          = $7
+     * p3 : per_item    → 20 × $12         = $240            p3 : per_item    → 20 × $2          = $40
+     * p4 : by_weight   → 20 × 0.02kg × $3 = $1.20           p4 : by_weight   → 20 × 0.2kg × $9  = $36.00
+     * p5 : free        → 20 × $0          = $0              p5 : ——          → ——               = $0
+     * ------------------------------------------------------------------------------------
+     * Seller 1 subtotal: $246.20                               Seller 2 subtotal: $83.00
+     * ------------------------------------------------------------------------------------
+     * 🧾 Total Shipping Fee (Seller1 + Seller2) = $329.20
+      */
+
+      cart = await services.cartService.findOrCreateUncheckoutCart(
+        testBuyer.id,
+      );
+
+      const result = await services.calculateShippingFeeUseCase.execute(cart);
+
+      console.log(result, '<< resut');
+      expect(result).toBeDefined();
+      expect(result.cartTotalShippingFee).toBeCloseTo(246.2, 2);
+
+      // ------ If dun apply threshold ------ //
+      await services.sellerShippingService.update(
+        seller_1_shipping.id,
+        seller_1.id,
+        {
+          freeShippingOption: undefined,
+        } as UpdateSellerShippingDto,
+      );
+
+      await services.sellerShippingService.update(
+        seller_2_shipping.id,
+        seller_2.id,
+        {
+          freeShippingOption: undefined,
+        } as UpdateSellerShippingDto,
+      );
+
+      const result2 = await services.calculateShippingFeeUseCase.execute(cart);
+
+      console.log(result2, '<< resut2');
+      expect(result2).toBeDefined();
+      expect(result2.cartTotalShippingFee).toBeCloseTo(329.2, 2);
+
+      // -------- If set very low threshold -------- //
+      await services.sellerShippingService.update(
+        seller_1_shipping.id,
+        seller_1.id,
+        {
+          freeShippingOption: {
+            freeShippingThresholdAmount: 1,
+            currency: 'GBP',
+          },
+        } as UpdateSellerShippingDto,
+      );
+
+      await services.sellerShippingService.update(
+        seller_2_shipping.id,
+        seller_2.id,
+        {
+          freeShippingOption: {
+            freeShippingThresholdAmount: 1,
+            currency: 'GBP',
+          },
+        } as UpdateSellerShippingDto,
+      );
+
+      const result3 = await services.calculateShippingFeeUseCase.execute(cart);
+      expect(result3).toBeDefined();
+      expect(result3.cartTotalShippingFee).toBeCloseTo(0, 2);
+    });
+  });
 
 });
