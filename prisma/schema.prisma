@@ -87,7 +87,6 @@ model Seller {
   SellerStripeAccountMapping SellerStripeAccountMapping[]
   Shop Shop[]
   SellerSubscription SellerSubscription[]
-  Order Order[] @relation("SellerOrders")
 }
 
 enum SellerStatus {
@@ -335,7 +334,7 @@ model ProductReviewReply {
 model Order {
   id             String           @id @default(cuid())
   buyerId        String
-  sellerId       String
+
   shopId         String
   cartId         String
   carrierId      String?
@@ -361,9 +360,7 @@ model Order {
 
   // Relations
   cart           Cart?            @relation("OrderToCart")
-  buyer          Buyer?           @relation("BuyerOrders", fields: [buyerId], references: [id])
-  seller         Seller?          @relation("SellerOrders", fields: [sellerId], references: [id])
-  
+  buyer          Buyer?           @relation("BuyerOrders", fields: [buyerId], references: [id],onDelete:Cascade )
   orderCarrier OrderCarrier?      @relation("OrderToCarrier")
   
 }
@@ -473,6 +470,8 @@ model OrderEventRecord {
 
 enum OrderEventRecordType {
   CREATE
+  PAYMENT_SUCCESS
+  PAYMENT_FAIL
   PROCESSING
   SHIPPED
   DELIVERED

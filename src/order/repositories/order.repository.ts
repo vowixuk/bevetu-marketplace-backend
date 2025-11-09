@@ -19,7 +19,6 @@ export class OrderRepository {
     const prismaOrder = await this.prisma.order.create({
       data: {
         buyerId: order.buyerId,
-        sellerId: order.sellerId,
         shopId: order.shopId,
         cartId: order.cartId,
         carrierId: order.carrierId,
@@ -49,107 +48,107 @@ export class OrderRepository {
   /**
    *  Seller side
    */
-  async sellerFindAllIfOwned(
-    sellerId: string,
-    page: {
-      skip?: number;
-      take?: number;
-      orderBy?: 'desc' | 'asc';
-    } = {
-      skip: 0,
-      take: 10,
-      orderBy: 'desc',
-    },
-  ): Promise<{ orders: Order[]; total: number }> {
-    const total = await this.prisma.order.count({
-      where: { sellerId },
-    });
-    const orders = (
-      await this.prisma.order.findMany({
-        where: { sellerId },
-        include: { items: true, eventRecords: true },
-        skip: page.skip,
-        take: page.take,
-        orderBy: { updatedAt: page.orderBy },
-      })
-    ).map(mapPrismaOrderToDomain) as Order[];
-    return {
-      orders,
-      total,
-    };
-  }
+  // async sellerFindAllIfOwned(
+  //   sellerId: string,
+  //   page: {
+  //     skip?: number;
+  //     take?: number;
+  //     orderBy?: 'desc' | 'asc';
+  //   } = {
+  //     skip: 0,
+  //     take: 10,
+  //     orderBy: 'desc',
+  //   },
+  // ): Promise<{ orders: Order[]; total: number }> {
+  //   const total = await this.prisma.order.count({
+  //     where: { sellerId },
+  //   });
+  //   const orders = (
+  //     await this.prisma.order.findMany({
+  //       where: { sellerId },
+  //       include: { items: true, eventRecords: true },
+  //       skip: page.skip,
+  //       take: page.take,
+  //       orderBy: { updatedAt: page.orderBy },
+  //     })
+  //   ).map(mapPrismaOrderToDomain) as Order[];
+  //   return {
+  //     orders,
+  //     total,
+  //   };
+  // }
 
-  async sellerFindOneIfOwned(id: string, sellerId: string): Promise<Order> {
-    return mapPrismaOrderToDomain(
-      await this.prisma.order.findUnique({
-        where: { id, sellerId },
-        include: { items: true, eventRecords: true, orderAddress: true },
-      }),
-    ) as Order;
-  }
+  // async sellerFindOneIfOwned(id: string, sellerId: string): Promise<Order> {
+  //   return mapPrismaOrderToDomain(
+  //     await this.prisma.order.findUnique({
+  //       where: { id, sellerId },
+  //       include: { items: true, eventRecords: true, orderAddress: true },
+  //     }),
+  //   ) as Order;
+  // }
 
-  async shopFindAllIfOwned(
-    shopId: string,
-    sellerId: string,
-    page: {
-      skip?: number;
-      take?: number;
-      orderBy?: 'desc' | 'asc';
-    } = {
-      skip: 0,
-      take: 10,
-      orderBy: 'desc',
-    },
-  ): Promise<{ orders: Order[]; total: number }> {
-    const total = await this.prisma.order.count({
-      where: { shopId, sellerId },
-    });
-    const orders = (
-      await this.prisma.order.findMany({
-        where: { shopId, sellerId },
-        include: { items: true, eventRecords: true },
-        skip: page.skip,
-        take: page.take,
-        orderBy: { updatedAt: page.orderBy },
-      })
-    ).map(mapPrismaOrderToDomain) as Order[];
-    return {
-      orders,
-      total,
-    };
-  }
+  // async shopFindAllIfOwned(
+  //   shopId: string,
+  //   sellerId: string,
+  //   page: {
+  //     skip?: number;
+  //     take?: number;
+  //     orderBy?: 'desc' | 'asc';
+  //   } = {
+  //     skip: 0,
+  //     take: 10,
+  //     orderBy: 'desc',
+  //   },
+  // ): Promise<{ orders: Order[]; total: number }> {
+  //   const total = await this.prisma.order.count({
+  //     where: { shopId, sellerId },
+  //   });
+  //   const orders = (
+  //     await this.prisma.order.findMany({
+  //       where: { shopId, sellerId },
+  //       include: { items: true, eventRecords: true },
+  //       skip: page.skip,
+  //       take: page.take,
+  //       orderBy: { updatedAt: page.orderBy },
+  //     })
+  //   ).map(mapPrismaOrderToDomain) as Order[];
+  //   return {
+  //     orders,
+  //     total,
+  //   };
+  // }
 
-  async sellerUpdateIfOwned(
-    id: string,
-    sellerId: string,
-    order: Order,
-  ): Promise<Order> {
-    return mapPrismaOrderToDomain(
-      await this.prisma.order.update({
-        where: { id, sellerId },
-        data: {
-          // buyerId: order.buyerId,
-          // sellerId: order.sellerId,
-          // shopId: order.shopId,
-          // cartId: order.cartId,
-          // addressId: order.addressId,
-          carrierId: order.carrierId,
+  // async sellerUpdateIfOwned(
+  //   id: string,
+  //   sellerId: string,
+  //   order: Order,
+  // ): Promise<Order> {
+  //   return mapPrismaOrderToDomain(
+  //     await this.prisma.order.update({
+  //       where: { id, sellerId },
+  //       data: {
+  //         // buyerId: order.buyerId,
+  //         // sellerId: order.sellerId,
+  //         // shopId: order.shopId,
+  //         // cartId: order.cartId,
+  //         // addressId: order.addressId,
+  //         carrierId: order.carrierId,
 
-          // totalAmount: order.totalAmount,
-          // shippingFee: order.shippingFee,
-          // discount: order.discount,
-          // currency: order.currency,
+  //         // totalAmount: order.totalAmount,
+  //         // shippingFee: order.shippingFee,
+  //         // discount: order.discount,
+  //         // currency: order.currency,
 
-          // paymentStatus: order.paymentStatus,
-          // paymentMethod: order.paymentMethod,
-          orderStatus: order.orderStatus,
-          attributes: order.attributes ?? {},
-          remark: order.remark,
-        },
-        include: { items: true, eventRecords: true },
-      }),
-    ) as Order;
-  }
+  //         // paymentStatus: order.paymentStatus,
+  //         // paymentMethod: order.paymentMethod,
+  //         orderStatus: order.orderStatus,
+  //         attributes: order.attributes ?? {},
+  //         remark: order.remark,
+  //       },
+  //       include: { items: true, eventRecords: true },
+  //     }),
+  //   ) as Order;
+  // }
 
   async findOne(id: string): Promise<Order> {
     return mapPrismaOrderToDomain(
@@ -160,14 +159,23 @@ export class OrderRepository {
     ) as Order;
   }
 
+  async findByBuyerId(buyerId: string): Promise<Order[]> {
+    const orders = await this.prisma.order.findMany({
+      where: { buyerId },
+      include: { items: true, eventRecords: true, orderAddress: true },
+    });
+
+    return orders.map(mapPrismaOrderToDomain) as Order[];
+  }
+
   async update(id: string, order: Order) {
+    console.log(order, '<< order in repo');
     const prismaOrder = await this.prisma.order.update({
       where: {
         id,
       },
       data: {
         buyerId: order.buyerId,
-        sellerId: order.sellerId,
         shopId: order.shopId,
         cartId: order.cartId,
         carrierId: order.carrierId,
@@ -284,7 +292,7 @@ export function mapPrismaOrderToDomain(
   return new Order({
     id: prismaOrder.id,
     buyerId: prismaOrder.buyerId,
-    sellerId: prismaOrder.sellerId,
+    // sellerId: prismaOrder.sellerId,
     shopId: prismaOrder.shopId,
     cartId: prismaOrder.cartId,
 
@@ -306,6 +314,7 @@ export function mapPrismaOrderToDomain(
     ...(prismaOrder.remark ? { remark: prismaOrder.remark } : undefined),
     createdAt: prismaOrder.createdAt,
     updatedAt: prismaOrder.updatedAt,
+    attributes: prismaOrder.attributes as Order['attributes'],
 
     ...('orderAddress' in prismaOrder
       ? {

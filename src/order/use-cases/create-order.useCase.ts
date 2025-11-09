@@ -30,7 +30,7 @@ export class CreateOrderUseCase {
     cartId: string,
     createOrderAddressDto: CreateOrderAddressDto,
     promotionCode?: string,
-  ) {
+  ): Promise<string> {
     /**
      * step 1 - fetch the cart item out with CheckItemsAvailabilityUseCase to make sure all the product are up to date
      */
@@ -83,7 +83,7 @@ export class CreateOrderUseCase {
     for (const item of cart.items) {
       createOrderItemDtos.push(
         Object.assign(new CreateOrderItemDto(), {
-          refundStatus: 'None',
+          refundStatus: 'PENDING',
           discount: 0,
           shippingFee: shippingFee.cartTotalShippingFee,
           price: item.price,
@@ -130,17 +130,23 @@ export class CreateOrderUseCase {
     /**
      * Step 6 – redirect to Stripe payment page
      */
-    const { url, id: stripeSessionId } =
-      await this.stripeService.createBuyerCheckoutSession({
-        items: lineItemForStripeCheckout,
-        shippingFee: shippingFee.cartTotalShippingFee,
-        currency: 'GBP',
-        successUrl: process.env.BUYER_CHECKOUT_SUCCESS_URL || '',
-        cancelUrl: process.env.BUYER_CHECKOUT_CANCEL_URL || '',
-        orderId: order.id,
-        buyerId,
-        promotionCode,
-      });
+    // const { url, id: stripeSessionId } =
+    const session = await this.stripeService.createBuyerCheckoutSession({
+      items: lineItemForStripeCheckout,
+      shippingFee: shippingFee.cartTotalShippingFee,
+      currency: 'GBP',
+      successUrl: process.env.BUYER_CHECKOUT_SUCCESS_URL || '',
+      cancelUrl: process.env.BUYER_CHECKOUT_CANCEL_URL || '',
+      orderId: order.id,
+      buyerId,
+      promotionCode,
+    });
+
+    if (!session.url) {
+      throw new Error(
+        'Failed to create Stripe Checkout session: no URL returned.',
+      );
+    }
 
     /**
      *  Step 7 - save the session id
@@ -148,10 +154,10 @@ export class CreateOrderUseCase {
     await this.orderService.update(
       order.id,
       Object.assign(new UpdateOrderDto(), {
-        stripeSessionId,
+        attributes: { stripeSessionId: session.id },
       }),
     );
 
-    return url;
+    return session.url;
   }
 }

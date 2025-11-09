@@ -7,18 +7,8 @@
  *  npm run test -- cart/test/cart.service.spec.ts
  */
 import { User } from '../../user/entities/user.entity';
-
-import {
-  createTestUser_1,
-  createTestUser_2,
-  createTestUser_3,
-  removeTestingUser,
-} from '../../../test/helper/user-helper';
-
+import { removeTestingUser } from '../../../test/helper/user-helper';
 import { setupMarketplaceTestEnvironment } from '../../../test/helper/marketplace-environment-setup';
-
-import { testBuyerSetup } from '../../../test/helper/buyer-helper';
-import { testSellerSetup } from '../../../test/helper/seller-helper';
 import { SellerSubscription } from '../../seller-subscription/entities/seller-subscription.entity';
 import { IProduct } from '../../seller-subscription/entities/vo/product.vo';
 
@@ -27,26 +17,15 @@ import {
   testTestingMoudleHelper,
 } from '../../../test/helper/testing-module/testing-module-helper';
 import { Seller } from '../../seller/entities/seller.entity';
-import { CreateProductDto } from '../../product/dto/create-product.dto';
 import { Shop } from '../../shop/entities/shop.entity';
-import { createTestShop1 } from '../../../test/helper/shop-helper';
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-} from '@nestjs/common';
-import { testEnrollSubscription } from '../../../test/helper/subscription-helper';
-import { ViewProductsDto } from '../../product/dto/view-products.dto';
-import { CreateSellerShippingDto } from '../../seller-shipping/dto/create-seller-shipping.dto';
+import { BadRequestException } from '@nestjs/common';
 import { UpdateSellerShippingDto } from '../../seller-shipping/dto/update-seller-shipping.dto';
-import { CreateSellerShippingProfileDto } from '../../seller-shipping/dto/create-seller-shipping-profile.dto';
 import { UpdateProductDto } from '../../product/dto/update-product.dto';
 import { Product } from '../../product/entities/product.entity'
 import { SellerShipping } from '../../seller-shipping/entities/seller-shipping.entity';
 import { Buyer } from '../../buyer/entities/buyer.entity';
 import { Cart } from '../entities/cart.entity';
 import { SellerShippingProfile } from '../../seller-shipping/entities/seller-shipping-profile.entity';
-import { CreateCartItemDto } from '../dto/create-cart-item.dto';
 import { AddItemToCartDto } from '../dto/add-item-to-cart.dto';
 import { UpdateItemQtyInCartDto } from '../dto/update-item-qty-in-cart.dto';
 
@@ -55,28 +34,18 @@ describe('CartService', () => {
 
 let testSellerUser_1: User;
 let testSellerUser_2: User;
-let testSellerUser_3: User;
-let testSellerUser_4: User;
 
 let seller_1: Omit<Seller, 'userId'>;
 let seller_2: Omit<Seller, 'userId'>;
-let seller_3: Omit<Seller, 'userId'>;
-let seller_4: Omit<Seller, 'userId'>;
 
 let seller_1_buyer_id: string;
 let seller_2_buyer_id: string;
-let seller_3_buyer_id: string;
-let seller_4_buyer_id: string;
 
 let seller_1_shop: Shop;
 let seller_2_shop: Shop;
-let seller_3_shop: Shop;
-let seller_4_shop: Shop;
 
 let seller_1_shipping: SellerShipping;
 let seller_2_shipping: SellerShipping;
-let seller_3_shipping: SellerShipping;
-let seller_4_shipping: SellerShipping;
 
 let seller_1_shippingProfiles: {
   free: SellerShippingProfile;
@@ -93,8 +62,6 @@ let seller_2_shippingProfiles: {
 
 let seller_1_products: Omit<Product, 'sellerId'>[];
 let seller_2_products: Omit<Product, 'sellerId'>[];
-let seller_3_products: Omit<Product, 'sellerId'>[];
-let seller_4_products: Omit<Product, 'sellerId'>[];
 
 let seller_1_StripeAccountId: string;
 let seller_2_StripeAccountId: string;
@@ -106,8 +73,6 @@ let seller_2_StripeCustomerId: string;
 
 let seller_1_Subscription: SellerSubscription;
 let seller_2_Subscription: SellerSubscription;
-let seller_3_Subscription: SellerSubscription;
-let seller_4_Subscription: SellerSubscription;
 
   // Users who is only buyer
   let testBuyerUser: User;
@@ -164,8 +129,6 @@ let seller_4_Subscription: SellerSubscription;
     const testUsers = [
       testSellerUser_1,
       testSellerUser_2,
-      // testSellerUser_3,
-      // testSellerUser_4,
       testBuyerUser,
     ];
 
@@ -179,8 +142,6 @@ let seller_4_Subscription: SellerSubscription;
     for (const accountId of [
       seller_1_StripeAccountId,
       seller_2_StripeAccountId,
-      // seller_3_StripeAccountId,
-      // seller_4_StripeAccountId,
     ]) {
       if (accountId) {
         await services.stripeService.removeAccount(accountId);
@@ -192,8 +153,6 @@ let seller_4_Subscription: SellerSubscription;
     for (const customerId of [
       seller_1_StripeCustomerId,
       seller_2_StripeCustomerId,
-      // seller_3_StripeCustomerId,
-      // seller_4_StripeCustomerId,
     ]) {
       if (customerId) {
         await services.stripeService.removeStripeCustomer(customerId);

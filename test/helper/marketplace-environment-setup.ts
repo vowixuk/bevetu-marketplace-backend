@@ -12,6 +12,7 @@ import { ServicesType } from '../../test/helper/testing-module/testing-module-he
 import { testEnrollSubscription } from './subscription-helper';
 
 import {
+  AddItemToCartUseCase,
   BuyerUseCase,
   CreateProductUseCase,
   SellerShippingProfileService,
@@ -23,6 +24,10 @@ import {
 } from './seller-shipping-profile-helper';
 import { createTestProductsForSeller } from './product-helper';
 import { SellerShippingProfile } from '../../src/seller-shipping/entities/seller-shipping-profile.entity';
+import { Cart } from '../../src/cart/entities/cart.entity';
+import { AddItemToCartDto } from '../../src/cart/dto/add-item-to-cart.dto';
+import { Product } from '../../src/product/entities/product.entity';
+import { Buyer } from '../../src/buyer/entities/buyer.entity';
 
 /**
  * Sets up  test seller1
@@ -208,6 +213,34 @@ export async function setupMarketplaceTestEnvironment(services: ServicesType) {
     createTestUser_5,
   );
   return { seller1, seller2, buyer };
+}
+
+export async function addProductToCart(
+  cart: Cart,
+  testBuyer: Buyer,
+  seller_1_products: Omit<Product, 'sellerId'>[],
+  seller_2_products: Omit<Product, 'sellerId'>[],
+  addItemToCartUseCase: AddItemToCartUseCase,
+) {
+  const itemsToAdd = [
+    ...seller_1_products.map((p, i) => ({
+      productId: p.id,
+      quantity: [4, 2, 1, 5, 10][i],
+    })),
+    ...seller_2_products.map((p, i) => ({
+      productId: p.id,
+      quantity: [5, 8, 1, 4][i],
+    })),
+  ].filter(Boolean);
+
+  for (const item of itemsToAdd) {
+    cart = await addItemToCartUseCase.execute(testBuyer.id, {
+      cartId: cart.id,
+      ...item,
+    } as AddItemToCartDto);
+  }
+
+  return cart;
 }
 
 function getProductArray(

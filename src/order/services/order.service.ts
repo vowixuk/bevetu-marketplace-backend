@@ -39,7 +39,6 @@ export class OrderService {
     const publicOrders: PublicOrder[] = orders.map(
       ({
         buyerId,
-        sellerId,
         eventRecords,
         items,
         carrierId,
@@ -127,7 +126,6 @@ export class OrderService {
 
     const {
       buyerId: bId,
-      sellerId,
 
       ...publicData
     } = order;
@@ -135,71 +133,71 @@ export class OrderService {
     return publicData;
   }
 
-  async sellerFindAllIfOwned(
-    sellerId: string,
-    page: number = 1,
-    limit: number = 10,
-    orderBy: 'desc' | 'asc' = 'desc',
-  ): Promise<PaginationResponse> {
-    const { orders, total } = await this.orderRepository.sellerFindAllIfOwned(
-      sellerId,
-      {
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy,
-      },
-    );
+  // async sellerFindAllIfOwned(
+  //   sellerId: string,
+  //   page: number = 1,
+  //   limit: number = 10,
+  //   orderBy: 'desc' | 'asc' = 'desc',
+  // ): Promise<PaginationResponse> {
+  //   const { orders, total } = await this.orderRepository.sellerFindAllIfOwned(
+  //     sellerId,
+  //     {
+  //       skip: (page - 1) * limit,
+  //       take: limit,
+  //       orderBy,
+  //     },
+  //   );
 
-    return this.pagination(
-      orders,
-      total,
-      page,
-      limit,
-      orderBy,
-      `${process.env.BASE_URL}/v1/products`,
-    );
-  }
+  //   return this.pagination(
+  //     orders,
+  //     total,
+  //     page,
+  //     limit,
+  //     orderBy,
+  //     `${process.env.BASE_URL}/v1/products`,
+  //   );
+  // }
 
-  async shopFindAllIfOwned(
-    shopId: string,
-    sellerId: string,
-    page: number = 1,
-    limit: number = 10,
-    orderBy: 'desc' | 'asc' = 'desc',
-  ): Promise<PaginationResponse> {
-    const { orders, total } = await this.orderRepository.shopFindAllIfOwned(
-      shopId,
-      sellerId,
-      {
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy,
-      },
-    );
+  // async shopFindAllIfOwned(
+  //   shopId: string,
+  //   sellerId: string,
+  //   page: number = 1,
+  //   limit: number = 10,
+  //   orderBy: 'desc' | 'asc' = 'desc',
+  // ): Promise<PaginationResponse> {
+  //   const { orders, total } = await this.orderRepository.shopFindAllIfOwned(
+  //     shopId,
+  //     sellerId,
+  //     {
+  //       skip: (page - 1) * limit,
+  //       take: limit,
+  //       orderBy,
+  //     },
+  //   );
 
-    return this.pagination(
-      orders,
-      total,
-      page,
-      limit,
-      orderBy,
-      `${process.env.BASE_URL}/v1/products`,
-    );
-  }
+  //   return this.pagination(
+  //     orders,
+  //     total,
+  //     page,
+  //     limit,
+  //     orderBy,
+  //     `${process.env.BASE_URL}/v1/products`,
+  //   );
+  // }
 
-  async sellerFindOneIfOwned(
-    orderId: string,
-    sellerId: string,
-  ): Promise<Omit<Order, 'buyerId' | 'sellerId'>> {
-    const order = await this.orderRepository.sellerFindOneIfOwned(
-      orderId,
-      sellerId,
-    );
+  // async sellerFindOneIfOwned(
+  //   orderId: string,
+  //   sellerId: string,
+  // ): Promise<Omit<Order, 'buyerId' | 'sellerId'>> {
+  //   const order = await this.orderRepository.sellerFindOneIfOwned(
+  //     orderId,
+  //     sellerId,
+  //   );
 
-    const { buyerId: bId, sellerId: sId, ...publicData } = order;
+  //   const { buyerId: bId, sellerId: sId, ...publicData } = order;
 
-    return publicData;
-  }
+  //   return publicData;
+  // }
 
   /**
    * ⚠️ Warning: Do NOT expose this update method publicly.
@@ -221,6 +219,15 @@ export class OrderService {
    */
   async fineOne(orderId: string): Promise<Order> {
     return await this.orderRepository.findOne(orderId);
+  }
+
+  /**
+   * ⚠️ Warning: Do NOT expose this update method publicly.
+   * It does NOT verify whether the buyer or seller actually owns the order.
+   * Intended for internal use only.
+   */
+  async fineByBuyerId(buyerId: string): Promise<Order[]> {
+    return await this.orderRepository.findByBuyerId(buyerId);
   }
 
   /**

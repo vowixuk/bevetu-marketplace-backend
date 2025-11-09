@@ -110,7 +110,7 @@ export class StripeService {
                 shopId: item.shopId,
               },
             },
-            unit_amount: item.unitAmount,
+            unit_amount: Math.round(item.unitAmount * 100),
           },
           quantity: item.quantity,
         }));
@@ -121,7 +121,7 @@ export class StripeService {
           price_data: {
             currency,
             product_data: { name: 'Shipping Fee' },
-            unit_amount: shippingFee,
+            unit_amount: Math.round(shippingFee * 100),
           },
           quantity: 1,
         });

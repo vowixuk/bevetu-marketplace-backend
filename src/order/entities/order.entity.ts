@@ -7,7 +7,7 @@ export class Order {
   id: string;
 
   buyerId: string;
-  sellerId: string;
+  // sellerId: string;
   shopId: string;
   cartId: string;
 
