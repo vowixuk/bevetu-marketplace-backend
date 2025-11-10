@@ -52,7 +52,7 @@ export class CreateOrderUseCase {
      */
 
     const shippingFee = await this.calculateShippingFeeUseCase.execute(cart);
-console.log(shippingFee, '<< shippingFee');
+
     const order = await this.orderService.buyerCreateOrder(
       buyerId,
       Object.assign(new CreateOrderDto(), {
@@ -98,7 +98,7 @@ console.log(shippingFee, '<< shippingFee');
 
       lineItemForStripeCheckout.push({
         name: item.productName,
-        unitAmount: item.price * 100,
+        unitAmount: item.price,
         quantity: item.quantity,
         shopId: item.shopId,
       });

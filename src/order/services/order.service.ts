@@ -78,8 +78,6 @@ export class OrderService {
    * Order can only be created by buyer
    */
   async buyerCreateOrder(buyerId: string, dto: CreateOrderDto): Promise<Order> {
-    console.log(dto,"<< dto")
-    
     const order = new Order({
       ...dto,
       id: '',

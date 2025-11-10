@@ -136,7 +136,6 @@ export class CalculateShippingFeeUseCase {
       (acc, product) => {
         const shopId = product.shopId;
 
-        console.log(product.shippingProfile, '<< product.shippingProfile');
         const qty = productIdToQtyMapping[product.id];
         const shippingFee = this.calculateShippingFee({
           profile: product.shippingProfile,
@@ -203,8 +202,6 @@ export class CalculateShippingFeeUseCase {
       (sum, shopData) => sum + shopData.totalShippingFee,
       0,
     );
-
-   
 
     return { cartTotalShippingFee, shopShippingFee };
   }
