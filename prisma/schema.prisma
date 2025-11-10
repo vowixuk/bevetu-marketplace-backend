@@ -52,8 +52,10 @@ model Buyer {
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   BuyerStripeCustomerAccountMapping BuyerStripeCustomerAccountMapping?
   Order Order[] @relation("BuyerOrders")
-  OrderAddress OrderAddress[] @relation("OrderToBuyer")
   carts Cart[]
+
+  orderAddresses OrderAddress[] @relation("BuyerToOrderAddress")
+
 }
 
 model BuyerStripeCustomerAccountMapping {
@@ -369,7 +371,7 @@ model Order {
 model OrderAddress {
   id          String  @id @default(cuid())
   buyerId     String  
-  orderId     String  @unique
+  orderId     String?  @unique
   fullName    String
   phoneNumber String?
   line1       String
@@ -380,8 +382,8 @@ model OrderAddress {
   country     String
 
   // Joining Table
-  order       Order   @relation("OrderToOrderAddress", fields: [orderId], references: [id], onDelete: Cascade)
-  buyer       Buyer   @relation("OrderToBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  order       Order?   @relation("OrderToOrderAddress", fields: [orderId], references: [id], onDelete: Cascade)
+  buyer       Buyer   @relation("BuyerToOrderAddress",fields: [buyerId], references: [id], onDelete: Cascade)
 }
 
 model OrderCarrier {

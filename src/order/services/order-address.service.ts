@@ -16,6 +16,8 @@ export class OrderAddressService {
       orderId: dto.orderId ?? '',
       buyerId: dto.buyerId ?? '',
     });
+
+    console.log(address, '<< address');
     return this.orderAddressRepository.create(address);
   }
 }

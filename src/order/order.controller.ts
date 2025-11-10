@@ -13,6 +13,7 @@ export class OrderController {
     @Req() req: IRequest,
     @Body() dto: CreateOrderUseCaseDto,
   ): Promise<string> {
+    dto.createOrderAddressDto.buyerId = req.middleware.buyer.id;
     return await this.createOrderUseCase.execute(
       req.middleware.buyer.id,
       dto.cartId,

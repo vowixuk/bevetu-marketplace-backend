@@ -35,7 +35,7 @@ export function mapPrismaOrderAddressToDomain(
 
   return new OrderAddress({
     id: prismaAddress.id,
-    orderId: prismaAddress.orderId,
+    orderId: prismaAddress.orderId ?? '',
     buyerId: prismaAddress.buyerId,
     fullName: prismaAddress.fullName,
     ...(prismaAddress.phoneNumber

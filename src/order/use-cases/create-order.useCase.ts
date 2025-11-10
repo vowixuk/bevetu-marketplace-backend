@@ -50,12 +50,13 @@ export class CreateOrderUseCase {
      *          Initialize the order with a `PENDING` payment status,
      *          which will be updated to `SUCCESS` after payment confirmation.
      */
-    const shippingFee = await this.calculateShippingFeeUseCase.execute(cart);
 
+    const shippingFee = await this.calculateShippingFeeUseCase.execute(cart);
+console.log(shippingFee, '<< shippingFee');
     const order = await this.orderService.buyerCreateOrder(
       buyerId,
       Object.assign(new CreateOrderDto(), {
-        buyerId,
+        buyerId: buyerId,
         sellerId: '',
         shopId: '',
         cartId: cart.id,

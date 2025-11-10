@@ -136,6 +136,7 @@ export class CalculateShippingFeeUseCase {
       (acc, product) => {
         const shopId = product.shopId;
 
+        console.log(product.shippingProfile, '<< product.shippingProfile');
         const qty = productIdToQtyMapping[product.id];
         const shippingFee = this.calculateShippingFee({
           profile: product.shippingProfile,
@@ -203,6 +204,8 @@ export class CalculateShippingFeeUseCase {
       0,
     );
 
+   
+
     return { cartTotalShippingFee, shopShippingFee };
   }
 
@@ -224,9 +227,10 @@ export class CalculateShippingFeeUseCase {
         return profile.feeAmount * qty;
 
       case 'by_weight':
-        return Number(
-          (dimensions!.weight! * qty * profile.feeAmount).toFixed(2),
-        );
+        if (!dimensions?.weight || !dimensions) {
+          return 0;
+        }
+        return Number((dimensions.weight * qty * profile.feeAmount).toFixed(2));
 
       case 'free':
         return 0;

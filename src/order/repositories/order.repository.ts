@@ -169,7 +169,6 @@ export class OrderRepository {
   }
 
   async update(id: string, order: Order) {
-    console.log(order, '<< order in repo');
     const prismaOrder = await this.prisma.order.update({
       where: {
         id,
