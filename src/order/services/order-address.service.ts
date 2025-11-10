@@ -10,7 +10,12 @@ export class OrderAddressService {
   ) {}
 
   async create(dto: CreateOrderAddressDto): Promise<OrderAddress> {
-    const address = new OrderAddress({ id: '', ...dto });
+    const address = new OrderAddress({
+      ...dto,
+      id: '',
+      orderId: dto.orderId ?? '',
+      buyerId: dto.buyerId ?? '',
+    });
     return this.orderAddressRepository.create(address);
   }
 }

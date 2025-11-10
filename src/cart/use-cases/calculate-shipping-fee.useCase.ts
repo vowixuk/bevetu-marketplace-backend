@@ -1,5 +1,5 @@
 import { ProductService } from '../../product/product.services';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Product } from '../../product/entities/product.entity';
 import { Cart } from '../entities/cart.entity';
 import { SellerShippingProfileService } from '../../seller-shipping/services/seller-shipping-profile.service';
@@ -35,11 +35,22 @@ export class CalculateShippingFeeUseCase {
     private checkItemsAvailabilityUseCase: CheckItemsAvailabilityUseCase,
   ) {}
 
-  async execute(_cart: Cart): Promise<ShippingCalculationReturn> {
+  async execute(
+    _cart: Cart | null,
+    buyerId?: string,
+    cartId?: string,
+  ): Promise<ShippingCalculationReturn> {
+    const resolvedBuyerId = _cart?.buyerId ?? buyerId;
+    const resolvedCartId = _cart?.id ?? cartId;
+
+    if (!resolvedBuyerId || !resolvedCartId) {
+      throw new BadRequestException('Missing buyer id and cart id');
+    }
+
     // Always check update the cart before calculation
     const cart = await this.checkItemsAvailabilityUseCase.execute(
-      _cart.buyerId,
-      _cart.id,
+      resolvedBuyerId,
+      resolvedCartId,
     );
     /*
      * Step 1 – Find all Products in cart

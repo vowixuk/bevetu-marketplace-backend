@@ -22,7 +22,10 @@ export class OrderEventRecordRepository {
         data: {
           orderId: record.orderId,
           type: record.type as PrismaOrderEventRecordType,
-          metadata: record.metadata ?? {},
+          metadata:
+            (JSON.parse(
+              JSON.stringify(record.metadata),
+            ) as unknown as 'InputJsonValue | null | undefined') ?? undefined,
           createdAt: record.createdAt ?? new Date(),
         },
       }),

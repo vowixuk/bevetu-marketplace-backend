@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OrderItemRepository } from '../repositories/order-item.repository';
 import { OrderItem } from '../entities/order-item.entity';
 import { CreateOrderItemDto } from '../dto/create-order-item.dto';
-import { UpdateOrderItemDto } from '../dto/update-order-item.dto';
+// import { UpdateOrderItemDto } from '../dto/update-order-item.dto';
 
 @Injectable()
 export class OrderItemService {
@@ -38,23 +38,23 @@ export class OrderItemService {
     return true;
   }
 
-  async sellerUpdateIfOwned(
-    sellerId: string,
-    orderId: string,
-    dto: UpdateOrderItemDto,
-  ): Promise<OrderItem> {
-    const orderItem = await this.orderItemRepository.sellerFindOneIfOwned(
-      orderId,
-      sellerId,
-    );
+  // async sellerUpdateIfOwned(
+  //   sellerId: string,
+  //   orderId: string,
+  //   dto: UpdateOrderItemDto,
+  // ): Promise<OrderItem> {
+  //   const orderItem = await this.orderItemRepository.sellerFindOneIfOwned(
+  //     orderId,
+  //     sellerId,
+  //   );
 
-    if (!orderItem) {
-      throw new BadRequestException('Unable to get the item');
-    }
+  //   if (!orderItem) {
+  //     throw new BadRequestException('Unable to get the item');
+  //   }
 
-    return this.orderItemRepository.sellerUpdateIfOwned(orderId, sellerId, {
-      ...orderItem,
-      ...dto,
-    });
-  }
+  //   return this.orderItemRepository.sellerUpdateIfOwned(orderId, sellerId, {
+  //     ...orderItem,
+  //     ...dto,
+  //   });
+  // }
 }

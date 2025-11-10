@@ -1,11 +1,13 @@
-import { IsString, IsUUID, IsOptional, Length, Matches } from 'class-validator';
+import { IsString, IsOptional, Length, Matches } from 'class-validator';
 
 export class CreateOrderAddressDto {
-  @IsUUID()
-  orderId: string;
+  @IsString()
+  @IsOptional()
+  orderId?: string;
 
-  @IsUUID()
-  buyerId: string;
+  @IsString()
+  @IsOptional()
+  buyerId?: string;
 
   @IsString()
   @Length(2, 100)

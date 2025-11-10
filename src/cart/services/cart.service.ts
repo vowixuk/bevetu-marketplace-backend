@@ -31,9 +31,9 @@ export class CartService {
    * create one if none exists.
    */
   async findOrCreateUncheckoutCart(buyerId: string): Promise<Cart> {
-    const cart = await this.cartRepository.findUncheckoutOneByUserId(buyerId);
+    let cart = await this.cartRepository.findUncheckoutOneByUserId(buyerId);
     if (!cart) {
-      return await this.create(buyerId);
+      cart = await this.create(buyerId);
     }
     return cart;
   }

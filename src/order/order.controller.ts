@@ -1,34 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+import { Body, Controller, Post, Req } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { CreateOrderUseCase } from './use-cases/create-order.useCase';
+import { type IRequest } from '../auth/middlewares/auth.middleware';
+import { CreateOrderUseCaseDto } from './dto/create-order-use-case.dto';
 
-@Controller('order')
+@ApiTags('Order')
+@Controller({ path: 'order', version: '1' })
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
-
-  @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderService.create(createOrderDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.orderService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.orderService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.orderService.update(+id, updateOrderDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orderService.remove(+id);
+  constructor(private readonly createOrderUseCase: CreateOrderUseCase) {}
+  @Post('/checkout')
+  async checkout(
+    @Req() req: IRequest,
+    @Body() dto: CreateOrderUseCaseDto,
+  ): Promise<string> {
+    return await this.createOrderUseCase.execute(
+      req.middleware.buyer.id,
+      dto.cartId,
+      dto.createOrderAddressDto,
+      dto.promotionCode,
+    );
   }
 }

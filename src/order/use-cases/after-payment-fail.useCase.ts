@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrderEventRecordService } from '../services/event-record.service';
 import { OrderService } from '../services/order.service';
-import { CartService } from '../../cart/services/cart.service';
 import { UpdateOrderDto } from '../dto/update-order.dto';
 import { CreateOrderEventRecordDto } from '../dto/create-event-record.dto';
 @Injectable()
@@ -9,7 +8,6 @@ export class AfterPaymentFailUseCase {
   constructor(
     private eventRecordsService: OrderEventRecordService,
     private orderService: OrderService,
-    private cartService: CartService,
   ) {}
 
   async execute(orderId: string, reason: string) {

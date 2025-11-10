@@ -35,7 +35,7 @@ export class OrderItemRepository {
     ) as OrderItem;
   }
 
-  async createMany(items: OrderItem[]): Promise<boolean>{
+  async createMany(items: OrderItem[]): Promise<boolean> {
     if (!items.length) return false;
 
     await this.prisma.orderItem.createMany({
@@ -63,56 +63,56 @@ export class OrderItemRepository {
     return true;
   }
 
-  async sellerFindOneIfOwned(
-    id: string,
-    sellerId: string,
-  ): Promise<OrderItem | null> {
-    return mapPrismaOrderItemToDomain(
-      await this.prisma.orderItem.findUnique({
-        where: {
-          id,
-          order: {
-            sellerId,
-          },
-        },
-      }),
-    );
-  }
+  // async sellerFindOneIfOwned(
+  //   id: string,
+  //   sellerId: string,
+  // ): Promise<OrderItem | null> {
+  //   return mapPrismaOrderItemToDomain(
+  //     await this.prisma.orderItem.findUnique({
+  //       where: {
+  //         id,
+  //         order: {
+  //           sellerId,
+  //         },
+  //       },
+  //     }),
+  //   );
+  // }
 
-  async sellerUpdateIfOwned(
-    id: string,
-    sellerId: string,
-    item: OrderItem,
-  ): Promise<OrderItem> {
-    return mapPrismaOrderItemToDomain(
-      await this.prisma.orderItem.update({
-        where: {
-          id,
-          order: {
-            sellerId,
-          },
-        },
-        data: {
-          // orderId: item.orderId,
-          // shopId: item.shopId,
-          // productId: item.productId,
-          // varientId: item.varientId ?? undefined,
-          // productName: item.productName,
-          // quantity: item.quantity,
-          // price: item.price,
+  //   async sellerUpdateIfOwned(
+  //     id: string,
+  //     sellerId: string,
+  //     item: OrderItem,
+  //   ): Promise<OrderItem> {
+  //     return mapPrismaOrderItemToDomain(
+  //       await this.prisma.orderItem.update({
+  //         where: {
+  //           id,
+  //           order: {
+  //             sellerId,
+  //           },
+  //         },
+  //         data: {
+  //           // orderId: item.orderId,
+  //           // shopId: item.shopId,
+  //           // productId: item.productId,
+  //           // varientId: item.varientId ?? undefined,
+  //           // productName: item.productName,
+  //           // quantity: item.quantity,
+  //           // price: item.price,
 
-          // shippingFee: item.shippingFee,
-          // discount: item.discount,
+  //           // shippingFee: item.shippingFee,
+  //           // discount: item.discount,
 
-          refundedQuantity: item.refundedQuantity,
-          refundedAmount: item.refundedAmount,
-          refundStatus: item.refundStatus as PrismaOrderRefundStatus,
-          attributes: item.attributes ?? {},
-          remark: item.remark,
-        },
-      }),
-    ) as OrderItem;
-  }
+  //           refundedQuantity: item.refundedQuantity,
+  //           refundedAmount: item.refundedAmount,
+  //           refundStatus: item.refundStatus as PrismaOrderRefundStatus,
+  //           attributes: item.attributes ?? {},
+  //           remark: item.remark,
+  //         },
+  //       }),
+  //     ) as OrderItem;
+  //   }
 }
 
 /**

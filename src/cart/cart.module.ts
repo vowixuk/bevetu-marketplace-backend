@@ -10,9 +10,9 @@ import { CheckItemsAvailabilityUseCase } from './use-cases/check-items-availabil
 import { CalculateShippingFeeUseCase } from './use-cases/calculate-shipping-fee.useCase';
 import { AddItemToCartUseCase } from './use-cases/add-item-to-cart.useCase';
 import { UpdateItemQtyInCartUseCase } from './use-cases/update-item-qty-in-cart.useCase';
-
+import { SellerShippingModule } from 'src/seller-shipping/seller-shipping.module';
 @Module({
-  imports: [ProductModule],
+  imports: [ProductModule, SellerShippingModule],
   controllers: [CartController],
   providers: [
     CartService,

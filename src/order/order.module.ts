@@ -11,13 +11,16 @@ import { OrderCarrierRepository } from './repositories/order-carrier.repository'
 import { AfterPaymentSuccessUseCase } from './use-cases/after-payment-success.useCase';
 import { AfterPaymentFailUseCase } from './use-cases/after-payment-fail.useCase';
 import { CreateOrderUseCase } from './use-cases/create-order.useCase';
-import { StripeModule, UpdateProductUseCase } from 'test/helper/testing-module';
+
 import { CartModule } from '../cart/cart.module';
-// import { OrderController } from './order.controller';
+import { OrderController } from './order.controller';
+import { ShopModule } from '../shop/shop.module';
+import { ProductModule } from '../product/product.module';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
-  // controllers: [OrderController],
-  imports: [StripeModule, CartModule],
+  controllers: [OrderController],
+  imports: [ProductModule, StripeModule, CartModule, ShopModule],
   providers: [
     OrderService,
     OrderAddressService,
@@ -33,7 +36,6 @@ import { CartModule } from '../cart/cart.module';
     AfterPaymentSuccessUseCase,
     AfterPaymentFailUseCase,
     CreateOrderUseCase,
-    UpdateProductUseCase,
   ],
   exports: [
     OrderService,
@@ -41,10 +43,15 @@ import { CartModule } from '../cart/cart.module';
     OrderItemService,
     OrderEventRecordService,
     OrderItemService,
+    OrderRepository,
+    OrderAddressRepository,
+    OrderItemRepository,
+    OrderEventRecordRepository,
+    OrderCarrierRepository,
+
     AfterPaymentSuccessUseCase,
     AfterPaymentFailUseCase,
     CreateOrderUseCase,
-    UpdateProductUseCase,
   ],
 })
 export class OrderModule {}
