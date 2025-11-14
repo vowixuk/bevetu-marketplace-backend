@@ -81,9 +81,8 @@ export class StripeService {
     currency = 'GBP',
     successUrl,
     cancelUrl,
-    orderId,
-    buyerId,
     promotionCode,
+    metadata,
   }: {
     items: {
       name: string;
@@ -95,9 +94,13 @@ export class StripeService {
     currency?: string;
     successUrl: string;
     cancelUrl: string;
-    orderId: string;
-    buyerId: string;
     promotionCode?: string;
+    metadata: {
+      action: string;
+      platform: string;
+      orderId: string;
+      buyerId: string;
+    };
   }): Promise<Stripe.Response<Stripe.Checkout.Session>> {
     try {
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
@@ -136,11 +139,7 @@ export class StripeService {
         discounts: promotionCode
           ? [{ promotion_code: promotionCode }]
           : undefined,
-        metadata: {
-          action: 'BUYER_CHECKOUT',
-          orderId: orderId,
-          buyerId: buyerId,
-        },
+        metadata,
       });
 
       return session;

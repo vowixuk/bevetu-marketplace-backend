@@ -3,8 +3,6 @@ import { IsOptional, IsInt, Min, Max, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class BuyerViewAllDto {
-  product?: string;
-
   @ApiProperty({
     description: 'Page number for pagination',
     required: false,

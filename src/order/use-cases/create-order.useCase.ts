@@ -84,7 +84,7 @@ export class CreateOrderUseCase {
     for (const item of cart.items) {
       createOrderItemDtos.push(
         Object.assign(new CreateOrderItemDto(), {
-          refundStatus: 'PENDING',
+          refundStatus: 'NONE',
           discount: 0,
           shippingFee: shippingFee.cartTotalShippingFee,
           price: item.price,
@@ -138,9 +138,13 @@ export class CreateOrderUseCase {
       currency: 'GBP',
       successUrl: process.env.BUYER_CHECKOUT_SUCCESS_URL || '',
       cancelUrl: process.env.BUYER_CHECKOUT_CANCEL_URL || '',
-      orderId: order.id,
-      buyerId,
       promotionCode,
+      metadata: {
+        action: 'BUYER_CHECKOUT',
+        platform: process.env.PLATFORM ?? 'MARKETPLACE',
+        orderId: order.id,
+        buyerId: buyerId,
+      },
     });
 
     if (!session.url) {
