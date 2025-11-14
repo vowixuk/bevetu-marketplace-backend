@@ -137,6 +137,7 @@ export class StripeService {
           ? [{ promotion_code: promotionCode }]
           : undefined,
         metadata: {
+          action: 'BUYER_CHECKOUT',
           orderId: orderId,
           buyerId: buyerId,
         },

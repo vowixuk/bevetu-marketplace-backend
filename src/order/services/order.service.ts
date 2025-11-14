@@ -5,23 +5,7 @@ import { OrderRepository } from '../repositories/order.repository';
 import { Order } from '../entities/order.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { UpdateOrderDto } from '../dto/update-order.dto';
-
-type PublicOrder = Omit<
-  Order,
-  'buyerId' | 'sellerId' | 'eventRecords' | 'items' | 'carrierId'
->;
-
-type PaginationResponse = {
-  orders: PublicOrder[];
-  currentPage: number; // current page of this return
-  limit: number; // no of record in this return
-  totalRecords: number; // Total number record in the database
-  totalPages: number; // Total page
-  start: number; // This return start from x record.
-  end: number; // This return end to y record.
-  next: string | null; // url of next page
-  prev: string | null; // url of previous page
-};
+import { PaginationResponse, PublicOrder } from '../order.type';
 
 @Injectable()
 export class OrderService {
@@ -55,11 +39,13 @@ export class OrderService {
 
     const next =
       end < totalRecords
-        ? `${baseApiEndpoint}?page=${page + 1}&limit=${limit}`
+        ? `${baseApiEndpoint}?page=${page + 1}&limit=${limit}&orderBY=${orderBy}`
         : null;
 
     const prev =
-      page > 1 ? `${baseApiEndpoint}?page=${page - 1}&limit=${limit}` : null;
+      page > 1
+        ? `${baseApiEndpoint}?page=${page - 1}&limit=${limit}&orderBY=${orderBy}`
+        : null;
 
     return {
       orders: publicOrders,
@@ -111,7 +97,7 @@ export class OrderService {
       page,
       limit,
       orderBy,
-      `${process.env.BASE_URL}/v1/products`,
+      `${process.env.BASE_URL}/v1/orders`,
     );
   }
 

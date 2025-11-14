@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { OrderService } from './services/order.service';
 import { OrderAddressService } from './services/order-address.service';
 import { OrderItemService } from './services/order-item.service';
@@ -20,7 +20,12 @@ import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
   controllers: [OrderController],
-  imports: [ProductModule, StripeModule, CartModule, ShopModule],
+  imports: [
+    forwardRef(() => StripeModule),
+    ProductModule,
+    CartModule,
+    ShopModule,
+  ],
   providers: [
     OrderService,
     OrderAddressService,

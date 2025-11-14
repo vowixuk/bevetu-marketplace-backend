@@ -59,6 +59,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     BuyerModule,
     SellerShippingModule,
     EventEmitterModule.forRoot(),
+
   ],
   controllers: [AppController],
   providers: [

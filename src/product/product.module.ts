@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { ProductSellerController } from './controllers/product.seller.controller';
 import { ProductService } from './product.services';
@@ -20,7 +20,12 @@ import {
 import { ProductController } from './controllers/product.controller';
 
 @Module({
-  imports: [EventEmitterModule, ShopModule, SubscriptionModule, StripeModule],
+  imports: [
+    EventEmitterModule,
+    ShopModule,
+    SubscriptionModule,
+    forwardRef(() => StripeModule),
+  ],
   controllers: [ProductSellerController, ProductController],
   providers: [
     ProductService,

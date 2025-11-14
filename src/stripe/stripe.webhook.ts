@@ -24,6 +24,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ApiHealthCheck, ApiWebhookListener } from './stripe.swagger';
 import type { RawBodyRequest } from '@nestjs/common';
 import { CompleteSellerListingSubscriptionEnrollmentDto } from '../seller-subscription/dto';
+import { AfterPaymentSuccessUseCase } from '../order/use-cases/after-payment-success.useCase';
 
 @ApiTags('Stripe Webhook (For Stripe use only)')
 @Controller({ path: 'stripe-webhook', version: '1' })
@@ -32,6 +33,7 @@ export class StripeWebhook {
     private readonly stripeService: StripeService,
     private readonly subscriptionService: SellerSubscriptionService,
     private readonly stripeCacheService: StripeCacheService,
+    private readonly afterPaymentSuccessUseCase: AfterPaymentSuccessUseCase,
   ) {}
 
   @Get()
@@ -98,9 +100,6 @@ export class StripeWebhook {
           console.log(
             '✅ Webhooks: Event `checkout.session.completed` for seller listing subscription action received',
           );
-
-          console.log(session, '<< session');
-          console.log(session, '<< metadata');
           await this.subscriptionService.completeSellerListingSubscriptionEnrollment(
             Object.assign(
               new CompleteSellerListingSubscriptionEnrollmentDto(),
@@ -120,6 +119,22 @@ export class StripeWebhook {
           );
           return { message: 'Listing Subscription Created' };
         }
+
+        if (session.metadata.action === 'BUYER_CHECKOUT') {
+          console.log(
+            '✅ Webhooks: Event `checkout.session.completed` for buyer checkout',
+          );
+          await this.afterPaymentSuccessUseCase.execute(
+            session.metadata.orderId,
+            session.currency,
+            Number(session.amount_total) / 100,
+            0,
+            // transactionNo?: string,
+            // invoiceUrl?: string,
+          );
+          return { message: 'Buy Checkout Completed' };
+        }
+
         // for non - 'SELLER_LISTENING_SUBSCRIPTION_ENROLLMENT' action, break it
         break;
 

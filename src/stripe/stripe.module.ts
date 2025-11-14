@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { StripeService } from './services/stripe.service';
 import { BuyerStripeCustomerAccountMappingService } from './services/buyer-account-mapping.service';
 import { SellerStripeAccountMappingService } from './services/seller-account-mapping.service';
@@ -9,8 +9,9 @@ import { SellerSubscriptionMappingRepository } from './repositories/seller-subsc
 import { SubscriptionModule } from '../seller-subscription/sellerSubscription.module';
 import { StripeWebhook } from './stripe.webhook';
 import { StripeCacheService } from './cache/stripe.cache-service';
+import { OrderModule } from '../order/order.module';
 @Module({
-  imports: [SubscriptionModule],
+  imports: [SubscriptionModule, forwardRef(() => OrderModule)],
   controllers: [StripeWebhook],
   providers: [
     StripeCacheService,
