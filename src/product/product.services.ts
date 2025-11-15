@@ -2,16 +2,27 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  InternalServerErrorException,
+  BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ViewProductsDto } from './dto';
+import { StorageService } from '../storage/storage.service';
+import { GetUploadPresignedUrlDto } from '../storage/dto/get-upload-presigned-url.dto';
+import { GetDownloadPresignedUrlDto } from 'src/storage/dto/get-donwload-presigned-url.dto';
+import { GetPresignedUrlDto } from './dto/get-presigned-url.dto';
+import { RemoveDocumentDto } from './dto/remove-document.dto';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly productRepository: ProductRepository,
+  ) {}
 
   /**
    * Warning!
@@ -374,7 +385,22 @@ export class ProductService {
 
   async remove(id: string, shopId: string): Promise<Product> {
     const product = await this.findOne(id, shopId);
-    return this.productRepository.remove(product.id);
+
+    const removedProduct = await this.productRepository.remove(product.id);
+
+    await Promise.all(
+      removedProduct.imageUrls.map(async (img) => {
+        try {
+          await this.removeDocumentFromStorage(product.sellerId, {
+            fileName: img,
+          } as RemoveDocumentDto);
+        } catch (err) {
+          console.error(`Failed to remove ${img}:`, err);
+        }
+      }),
+    );
+
+    return removedProduct;
   }
 
   async disapproval(id: string, shopId: string) {
@@ -398,6 +424,119 @@ export class ProductService {
         ...{ isApproved: true },
         updatedAt: new Date(),
       }),
+    );
+  }
+
+  async addImageUrl(
+    sellerId: string,
+    productId: string,
+    dto: UpdateProductDto,
+  ) {
+    const products = await this.findByIds([productId]);
+
+    if (!products || products.length <= 0) {
+      throw new BadRequestException('Product not found');
+    }
+    if (!dto.imageUrls || dto.imageUrls.length <= 0) {
+      throw new BadRequestException('No image url found');
+    }
+
+    const product = products[0];
+    if (product.sellerId !== sellerId) {
+      throw new UnauthorizedException('Not allowed');
+    }
+    const newImageUrls = [...product.imageUrls, ...dto.imageUrls];
+
+    return await this.productRepository.update(
+      new Product({
+        ...product,
+        imageUrls: newImageUrls,
+      }),
+    );
+  }
+
+  async removeImageUrl(
+    sellerId: string,
+    productId: string,
+    dto: UpdateProductDto,
+  ) {
+    const products = await this.findByIds([productId]);
+
+    if (!products || products.length <= 0) {
+      throw new BadRequestException('Product not found');
+    }
+
+    const product = products[0];
+    if (product.sellerId !== sellerId) {
+      throw new UnauthorizedException('Not allowed');
+    }
+
+    if (
+      !dto.imageUrls ||
+      dto.imageUrls.length <= 0 ||
+      dto.imageUrls == undefined ||
+      !dto.imageUrls[0]
+    ) {
+      throw new BadRequestException('No image url found');
+    }
+
+    const newImageUrls = product.imageUrls.filter(
+      (img) => img !== dto.imageUrls![0],
+    );
+
+    await this.productRepository.update(
+      new Product({
+        ...product,
+        imageUrls: newImageUrls,
+      }),
+    );
+
+    await this.removeDocumentFromStorage(sellerId, {
+      fileName: dto.imageUrls[0],
+    } as RemoveDocumentDto);
+  }
+
+  async generateUploadProductPicturePresignedUrl(
+    sellerId: string,
+    fileName: string,
+  ): Promise<string> {
+    return await this.storageService.getUploadPresignedUrl(
+      Object.assign(new GetUploadPresignedUrlDto(), {
+        fileName: fileName,
+        allowedContentTypes: ['image/jpeg', 'image/png'],
+        bucket: process.env.BUCKET_PRODUCT_PICTURES,
+        storagePath: `${sellerId}/`,
+        expires: 60 * 5,
+        acl: 'public-read',
+      }),
+    );
+  }
+
+  async generateDownloadPresignedUrl(
+    getPresignedUrlDto: GetPresignedUrlDto,
+  ): Promise<string> {
+    try {
+      const product = await this.findByIds([getPresignedUrlDto.productId]);
+      const presignedUrl = await this.storageService.getDownloadPresignedUrl(
+        Object.assign(new GetDownloadPresignedUrlDto(), {
+          bucket: process.env.BUCKET_PRODUCT_PICTURES,
+          key: `${product[0].sellerId}/${getPresignedUrlDto.fileName}`,
+          expires: 60 * 5,
+        }),
+      );
+      return presignedUrl;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async removeDocumentFromStorage(
+    sellerId: string,
+    removeDocumentDto: RemoveDocumentDto,
+  ): Promise<string> {
+    return await this.storageService.deleteObject(
+      process.env.BUCKET_PRODUCT_PICTURES!,
+      `${sellerId}/${removeDocumentDto.fileName}`,
     );
   }
 

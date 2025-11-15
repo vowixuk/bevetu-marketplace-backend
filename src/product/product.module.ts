@@ -19,12 +19,15 @@ import {
 } from './use-cases/seller';
 import { ProductController } from './controllers/product.controller';
 
+import { StorageModule } from '../storage/storage.module';
+
 @Module({
   imports: [
     EventEmitterModule,
     ShopModule,
     SubscriptionModule,
     forwardRef(() => StripeModule),
+    StorageModule,
   ],
   controllers: [ProductSellerController, ProductController],
   providers: [

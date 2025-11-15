@@ -9,6 +9,7 @@ import {
   Req,
   Query,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { IRequest } from '../../auth/middlewares/auth.middleware';
@@ -33,6 +34,7 @@ import {
 
 import {
   CreateProductReturnSchema,
+  GetUploadProductPresignUrlReturnSchema,
   ResetProductOnShelfReturnSchema,
   SellerViewProductReturnSchema,
   SetProductOnShelfReturnSchema,
@@ -41,8 +43,11 @@ import {
 } from '../product.type';
 
 import {
+  ApiAddProductImage,
   ApiCreateProduct,
   ApiDeleteProduct,
+  ApiGetUploadProductPicturePresignUrl,
+  ApiRemoveProductImage,
   ApiResetProductOnShelf,
   ApiSellerViewProduct,
   ApiSetProductOnShelf,
@@ -51,6 +56,8 @@ import {
 } from '../product.swagger';
 import { SellerOriginGuard } from '../../share/guards/seller-site-origin.guard';
 import { ProductIdShopIdParamDto } from '../dto/product-id-shop-id-param.dto';
+import { GenerateUploadPresignedUrlDto } from '../dto/generate-upload-presigned-url.dto';
+import { ProductService } from '../product.services';
 
 @UseGuards(SellerOriginGuard)
 @ApiTags('Product - seller')
@@ -64,6 +71,7 @@ export class ProductSellerController {
     private readonly resetProductOnShelfUseCase: ResetProductOnShelfUseCase,
     private readonly sellerViewProductUseCase: SellerViewProductUseCase,
     private readonly deleteProductUseCase: DeleteProductUseCase,
+    private readonly productService: ProductService,
   ) {}
 
   @Post('shop/:shopId/create-product')
@@ -181,5 +189,49 @@ export class ProductSellerController {
     return {
       message: 'deleted',
     };
+  }
+
+  @Post('profile-picture-upload-url')
+  @ApiGetUploadProductPicturePresignUrl()
+  async getUploadProductPicturePresignUrl(
+    @Req() req: IRequest,
+    @Query() query: GenerateUploadPresignedUrlDto,
+  ): Promise<GetUploadProductPresignUrlReturnSchema> {
+    const url =
+      await this.productService.generateUploadProductPicturePresignedUrl(
+        query.fileName,
+        req.middleware.seller!.id,
+      );
+    return { url };
+  }
+
+  @Patch('shop/:shopId/update-product/:productId/remove-image')
+  @ApiRemoveProductImage()
+  @HttpCode(204)
+  async removeProductImage(
+    @Req() req: IRequest,
+    @Param() param: ProductIdShopIdParamDto,
+    @Body() body: UpdateProductDto,
+  ) {
+    await this.productService.removeImageUrl(
+      req.middleware.seller!.id,
+      param.productId,
+      body,
+    );
+  }
+
+  @Patch('shop/:shopId/update-product/:productId/add-image')
+  @ApiAddProductImage()
+  @HttpCode(204)
+  async addProductImage(
+    @Req() req: IRequest,
+    @Param() param: ProductIdShopIdParamDto,
+    @Body() body: UpdateProductDto,
+  ) {
+    await this.productService.addImageUrl(
+      req.middleware.seller!.id,
+      param.productId,
+      body,
+    );
   }
 }

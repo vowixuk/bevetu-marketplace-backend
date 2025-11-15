@@ -16,6 +16,7 @@ import {
 
 import {
   CreateProductReturnSchema,
+  GetUploadProductPresignUrlReturnSchema,
   ResetProductOnShelfReturnSchema,
   SafeProductForPublic,
   SellerViewProductReturnSchema,
@@ -24,6 +25,7 @@ import {
   ViewFilteredProductReturnSchema,
   ViewProductListReturnSchema,
 } from './product.type';
+import { GenerateUploadPresignedUrlDto } from './dto/generate-upload-presigned-url.dto';
 
 // --- example objects ---
 const safeProductExample: SellerViewProductReturnSchema = {
@@ -258,3 +260,62 @@ export function ApiViewFilteredProducts() {
     }),
   );
 }
+
+export function ApiGetUploadProductPicturePresignUrl() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Generate presigned URL for profile picture upload',
+      description:
+        'Generates a presigned URL that allows the client to upload a profile picture directly to the storage service.',
+      tags: ['Product'],
+      deprecated: false,
+    }),
+    ApiBody({
+      type: GenerateUploadPresignedUrlDto,
+      description: 'The details required to generate the presigned URL',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Presigned URL generated successfully',
+      schema: {
+        example: {
+          url: 'https://example.com/upload/presigned-url',
+        } as GetUploadProductPresignUrlReturnSchema,
+      },
+    }),
+  );
+}
+
+export function ApiRemoveProductImage() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Remove an image from a product',
+      description: "Removes a specific image URL from the product's gallery.",
+      tags: ['Product'],
+    }),
+    ApiParam({ name: 'shopId', type: String }),
+    ApiParam({ name: 'productId', type: String }),
+    ApiResponse({
+      status: 204,
+      description: 'Image removed successfully. No content returned.',
+    }),
+  );
+}
+
+export function ApiAddProductImage() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Add an image to a product',
+      description: "Adds a new image URL to the product's gallery.",
+      tags: ['Product'],
+    }),
+    ApiParam({ name: 'shopId', type: String }),
+    ApiParam({ name: 'productId', type: String }),
+    ApiResponse({
+      status: 204,
+      description: 'Image added successfully. No content returned.',
+    }),
+  );
+}
+
+

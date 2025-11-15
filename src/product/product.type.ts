@@ -48,3 +48,5 @@ export type ViewFilteredProductReturnSchema = {
   next: string | null; // url of next page
   prev: string | null; // url of previous page
 };
+
+export type GetUploadProductPresignUrlReturnSchema = { url: string };

@@ -27,6 +27,7 @@ import { CartModule } from './cart/cart.module';
 import { BuyerModule } from './buyer/buyer.module';
 import { SellerShippingModule } from './seller-shipping/seller-shipping.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       },
     ]),
 
+    StorageModule,
     AuthModule,
     UserModule,
     StripeModule,
@@ -59,7 +61,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     BuyerModule,
     SellerShippingModule,
     EventEmitterModule.forRoot(),
-
   ],
   controllers: [AppController],
   providers: [

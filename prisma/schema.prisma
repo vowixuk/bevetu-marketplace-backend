@@ -453,8 +453,10 @@ enum OrderRefundStatus {
   NONE
   PENDING
   COMPLETED
+  REQUESTED
   REJECTED
 }
+
 
 
 model OrderEventRecord {
