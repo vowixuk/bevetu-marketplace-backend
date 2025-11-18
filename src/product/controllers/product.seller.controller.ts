@@ -34,7 +34,7 @@ import {
 
 import {
   CreateProductReturnSchema,
-  GetUploadProductPresignUrlReturnSchema,
+  GetUploadProductImagePresignUrlReturnSchema,
   ResetProductOnShelfReturnSchema,
   SellerViewProductReturnSchema,
   SetProductOnShelfReturnSchema,
@@ -46,7 +46,7 @@ import {
   ApiAddProductImage,
   ApiCreateProduct,
   ApiDeleteProduct,
-  ApiGetUploadProductPicturePresignUrl,
+  ApiGetUploadProductImagePresignUrl,
   ApiRemoveProductImage,
   ApiResetProductOnShelf,
   ApiSellerViewProduct,
@@ -191,47 +191,48 @@ export class ProductSellerController {
     };
   }
 
-  @Post('profile-picture-upload-url')
-  @ApiGetUploadProductPicturePresignUrl()
-  async getUploadProductPicturePresignUrl(
+  @Post('product-image-upload-url')
+  @ApiGetUploadProductImagePresignUrl()
+  async getUploadProductImagePresignUrl(
     @Req() req: IRequest,
-    @Query() query: GenerateUploadPresignedUrlDto,
-  ): Promise<GetUploadProductPresignUrlReturnSchema> {
+    @Body() dto: GenerateUploadPresignedUrlDto,
+  ): Promise<GetUploadProductImagePresignUrlReturnSchema> {
     const url =
-      await this.productService.generateUploadProductPicturePresignedUrl(
-        query.fileName,
+      await this.productService.generateUploadProductImagePresignedUrl(
         req.middleware.seller!.id,
+        dto.shopId,
+        dto.fileName,
       );
     return { url };
   }
 
-  @Patch('shop/:shopId/update-product/:productId/remove-image')
+  @Patch('shop/:shopId/product/:productId/remove-image')
   @ApiRemoveProductImage()
   @HttpCode(204)
   async removeProductImage(
     @Req() req: IRequest,
     @Param() param: ProductIdShopIdParamDto,
-    @Body() body: UpdateProductDto,
+    @Body() dto: UpdateProductDto,
   ) {
     await this.productService.removeImageUrl(
       req.middleware.seller!.id,
       param.productId,
-      body,
+      dto,
     );
   }
 
-  @Patch('shop/:shopId/update-product/:productId/add-image')
+  @Patch('shop/:shopId/product/:productId/add-image')
   @ApiAddProductImage()
   @HttpCode(204)
   async addProductImage(
     @Req() req: IRequest,
     @Param() param: ProductIdShopIdParamDto,
-    @Body() body: UpdateProductDto,
+    @Body() dto: UpdateProductDto,
   ) {
     await this.productService.addImageUrl(
       req.middleware.seller!.id,
       param.productId,
-      body,
+      dto,
     );
   }
 }

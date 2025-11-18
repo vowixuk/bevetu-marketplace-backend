@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  InternalServerErrorException,
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,8 +12,6 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { ViewProductsDto } from './dto';
 import { StorageService } from '../storage/storage.service';
 import { GetUploadPresignedUrlDto } from '../storage/dto/get-upload-presigned-url.dto';
-import { GetDownloadPresignedUrlDto } from 'src/storage/dto/get-donwload-presigned-url.dto';
-import { GetPresignedUrlDto } from './dto/get-presigned-url.dto';
 import { RemoveDocumentDto } from './dto/remove-document.dto';
 
 @Injectable()
@@ -357,12 +354,78 @@ export class ProductService {
   ): Promise<Product> {
     const existingProduct = await this.findOne(id, shopId);
 
+    console.log(updateDto, '<< updateDto');
+
+    if (updateDto.imageUrls && Array.isArray(updateDto.imageUrls)) {
+      await this.handleImagesUpdate(
+        shopId,
+        existingProduct.imageUrls,
+        updateDto.imageUrls,
+      );
+    }
     return this.productRepository.update(
       new Product({
         ...existingProduct,
         ...updateDto,
       }),
     );
+  }
+
+  /**
+   * Compares the original and updated image URLs for a product and removes any images
+   * that were deleted by the user from storage.
+   *
+   * Behavior:
+   * - If an image exists in `originalImageUrls` but not in `updatedImageUrls`,
+   *   it means the user deleted it, and we need to remove it from storage.
+   * - If an image exists in `updatedImageUrls` but not in `originalImageUrls`,
+   *   it means the user added a new image. No action is required here because
+   *   new images are already uploaded to storage before updating the database.
+   *
+   * @param shopId - The ID of the shop the images belong to
+   * @param originalImageUrls - The list of original image URLs stored in the database
+   * @param updatedImageUrls - The list of updated image URLs submitted by the user
+   */
+  async handleImagesUpdate(
+    shopId: string,
+    originalImageUrls: string[],
+    updatedImageUrls: string[],
+  ) {
+    console.log(originalImageUrls, '<< originalImageUrls');
+    console.log(updatedImageUrls, '<< updatedImageUrls');
+    // If arrays are identical, no action is needed
+    if (
+      originalImageUrls.length === updatedImageUrls.length &&
+      updatedImageUrls.every(
+        (value, index) => value === originalImageUrls[index],
+      )
+    ) {
+      console.log('same images url. no action required');
+      return;
+    }
+
+    // Determine which images were removed by the user
+    const imageToRemoveFromStorage = originalImageUrls.filter(
+      (url) => !updatedImageUrls.includes(url),
+    );
+
+    console.log(imageToRemoveFromStorage, '<< imageToRemoveFromStorage');
+
+    if (imageToRemoveFromStorage.length) {
+      await Promise.all(
+        imageToRemoveFromStorage.map(async (fileName) => {
+          try {
+            await this.removeDocumentFromStorage(shopId, {
+              fileName,
+            } as RemoveDocumentDto);
+            console.warn(`Removed image ${fileName}`);
+          } catch (err) {
+            console.warn(`Failed to remove image ${fileName}:`, err);
+            // Ignore error
+          }
+        }),
+      );
+    }
   }
 
   /**
@@ -496,47 +559,95 @@ export class ProductService {
     } as RemoveDocumentDto);
   }
 
-  async generateUploadProductPicturePresignedUrl(
+  /**
+   * Verifies whether the given shopId belongs to the specified sellerId.
+   *
+   * NOTE: This function is not yet implemented.
+   * PENDING: Add proper verification logic to check ownership of the shop by the seller.
+   *
+   * @param sellerId - The ID of the seller to verify ownership against.
+   * @param shopId - The ID of the shop to verify.
+   * @returns An object containing sellerId and shopId (currently a placeholder).
+   */
+  verifyShopIdAndSellerId(sellerId: string, shopId: string) {
+    // TODO: Implement actual verification logic
+    return {
+      sellerId,
+      shopId,
+    };
+  }
+
+  async generateUploadProductImagePresignedUrl(
     sellerId: string,
+    shopId: string,
     fileName: string,
   ): Promise<string> {
+    const verifiedData = this.verifyShopIdAndSellerId(sellerId, shopId);
     return await this.storageService.getUploadPresignedUrl(
       Object.assign(new GetUploadPresignedUrlDto(), {
         fileName: fileName,
         allowedContentTypes: ['image/jpeg', 'image/png'],
         bucket: process.env.BUCKET_PRODUCT_PICTURES,
-        storagePath: `${sellerId}/`,
+        storagePath: `${verifiedData.shopId}/`,
         expires: 60 * 5,
         acl: 'public-read',
       }),
     );
   }
 
-  async generateDownloadPresignedUrl(
-    getPresignedUrlDto: GetPresignedUrlDto,
-  ): Promise<string> {
-    try {
-      const product = await this.findByIds([getPresignedUrlDto.productId]);
-      const presignedUrl = await this.storageService.getDownloadPresignedUrl(
-        Object.assign(new GetDownloadPresignedUrlDto(), {
-          bucket: process.env.BUCKET_PRODUCT_PICTURES,
-          key: `${product[0].sellerId}/${getPresignedUrlDto.fileName}`,
-          expires: 60 * 5,
-        }),
-      );
-      return presignedUrl;
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
-  }
+  // saltedSellerId(sellerId: string) {
+  //   if (!process.env.STORAGE_SELLER_ID_PATH_SALT) {
+  //     throw new Error('salt variable is missing');
+  //   }
+  //   return crypto
+  //     .createHmac('sha256', process.env.STORAGE_SELLER_ID_PATH_SALT)
+  //     .update(sellerId)
+  //     .digest('hex');
+  // }
+
+  // ensureImageUrlsSalted(sellerId: string, imageUrls: string[]): string[] {
+  //   const saltedFolder = this.saltedSellerId(sellerId);
+
+  //   return imageUrls.map((url) => {
+  //     if (url.includes(`/${saltedFolder}/`)) return url;
+
+  //     const lastSlashIndex = url.lastIndexOf('/');
+  //     if (lastSlashIndex === -1) return url;
+
+  //     const newUrl =
+  //       url.substring(0, lastSlashIndex) +
+  //       `/${saltedFolder}` +
+  //       url.substring(lastSlashIndex);
+
+  //     return newUrl;
+  //   });
+  // }
+
+  // async generateDownloadPresignedUrl(
+  //   getPresignedUrlDto: GetPresignedUrlDto,
+  // ): Promise<string> {
+  //   try {
+  //     const product = await this.findByIds([getPresignedUrlDto.productId]);
+  //     const presignedUrl = await this.storageService.getDownloadPresignedUrl(
+  //       Object.assign(new GetDownloadPresignedUrlDto(), {
+  //         bucket: process.env.BUCKET_PRODUCT_PICTURES,
+  //         key: `${product[0].sellerId}/${getPresignedUrlDto.fileName}`,
+  //         expires: 60 * 5,
+  //       }),
+  //     );
+  //     return presignedUrl;
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(error);
+  //   }
+  // }
 
   async removeDocumentFromStorage(
-    sellerId: string,
+    shopId: string,
     removeDocumentDto: RemoveDocumentDto,
   ): Promise<string> {
     return await this.storageService.deleteObject(
       process.env.BUCKET_PRODUCT_PICTURES!,
-      `${sellerId}/${removeDocumentDto.fileName}`,
+      `${shopId}/${removeDocumentDto.fileName}`,
     );
   }
 

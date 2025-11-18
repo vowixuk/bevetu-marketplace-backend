@@ -110,6 +110,7 @@ export class ProductRepository {
       take,
       orderBy: { updatedAt: 'desc' },
     });
+
     return {
       products: products.map(mapPrismaProductToDomain) as Product[],
       total,
@@ -368,9 +369,9 @@ export function mapPrismaProductToDomain(
     reservedStock: prismaProduct.reservedStock,
     onShelf: prismaProduct.onShelf ? true : false,
     isApproved: prismaProduct.isApproved,
-    variants: prismaProduct.variants as Variants[], // JSON -> TypeScript type
-    discount: prismaProduct.discount as unknown as Discount[], // JSON -> TypeScript type
-    categories: prismaProduct.categories as Categories, // JSON -> TypeScript type
+    variants: prismaProduct.variants as Variants[],
+    discount: prismaProduct.discount as unknown as Discount[],
+    categories: prismaProduct.categories as Categories,
     createdAt: prismaProduct.createdAt,
     updatedAt: prismaProduct.updatedAt,
     dimensions:

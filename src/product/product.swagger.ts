@@ -13,10 +13,9 @@ import {
   UpdateProductDto,
   ViewProductsDto,
 } from './dto';
-
 import {
   CreateProductReturnSchema,
-  GetUploadProductPresignUrlReturnSchema,
+  GetUploadProductImagePresignUrlReturnSchema,
   ResetProductOnShelfReturnSchema,
   SafeProductForPublic,
   SellerViewProductReturnSchema,
@@ -261,7 +260,7 @@ export function ApiViewFilteredProducts() {
   );
 }
 
-export function ApiGetUploadProductPicturePresignUrl() {
+export function ApiGetUploadProductImagePresignUrl() {
   return applyDecorators(
     ApiOperation({
       summary: 'Generate presigned URL for profile picture upload',
@@ -280,7 +279,7 @@ export function ApiGetUploadProductPicturePresignUrl() {
       schema: {
         example: {
           url: 'https://example.com/upload/presigned-url',
-        } as GetUploadProductPresignUrlReturnSchema,
+        } as GetUploadProductImagePresignUrlReturnSchema,
       },
     }),
   );
@@ -317,5 +316,3 @@ export function ApiAddProductImage() {
     }),
   );
 }
-
-

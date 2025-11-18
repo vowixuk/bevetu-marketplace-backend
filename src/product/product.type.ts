@@ -49,4 +49,4 @@ export type ViewFilteredProductReturnSchema = {
   prev: string | null; // url of previous page
 };
 
-export type GetUploadProductPresignUrlReturnSchema = { url: string };
+export type GetUploadProductImagePresignUrlReturnSchema = { url: string };

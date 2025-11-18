@@ -16,4 +16,12 @@ export class GenerateUploadPresignedUrlDto {
       'Invalid file extension. Only  .jpg, .jpeg, and .png, files are allowed.',
   })
   fileName: string;
+
+  @ApiProperty({
+    description: 'Shop ID',
+    example: 'shop-ad99afd9saf9-asdfasdf',
+  })
+  @IsString()
+  @IsNotEmpty()
+  shopId: string;
 }

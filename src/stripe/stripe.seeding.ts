@@ -79,7 +79,6 @@ async function seedProducts() {
   }
 }
 
-console.log(Products, '<< Products');
 
 
 // Run seeder
