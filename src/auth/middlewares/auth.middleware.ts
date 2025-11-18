@@ -66,7 +66,7 @@ export class AuthMiddleware implements NestMiddleware {
     /**
      *  Step 1. Get the token from cookies(web) or header(mobile)
      */
-    console.log(' Step 1. Get the token from cookies(web) or header(mobile)');
+    // console.log(' Step 1. Get the token from cookies(web) or header(mobile)');
     const accessToken = this.authService.getToken('ACCESS', req);
     if (!accessToken) {
       res.clearCookie('BVT_MKT', {
@@ -79,7 +79,7 @@ export class AuthMiddleware implements NestMiddleware {
     /**
      *  Step 2. Verfiy the token and get user basic detail
      */
-    console.log('Step 2. Verfiy the token and get user basic detail');
+    // console.log('Step 2. Verfiy the token and get user basic detail');
     let email: string, familyName: string, givenName: string, userId: string;
     try {
       const payload = this.authService.verifyAccessToken(accessToken);
@@ -97,7 +97,7 @@ export class AuthMiddleware implements NestMiddleware {
     /**
      * Step 3. get the origin where the api is sent
      * */
-    console.log('Step 3. get the origin where the api is sent');
+    // console.log('Step 3. get the origin where the api is sent');
     let origin: IRequest['middleware']['origin'];
     if (req.headers.origin === process.env.BUYER_URL) {
       origin = 'BUYER_URL';
@@ -110,9 +110,9 @@ export class AuthMiddleware implements NestMiddleware {
     /**
      *  Step 4. Get the marketplace token from cookies(web) or header(mobile)
      */
-    console.log(
-      'Step 4. Get the marketplace token from cookies(web) or header(mobile)',
-    );
+    // console.log(
+    //   'Step 4. Get the marketplace token from cookies(web) or header(mobile)',
+    // );
     const marketplaceToken = this.authService.getMarketplaceToken(req);
     let marketplaceSetupData: IJwtPayload | null = null;
 
@@ -122,32 +122,32 @@ export class AuthMiddleware implements NestMiddleware {
      * The system will create a new token and set it in the cookies.
      */
     try {
-      console.log('Step 5. Verify marketplace token');
+      // console.log('Step 5. Verify marketplace token');
       if (marketplaceToken && typeof marketplaceToken == 'string') {
         marketplaceSetupData =
           this.authService.verifyMarketplaceToken(marketplaceToken);
-        console.log('Step 5. Verify marketplace token successfully');
+        // console.log('Step 5. Verify marketplace token successfully');
       } else {
         /**
          *  Step 5b . If no marketplace token or verification fail, throw error
          */
-        console.log('Step 5b. No marketplace token');
+        // console.log('Step 5b. No marketplace token');
         throw new Error();
       }
     } catch {
       /**
        *  Step 5c. If error, re-setup the marketplace data and set cookies
        */
-      console.log('Step 5c. re-setup the marketplace data and set cookies');
+      // console.log('Step 5c. re-setup the marketplace data and set cookies');
       marketplaceSetupData = await this.authUseCase.marketplaceAccessSetup(
         userId,
         email,
       );
       this.authService.marketplaceTokenCookieOptions();
-      console.log(
-        this.authService.marketplaceTokenCookieOptions(),
-        '<this.authService.marketplaceTokenCookieOptions();< cookieoption',
-      );
+      // console.log(
+      //   this.authService.marketplaceTokenCookieOptions(),
+      //   '<this.authService.marketplaceTokenCookieOptions();< cookieoption',
+      // );
       res.cookie(
         'BVT_MKT',
         this.authService.generateMarketPlaceToken(marketplaceSetupData),
@@ -158,7 +158,7 @@ export class AuthMiddleware implements NestMiddleware {
     /**
      *  Step 7. set cookies in middleware
      */
-    console.log('Step 7. set cookies in middleware');
+    // console.log('Step 7. set cookies in middleware');
     req.middleware = {
       // This is the id that used across all platforms
       mainId: userId,
@@ -175,7 +175,7 @@ export class AuthMiddleware implements NestMiddleware {
       seller: marketplaceSetupData.seller,
     };
 
-    console.log(req.middleware);
+    // console.log(req.middleware);
 
     next();
   }

@@ -354,8 +354,6 @@ export class ProductService {
   ): Promise<Product> {
     const existingProduct = await this.findOne(id, shopId);
 
-    console.log(updateDto, '<< updateDto');
-
     if (updateDto.imageUrls && Array.isArray(updateDto.imageUrls)) {
       await this.handleImagesUpdate(
         shopId,
@@ -391,8 +389,8 @@ export class ProductService {
     originalImageUrls: string[],
     updatedImageUrls: string[],
   ) {
-    console.log(originalImageUrls, '<< originalImageUrls');
-    console.log(updatedImageUrls, '<< updatedImageUrls');
+    // console.log(originalImageUrls, '<< originalImageUrls');
+    // console.log(updatedImageUrls, '<< updatedImageUrls');
     // If arrays are identical, no action is needed
     if (
       originalImageUrls.length === updatedImageUrls.length &&
@@ -400,7 +398,7 @@ export class ProductService {
         (value, index) => value === originalImageUrls[index],
       )
     ) {
-      console.log('same images url. no action required');
+      // console.log('same images url. no action required');
       return;
     }
 
@@ -409,9 +407,16 @@ export class ProductService {
       (url) => !updatedImageUrls.includes(url),
     );
 
-    console.log(imageToRemoveFromStorage, '<< imageToRemoveFromStorage');
+    const newlyAddedImage = updatedImageUrls.filter(
+      (url) => !originalImageUrls.includes(url),
+    );
+
+    if (newlyAddedImage.length) {
+      // console.log(newlyAddedImage, '<< newlyAddedImage');
+    }
 
     if (imageToRemoveFromStorage.length) {
+      // console.log(imageToRemoveFromStorage, '<< imageToRemoveFromStorage');
       await Promise.all(
         imageToRemoveFromStorage.map(async (fileName) => {
           try {
@@ -421,7 +426,6 @@ export class ProductService {
             console.warn(`Removed image ${fileName}`);
           } catch (err) {
             console.warn(`Failed to remove image ${fileName}:`, err);
-            // Ignore error
           }
         }),
       );
