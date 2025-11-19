@@ -142,5 +142,8 @@ export function mapPrismaOrderItemToDomain(
     remark: (prismaItem.remark as OrderItem['remark']) ?? undefined,
     createdAt: prismaItem.createdAt,
     updatedAt: prismaItem.updatedAt,
+    carrierId: (prismaItem.carrierId as OrderItem['carrierId']) ?? undefined,
+    orderStatus:
+      (prismaItem.orderStatus as OrderItem['orderStatus']) ?? 'CREATED',
   });
 }

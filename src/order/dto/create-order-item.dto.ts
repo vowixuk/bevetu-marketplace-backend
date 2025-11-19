@@ -9,6 +9,8 @@ import {
 } from 'class-validator';
 import { type OrderRefundStatus } from '../entities/order-item.entity';
 
+import { type OrderStatus } from '../entities/order.entity';
+
 export class CreateOrderItemDto {
   @IsString()
   orderId: string;
@@ -64,4 +66,11 @@ export class CreateOrderItemDto {
   @IsString()
   @Length(0, 500)
   remark?: string;
+
+  @IsOptional()
+  @IsString()
+  carrierId?: string;
+
+  @IsEnum(['CREATED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'])
+  orderStatus: OrderStatus;
 }

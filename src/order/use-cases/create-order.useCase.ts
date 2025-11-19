@@ -82,11 +82,18 @@ export class CreateOrderUseCase {
     }[] = [];
     const createOrderItemDtos: CreateOrderItemDto[] = [];
     for (const item of cart.items) {
+      const shippingFeeDataOfAllProducts =
+        shippingFee.shopShippingFee[item.shopId];
+      const shippingFeeDataOfThisItem =
+        shippingFeeDataOfAllProducts.products.find(
+          (p) => p.product.id == item.productId,
+        );
       createOrderItemDtos.push(
         Object.assign(new CreateOrderItemDto(), {
           refundStatus: 'NONE',
+          orderStatus: 'CREATED',
           discount: 0,
-          shippingFee: shippingFee.cartTotalShippingFee,
+          shippingFee: shippingFeeDataOfThisItem?.shippingFee ?? 0,
           price: item.price,
           quantity: item.quantity,
           productName: item.productName,

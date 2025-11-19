@@ -1,4 +1,5 @@
 import { OptionalProperties } from '../../share/types';
+import { OrderStatus } from './order.entity';
 
 export type OrderRefundStatus =
   | 'NONE'
@@ -23,6 +24,9 @@ export class OrderItem {
   refundStatus?: OrderRefundStatus;
   createdAt: Date;
   updatedAt: Date;
+
+  carrierId?: string;
+  orderStatus: OrderStatus;
 
   attributes?: Record<string, any>;
   remark?: string;

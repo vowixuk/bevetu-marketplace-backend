@@ -37,15 +37,15 @@ export class AuthUseCase {
      *    User Setup    *
      * *****************/
     // Step 1 - Check if marketplace user created
-    console.log('Check if marketplace user created');
+    // console.log('Check if marketplace user created');
     let user: User | null = null;
     try {
       user = await this.userService.findOneByMainId(mainId);
-      console.log('User already created');
+      // console.log('User already created');
     } catch (error) {
       console.log(error, '<< error');
       if (error instanceof NotFoundException) {
-        console.log('User not created');
+        // console.log('User not created');
         user = null;
       } else {
         throw new InternalServerErrorException('Error when fetching user', {
@@ -61,7 +61,7 @@ export class AuthUseCase {
           email,
         }),
       );
-      console.log('Create new user');
+      // console.log('Create new user');
     }
     /*************************************
      *      Buyer Account Setup    *
@@ -93,11 +93,11 @@ export class AuthUseCase {
     try {
       sellerStripeAccountMapping =
         await this.sellAccountMappingService.findOneByUserId(user.id);
-      console.log('has sellerStripeAccountMapping');
+      // console.log('has sellerStripeAccountMapping');
     } catch (error) {
       if (error instanceof NotFoundException) {
         sellerStripeAccountMapping = null;
-        console.log('no sellerStripeAccountMapping');
+        // console.log('no sellerStripeAccountMapping');
       } else {
         throw new InternalServerErrorException(
           'Error when fetching seller mapping',

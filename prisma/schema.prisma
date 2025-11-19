@@ -89,6 +89,7 @@ model Seller {
   SellerStripeAccountMapping SellerStripeAccountMapping[]
   Shop Shop[]
   SellerSubscription SellerSubscription[]
+
 }
 
 enum SellerStatus {
@@ -336,10 +337,7 @@ model ProductReviewReply {
 model Order {
   id             String           @id @default(cuid())
   buyerId        String
-
-  shopId         String
   cartId         String
-  carrierId      String?
   orderAddress   OrderAddress?    @relation("OrderToOrderAddress")
   items          OrderItem[]
 
@@ -350,6 +348,13 @@ model Order {
 
   paymentStatus  OrderPaymentStatus
   paymentMethod  String
+
+   // `carrierId is useless here as one order may contain more then one shop`
+  carrierId      String?
+     // `shopId is useless here as one order may contain more then one shop`
+  shopId         String
+
+   // `orderStatus` is useless here as one order may contain more then one shop`
   orderStatus    OrderStatus
 
   createdAt      DateTime         @default(now())
@@ -364,7 +369,6 @@ model Order {
   cart           Cart?            @relation("OrderToCart")
   buyer          Buyer?           @relation("BuyerOrders", fields: [buyerId], references: [id],onDelete:Cascade )
   orderCarrier OrderCarrier?      @relation("OrderToCarrier")
-  
 }
 
 
@@ -384,6 +388,8 @@ model OrderAddress {
   // Joining Table
   order       Order?   @relation("OrderToOrderAddress", fields: [orderId], references: [id], onDelete: Cascade)
   buyer       Buyer   @relation("BuyerToOrderAddress",fields: [buyerId], references: [id], onDelete: Cascade)
+
+
 }
 
 model OrderCarrier {
@@ -423,6 +429,7 @@ enum OrderStatus {
 model OrderItem {
   id             String   @id @default(cuid())
   orderId        String
+
   shopId         String
   productId      String
   varientId      String?
@@ -443,9 +450,14 @@ model OrderItem {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+
+  carrierId      String?
+  orderStatus    OrderStatus?
+
   // Joining Table
   order          Order    @relation(fields: [orderId], references: [id],onDelete: Cascade)
   shop           Shop     @relation(fields: [shopId], references: [id],onDelete: Cascade)
+  
 }
 
 

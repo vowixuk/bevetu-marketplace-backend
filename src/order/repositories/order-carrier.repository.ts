@@ -25,6 +25,47 @@ export class OrderCarrierRepository {
     ) as OrderCarrier;
   }
 
+  async fineOneIfShopOwned(id: string, shopId: string): Promise<OrderCarrier> {
+    return mapPrismaOrderCarrierToDomain(
+      await this.prisma.orderCarrier.findUnique({
+        where: {
+          id,
+          order: {
+            shopId: shopId,
+          },
+        },
+      }),
+    ) as OrderCarrier;
+  }
+
+  async updateIfShopOwned(
+    id: string,
+    shopId: string,
+    orderCarrier: OrderCarrier,
+  ): Promise<OrderCarrier> {
+    return mapPrismaOrderCarrierToDomain(
+      await this.prisma.orderCarrier.update({
+        where: {
+          id: orderCarrier.id,
+          orderId: orderCarrier.orderId,
+          order: {
+            shopId,
+          },
+        },
+        data: {
+          carrierName: orderCarrier.carrierName,
+          serviceType: orderCarrier.serviceType,
+          trackingNumber: orderCarrier.trackingNumber,
+          trackingUrl: orderCarrier.trackingUrl,
+          shippedAt: orderCarrier.shippedAt,
+          estimatedDelivery: orderCarrier.estimatedDelivery,
+          deliveredAt: orderCarrier.deliveredAt,
+          remark: orderCarrier.remark,
+        },
+      }),
+    ) as OrderCarrier;
+  }
+
   //   async sellerUpdateIfOwned(
   //     sellerId: string,
   //     orderCarrier: OrderCarrier,
